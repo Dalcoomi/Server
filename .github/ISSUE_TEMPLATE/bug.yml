@@ -1,14 +1,8 @@
 name: "🐞 Bug"
 description: "버그가 발생했어요."
 title: "OO 버그 해결"
-labels: "🍀 BE, 🐛 fix"
+labels: "🐞 bugfix"
 body:
-  - type: checkboxes
-    attributes:
-      label: 📋 Checklist
-      description: 반드시 먼저 체크해주세요!
-      options:
-        - label: 📁 Jira에 이슈를 등록했나요?
   - type: textarea
     attributes:
       label: 🐞 Problem

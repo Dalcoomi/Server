@@ -1,14 +1,8 @@
 name: "🔨 Refactor"
 description: "리팩터링 해야 할 부분이 있어요."
 title: "OO 리팩터링"
-labels: "🍀 BE, ♻️ refactor"
+labels: "♻ refactor"
 body:
-  - type: checkboxes
-    attributes:
-      label: 📋 Checklist
-      description: 반드시 먼저 체크해주세요!
-      options:
-        - label: 📁 Jira에 이슈를 등록했나요?
   - type: textarea
     attributes:
       label: ✅ Tasks
