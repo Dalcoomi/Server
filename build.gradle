@@ -167,6 +167,9 @@ dependencies {
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2'
     implementation 'com.lmax:disruptor:4.0.0'
 
+    // H2
+    runtimeOnly 'com.h2database:h2'
+
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
 
