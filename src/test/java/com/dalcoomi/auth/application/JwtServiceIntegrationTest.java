@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +20,7 @@ import com.dalcoomi.common.error.exception.UnauthorizedException;
 
 @Transactional
 @SpringBootTest
-@ActiveProfiles("test")
-@TestPropertySource("classpath:application-test.yml")
+@TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
 class JwtServiceIntegrationTest {
 
