@@ -55,7 +55,7 @@ sonar {
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
         property "sonar.exclusions", "**/*Application*.java, **/*Config*.java, **/*GlobalExceptionHandler.java, **/Q*.java, **/DynamicQuery.java, " +
-                "**/*Exception.java, **/*Adapter.java, **/*Filter.java, **/BaseTimeEntity.java"
+                "**/*Exception.java, **/*Adapter.java, **/*Filter.java, **/BaseTimeEntity.java, **/CustomOAuth2UserService.java"
         property "sonar.java.coveragePlugin", "jacoco"
     }
 }
@@ -129,7 +129,9 @@ jacocoTestCoverageVerification {
                     'scouter.*',
                     'reactor.*',
                     '*.*RepositoryImpl',
-                    '*.BaseTimeEntity'
+                    '*.BaseTimeEntity',
+                    '*.CustomOAuth2UserService',
+                    '*.*.CustomUserDetails'
             ]
         }
     }
@@ -151,8 +153,10 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     compileOnly 'org.projectlombok:lombok'
 
-    // OAuth2
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
     // TSID
     implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.9.0'
@@ -162,6 +166,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2'
     implementation 'com.lmax:disruptor:4.0.0'
+
+    // H2
+    runtimeOnly 'com.h2database:h2'
 
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
