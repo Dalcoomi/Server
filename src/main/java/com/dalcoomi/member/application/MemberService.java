@@ -6,7 +6,6 @@ import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.util.NicknameProvider;
 import com.dalcoomi.member.application.repository.MemberRepository;
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberService {
 
-	private final JwtService jwtService;
 	private final MemberRepository memberRepository;
 	private final SocialConnectionRepository socialConnectionRepository;
 
@@ -57,7 +55,7 @@ public class MemberService {
 			.build();
 
 		socialConnectionRepository.save(socialConnection);
-		
+
 		return member.getId();
 	}
 }
