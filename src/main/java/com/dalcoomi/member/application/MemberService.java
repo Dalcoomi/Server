@@ -1,0 +1,64 @@
+package com.dalcoomi.member.application;
+
+import static com.dalcoomi.common.constant.ImageConstant.DEFAULT_PROFILE_IMAGE;
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.dalcoomi.auth.application.JwtService;
+import com.dalcoomi.auth.dto.TokenInfo;
+import com.dalcoomi.common.error.exception.ConflictException;
+import com.dalcoomi.common.util.NicknameProvider;
+import com.dalcoomi.member.application.repository.MemberRepository;
+import com.dalcoomi.member.application.repository.SocialConnectionRepository;
+import com.dalcoomi.member.domain.Member;
+import com.dalcoomi.member.domain.SocialConnection;
+import com.dalcoomi.member.dto.SocialInfo;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class MemberService {
+
+	private final JwtService jwtService;
+	private final MemberRepository memberRepository;
+	private final SocialConnectionRepository socialConnectionRepository;
+
+	@Transactional
+	public TokenInfo signUp(SocialInfo socialInfo) {
+		boolean existsMember = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
+			socialInfo.socialId(), socialInfo.socialType());
+
+		if (existsMember) {
+			throw new ConflictException(MEMBER_CONFLICT);
+		}
+
+		String name = socialInfo.memberInfo().name();
+		String nickname = new NicknameProvider().generateUniqueNickname(name, 4);
+
+		Member member = Member.builder()
+			.email(socialInfo.memberInfo().email())
+			.name(name)
+			.nickname(nickname)
+			.birthday(socialInfo.memberInfo().birthday())
+			.gender(socialInfo.memberInfo().gender())
+			.profileImageUrl(DEFAULT_PROFILE_IMAGE)
+			.serviceAgreement(socialInfo.memberInfo().serviceAgreement())
+			.collectionAgreement(socialInfo.memberInfo().collectionAgreement())
+			.build();
+
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnection.builder()
+			.member(member)
+			.socialId(socialInfo.socialId())
+			.socialType(socialInfo.socialType())
+			.build();
+
+		socialConnectionRepository.save(socialConnection);
+
+		return jwtService.createAndSaveToken(member.getId());
+	}
+}
