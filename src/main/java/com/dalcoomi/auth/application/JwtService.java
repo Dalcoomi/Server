@@ -1,17 +1,26 @@
 package com.dalcoomi.auth.application;
 
+import static com.dalcoomi.common.constant.TokenConstant.ACCESS_TOKEN_TYPE;
+import static com.dalcoomi.common.constant.TokenConstant.BEARER_PREFIX;
+import static com.dalcoomi.common.constant.TokenConstant.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+import static com.dalcoomi.common.constant.TokenConstant.REFRESH_TOKEN_TYPE;
 import static com.dalcoomi.common.error.model.ErrorMessage.AUTHORIZATION_HEADER_ERROR;
 import static com.dalcoomi.common.error.model.ErrorMessage.MALFORMED_TOKEN;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_HAS_EXPIRED;
+import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_NOT_FOUND;
 import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import com.dalcoomi.auth.dto.TokenInfo;
+import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.common.error.exception.UnauthorizedException;
 
 import io.jsonwebtoken.Claims;
@@ -28,9 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class JwtService {
 
-	private static final String BEARER_PREFIX = "Bearer ";
-	private static final String ACCESS_TOKEN_TYPE = "access";
-	private static final String REFRESH_TOKEN_TYPE = "refresh";
+	private final StringRedisTemplate redisTemplate;
 
 	@Value("${jwt.issuer}")
 	private String issuer;
@@ -83,15 +90,46 @@ public class JwtService {
 	}
 
 	public String createAccessToken(Long memberId) {
+		return createToken(memberId, accessTokenDuration, ACCESS_TOKEN_TYPE);
+	}
+
+	public String createRefreshToken(Long memberId) {
+		return createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE);
+	}
+
+	public TokenInfo createAndSaveToken(Long memberId) {
+		String accessToken = createAccessToken(memberId);
+		String refreshToken = createRefreshToken(memberId);
+
+		redisTemplate.opsForValue().set(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken);
+
+		return new TokenInfo(accessToken, refreshToken);
+	}
+
+	public boolean hasRefreshToken(Long memberId) {
+		return requireNonNull(redisTemplate.hasKey(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX));
+	}
+
+	public void deleteRefreshToken(Long memberId) {
+		boolean existsRefreshToken = hasRefreshToken(memberId);
+
+		if (existsRefreshToken) {
+			redisTemplate.delete(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
+		} else {
+			throw new NotFoundException(TOKEN_NOT_FOUND);
+		}
+	}
+
+	private String createToken(Long memberId, long duration, String tokenType) {
 		Date now = new Date();
-		Date duration = new Date(now.getTime() + accessTokenDuration);
+		Date expireDate = new Date(now.getTime() + duration);
 
 		return Jwts.builder()
 			.issuer(issuer)
 			.subject(String.valueOf(memberId))
 			.issuedAt(now)
-			.expiration(duration)
-			.claim("type", ACCESS_TOKEN_TYPE)
+			.expiration(expireDate)
+			.claim("type", tokenType)
 			.signWith(getSignKey())
 			.compact();
 	}

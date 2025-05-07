@@ -1,6 +1,6 @@
 package com.dalcoomi.auth.config;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 import java.util.Arrays;
 
@@ -33,7 +33,9 @@ public class SecurityConfig {
 
 	private static final String[] ALLOWED_URIS = {
 		"/",
-		"/login/**"
+		"/login/**",
+		"/api/auth/login",
+		"/api/member/sign-up",
 	};
 
 	private final ObjectMapper objectMapper;
@@ -57,7 +59,7 @@ public class SecurityConfig {
 			.exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
 				log.error("(유효하지 않는 URL) 시큐리티 필터 에러: {}", authException.getMessage(), authException);
 
-				response.setStatus(SC_NOT_FOUND);
+				response.setStatus(SC_UNAUTHORIZED);
 				response.setContentType("application/json;charset=UTF-8");
 				response.getWriter().write(objectMapper.writeValueAsString(new ErrorResponse("유효하지 않는 URL 입니다.")));
 			}));

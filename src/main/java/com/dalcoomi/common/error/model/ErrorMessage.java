@@ -24,6 +24,7 @@ public enum ErrorMessage {
 	MALFORMED_TOKEN("잘못된 형식의 토큰입니다."),
 	TOKEN_HAS_EXPIRED("토큰이 만료되었습니다."),
 	INVALID_TOKEN("유효하지 않는 토큰입니다."),
+	TOKEN_NOT_FOUND("토큰이 존재하지 않습니다."),
 
 	UNSUPPORTED_SOCIAL_TYPE("지원하지 않는 소셜 서비스입니다."),
 	KAKAO_SERVER_ERROR("Kakao 서버 에러가 발생했습니다."),
@@ -33,11 +34,11 @@ public enum ErrorMessage {
 	MEMBER_INVALID_SOCIAL_ID("유효하지 않는 소셜 ID 입니다."),
 	MEMBER_INVALID_EMAIL("유효하지 않는 EMAIL 입니다."),
 	MEMBER_INVALID_NAME("유효하지 않는 이름입니다."),
+	MEMBER_INVALID_NICKNAME("유효하지 않는 닉네임입니다."),
+	MEMBER_INVALID_GENDER("유효하지 않는 성별입니다."),
 	MEMBER_INVALID_PROFILE_IMAGE_URL("유효하지 않는 프로필입니다."),
-	MEMBER_UNSUPPORTED_MEMBER_TYPE("지원하지 않는 회원 타입입니다."),
 	MEMBER_INVALID_SERVICE_AGREEMENT("서비스 이용 약관 동의 여부는 true 여야 합니다."),
-	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다."),
-	MEMBER_NULL_ADVERTISEMENT_AGREEMENT("회원 광고성 알림 수신 동의 여부가 null 입니다.");
+	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다.");
 
 	private final String message;
 }
