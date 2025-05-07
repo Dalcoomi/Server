@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ class JwtServiceIntegrationTest {
 
 	@Autowired
 	private JwtService jwtService;
+
+	@Autowired
+	private StringRedisTemplate redisTemplate;
 
 	@Value("${jwt.secret-key}")
 	private String tokenSecret;
@@ -64,7 +68,7 @@ class JwtServiceIntegrationTest {
 	@DisplayName("통합 테스트 - 만료된 토큰으로 인증 시 예외 발생")
 	void expired_token_throws_unauthorized_exception() {
 		// given
-		JwtService expiredTokenService = new JwtService();
+		JwtService expiredTokenService = new JwtService(redisTemplate);
 		ReflectionTestUtils.setField(expiredTokenService, "tokenSecret", tokenSecret);
 		ReflectionTestUtils.setField(expiredTokenService, "accessTokenDuration", -1000L); // 음수로 만료
 		ReflectionTestUtils.setField(expiredTokenService, "issuer", issuer);
