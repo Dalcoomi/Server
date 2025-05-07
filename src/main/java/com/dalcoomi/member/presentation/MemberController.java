@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.dto.MemberInfo;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class MemberController {
 
 	private final MemberService memberService;
+	private final JwtService jwtService;
 
 	@PostMapping("/sign-up")
 	@ResponseStatus(CREATED)
@@ -42,7 +44,9 @@ public class MemberController {
 			.memberInfo(memberInfo)
 			.build();
 
-		TokenInfo tokenInfo = memberService.signUp(socialInfo);
+		Long memberId = memberService.signUp(socialInfo);
+
+		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId);
 
 		return new SignUpResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
 	}

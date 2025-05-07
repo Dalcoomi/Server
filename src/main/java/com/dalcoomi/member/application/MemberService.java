@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.auth.application.JwtService;
-import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.util.NicknameProvider;
 import com.dalcoomi.member.application.repository.MemberRepository;
@@ -27,7 +26,7 @@ public class MemberService {
 	private final SocialConnectionRepository socialConnectionRepository;
 
 	@Transactional
-	public TokenInfo signUp(SocialInfo socialInfo) {
+	public Long signUp(SocialInfo socialInfo) {
 		boolean existsMember = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
 			socialInfo.socialId(), socialInfo.socialType());
 
@@ -58,7 +57,7 @@ public class MemberService {
 			.build();
 
 		socialConnectionRepository.save(socialConnection);
-
-		return jwtService.createAndSaveToken(member.getId());
+		
+		return member.getId();
 	}
 }
