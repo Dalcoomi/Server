@@ -40,7 +40,7 @@ public class MemberService {
 			.name(name)
 			.nickname(nickname)
 			.birthday(socialInfo.memberInfo().birthday())
-			.gender(socialInfo.memberInfo().gender())
+			.gender(socialInfo.memberInfo().gender() == null ? "밝히고 싶지 않음" : socialInfo.memberInfo().gender())
 			.profileImageUrl(DEFAULT_PROFILE_IMAGE)
 			.serviceAgreement(socialInfo.memberInfo().serviceAgreement())
 			.collectionAgreement(socialInfo.memberInfo().collectionAgreement())
