@@ -38,7 +38,16 @@ public enum ErrorMessage {
 	MEMBER_INVALID_GENDER("유효하지 않는 성별입니다."),
 	MEMBER_INVALID_PROFILE_IMAGE_URL("유효하지 않는 프로필입니다."),
 	MEMBER_INVALID_SERVICE_AGREEMENT("서비스 이용 약관 동의 여부는 true 여야 합니다."),
-	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다.");
+	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다."),
+
+	UNSUPPORTED_TRANSACTION_TYPE("지원하지 않는 거래 타입입니다."),
+	UNSUPPORTED_OWNER_TYPE("지원하지 않는 집합 속성입니다."),
+
+	CATEGORY_INVALID_NAME("유효하지 않는 카테고리명입니다."),
+	CATEGORY_INVALID_ICON_URL("유효하지 않는 아이콘입니다."),
+
+	TRANSACTION_NOT_FOUND("거래 내역이 존재하지 않습니다."),
+	TRANSACTION_INVALID_CONTENT("유효하지 않는 거래 내용입니다.");
 
 	private final String message;
 }
