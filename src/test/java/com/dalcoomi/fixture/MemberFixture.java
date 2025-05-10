@@ -11,7 +11,7 @@ public final class MemberFixture {
 		String name = "조만제";
 		String nickname = "조만제#1234";
 		LocalDate birthday = LocalDate.of(2000, 1, 1);
-		String gender = "MALE";
+		String gender = "남성";
 		String profileImageUrl = "https://profile.com/1234567890";
 
 		return Member.builder()
@@ -32,7 +32,7 @@ public final class MemberFixture {
 		String name = "조만제";
 		String nickname = "조만제#1234";
 		LocalDate birthday = LocalDate.of(2000, 1, 1);
-		String gender = "MALE";
+		String gender = "남성";
 		String profileImageUrl = "https://profile.com/1234567890";
 
 		return Member.builder()
@@ -53,7 +53,7 @@ public final class MemberFixture {
 		String name = "손민정";
 		String nickname = "손민정#1234";
 		LocalDate birthday = LocalDate.of(2000, 2, 2);
-		String gender = "FEMALE";
+		String gender = "여성";
 		String profileImageUrl = "https://profile.com/1234567890";
 
 		return Member.builder()
@@ -73,7 +73,7 @@ public final class MemberFixture {
 		String name = "손민정";
 		String nickname = "손민정#1234";
 		LocalDate birthday = LocalDate.of(2000, 2, 2);
-		String gender = "FEMALE";
+		String gender = "여성";
 		String profileImageUrl = "https://profile.com/1234567890";
 
 		return Member.builder()
