@@ -111,8 +111,8 @@ class TransactionControllerTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 데이터가 없는 달의 거래 내역 조회")
-	void get_transactions_empty_month() throws Exception {
+	@DisplayName("통합 테스트 - 데이터가 없는 달의 개인 거래 내역 조회 시 빈 배열 조회 성공")
+	void get_my_transactions_empty_month_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 
