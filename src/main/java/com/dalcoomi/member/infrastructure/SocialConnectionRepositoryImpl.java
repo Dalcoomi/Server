@@ -18,7 +18,7 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	private final SocialConnectionJpaRepository socialConnectionJpaRepository;
 
 	@Override
-	public boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType) {
+	public Boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType) {
 		return socialConnectionJpaRepository.existsBySocialIdAndSocialType(socialId, socialType);
 	}
 

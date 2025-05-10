@@ -5,7 +5,7 @@ import com.dalcoomi.member.domain.SocialType;
 
 public interface SocialConnectionRepository {
 
-	boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType);
+	Boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType);
 
 	Long findMemberIdBySocialIdAndSocialType(String socialId, SocialType socialType);
 
