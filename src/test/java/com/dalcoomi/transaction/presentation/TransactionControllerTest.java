@@ -1,11 +1,15 @@
 package com.dalcoomi.transaction.presentation;
 
+import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,6 +38,7 @@ import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.dto.request.CreateMyTransactionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
@@ -58,6 +63,52 @@ class TransactionControllerTest {
 
 	@Autowired
 	private CategoryRepository categoryRepository;
+
+	@Test
+	@DisplayName("통합 테스트 - 개인 거래 내역 저장 성공")
+	void save_my_transactions_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+
+		member = memberRepository.save(member);
+
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		Category category = CategoryFixture.getCategory1(member);
+
+		category = categoryRepository.save(category);
+
+		Long amount = 30000L;
+		String content = "앙";
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 1, 12, 0);
+
+		CreateMyTransactionRequest request = new CreateMyTransactionRequest(category.getId(), amount, content,
+			transactionDate, EXPENSE);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/transaction/my")
+				.contentType("application/json")
+				.content(json))
+			.andExpect(status().isCreated())
+			.andDo(print());
+
+		List<Transaction> transactions = transactionRepository.findByMemberIdAndYearAndMonth(member.getId(),
+			transactionDate.getYear(), transactionDate.getMonthValue());
+
+		assertThat(transactions.getFirst().getAmount()).isEqualTo(amount);
+		assertThat(transactions.getFirst().getContent()).isEqualTo(content);
+		assertThat(transactions.getFirst().getTransactionDate()).isEqualTo(transactionDate);
+		assertThat(transactions.getFirst().getTransactionType()).isEqualTo(EXPENSE);
+	}
 
 	@Test
 	@DisplayName("통합 테스트 - 개인 거래 내역 조회 성공")

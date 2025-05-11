@@ -23,9 +23,14 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	private final JPAQueryFactory jpaQueryFactory;
 
 	@Override
-	public List<Transaction> saveAll(List<Transaction> transaction) {
+	public Transaction save(Transaction transaction) {
+		return transactionJpaRepository.save(TransactionJpaEntity.from(transaction)).toModel();
+	}
+
+	@Override
+	public List<Transaction> saveAll(List<Transaction> transactions) {
 		List<TransactionJpaEntity> transactionJpaEntities = transactionJpaRepository.saveAll(
-			transaction.stream().map(TransactionJpaEntity::from).toList());
+			transactions.stream().map(TransactionJpaEntity::from).toList());
 
 		return transactionJpaEntities.stream().map(TransactionJpaEntity::toModel).toList();
 	}

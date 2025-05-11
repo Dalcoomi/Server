@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 
 import com.dalcoomi.category.domain.Category;
 import com.dalcoomi.member.domain.Member;
+import com.dalcoomi.transaction.dto.TransactionInfo;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -25,12 +26,11 @@ public class Transaction {
 	private final String content;
 	private final Long amount;
 	private final TransactionType transactionType;
-	private final OwnerType ownerType;
 	private final LocalDateTime deletedAt;
 
 	@Builder
 	public Transaction(Long id, Member member, Category category, Long groupId, LocalDateTime transactionDate,
-		String content, Long amount, TransactionType transactionType, OwnerType ownerType, LocalDateTime deletedAt) {
+		String content, Long amount, TransactionType transactionType, LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = requireNonNull(member);
 		this.category = requireNonNull(category);
@@ -39,8 +39,18 @@ public class Transaction {
 		this.content = validateContent(content);
 		this.amount = requireNonNull(amount);
 		this.transactionType = requireNonNull(transactionType);
-		this.ownerType = requireNonNull(ownerType);
 		this.deletedAt = deletedAt;
+	}
+
+	public static Transaction of(Member member, Category category, TransactionInfo transactionInfo) {
+		return Transaction.builder()
+			.member(member)
+			.category(category)
+			.transactionDate(transactionInfo.transactionDate())
+			.content(transactionInfo.content())
+			.amount(transactionInfo.amount())
+			.transactionType(transactionInfo.transactionType())
+			.build();
 	}
 
 	private String validateContent(String content) {

@@ -6,6 +6,8 @@ import com.dalcoomi.transaction.domain.Transaction;
 
 public interface TransactionRepository {
 
+	Transaction save(Transaction transaction);
+
 	List<Transaction> saveAll(List<Transaction> transaction);
 
 	List<Transaction> findByMemberIdAndYearAndMonth(Long memberId, int year, int month);

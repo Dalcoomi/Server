@@ -1,6 +1,5 @@
 package com.dalcoomi.fixture;
 
-import static com.dalcoomi.transaction.domain.OwnerType.MEMBER;
 import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
 
 import java.time.LocalDateTime;
@@ -23,7 +22,6 @@ public final class TransactionFixture {
 			.content(content)
 			.amount(amount)
 			.transactionType(EXPENSE)
-			.ownerType(MEMBER)
 			.build();
 	}
 
@@ -39,7 +37,6 @@ public final class TransactionFixture {
 			.content(content)
 			.amount(amount)
 			.transactionType(EXPENSE)
-			.ownerType(MEMBER)
 			.build();
 	}
 
@@ -55,7 +52,6 @@ public final class TransactionFixture {
 			.content(content)
 			.amount(amount)
 			.transactionType(EXPENSE)
-			.ownerType(MEMBER)
 			.build();
 	}
 
@@ -71,7 +67,6 @@ public final class TransactionFixture {
 			.content(content)
 			.amount(amount)
 			.transactionType(EXPENSE)
-			.ownerType(MEMBER)
 			.build();
 	}
 }

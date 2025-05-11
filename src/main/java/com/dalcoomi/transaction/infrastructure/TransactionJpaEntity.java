@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 import com.dalcoomi.category.infrastructure.CategoryJpaEntity;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
-import com.dalcoomi.transaction.domain.OwnerType;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.TransactionType;
 
@@ -65,14 +64,10 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	@Column(name = "transaction_type", nullable = false)
 	private TransactionType transactionType;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "owner_type", nullable = false)
-	private OwnerType ownerType;
-
 	@Builder
 	public TransactionJpaEntity(Long id, MemberJpaEntity member, CategoryJpaEntity category, Long groupId,
 		LocalDateTime transactionDate, String content, Long amount, TransactionType transactionType,
-		OwnerType ownerType, LocalDateTime deletedAt) {
+		LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
 		this.category = category;
@@ -81,7 +76,6 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 		this.content = content;
 		this.amount = amount;
 		this.transactionType = transactionType;
-		this.ownerType = ownerType;
 		this.deletedAt = deletedAt;
 	}
 
@@ -95,7 +89,6 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 			.content(transaction.getContent())
 			.amount(transaction.getAmount())
 			.transactionType(transaction.getTransactionType())
-			.ownerType(transaction.getOwnerType())
 			.deletedAt(transaction.getDeletedAt())
 			.build();
 	}
@@ -110,7 +103,6 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 			.content(this.content)
 			.amount(this.amount)
 			.transactionType(this.transactionType)
-			.ownerType(this.ownerType)
 			.deletedAt(this.deletedAt)
 			.build();
 	}
