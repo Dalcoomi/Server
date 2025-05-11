@@ -6,6 +6,7 @@ import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_NAME;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_NICKNAME;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_PROFILE_IMAGE_URL;
 import static io.micrometer.common.util.StringUtils.isBlank;
+import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,8 +44,8 @@ public class Member {
 		this.birthday = birthday;
 		this.gender = validateGender(gender);
 		this.profileImageUrl = validateProfileImageUrl(profileImageUrl);
-		this.serviceAgreement = serviceAgreement;
-		this.collectionAgreement = collectionAgreement;
+		this.serviceAgreement = requireNonNull(serviceAgreement);
+		this.collectionAgreement = requireNonNull(collectionAgreement);
 		this.deletedAt = deletedAt;
 	}
 
@@ -73,7 +74,7 @@ public class Member {
 	}
 
 	private String validateGender(String gender) {
-		if (isBlank(gender) || gender.length() > GENDER_LENGTH) {
+		if (!isBlank(gender) && gender.length() > GENDER_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_GENDER.getMessage());
 		}
 

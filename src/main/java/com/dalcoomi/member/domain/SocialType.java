@@ -6,6 +6,7 @@ import com.dalcoomi.common.error.exception.DalcoomiException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum SocialType {
+
 	NAVER,
 	KAKAO;
 

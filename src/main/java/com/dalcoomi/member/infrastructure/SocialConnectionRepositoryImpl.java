@@ -18,7 +18,12 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	private final SocialConnectionJpaRepository socialConnectionJpaRepository;
 
 	@Override
-	public boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType) {
+	public SocialConnection save(SocialConnection socialConnection) {
+		return socialConnectionJpaRepository.save(SocialConnectionJpaEntity.from(socialConnection)).toModel();
+	}
+
+	@Override
+	public Boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType) {
 		return socialConnectionJpaRepository.existsBySocialIdAndSocialType(socialId, socialType);
 	}
 
@@ -26,10 +31,5 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	public Long findMemberIdBySocialIdAndSocialType(String socialId, SocialType socialType) {
 		return socialConnectionJpaRepository.findBySocialIdAndSocialType(socialId, socialType)
 			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).getMember().getId();
-	}
-
-	@Override
-	public SocialConnection save(SocialConnection socialConnection) {
-		return socialConnectionJpaRepository.save(SocialConnectionJpaEntity.from(socialConnection)).toModel();
 	}
 }
