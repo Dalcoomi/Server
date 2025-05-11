@@ -5,9 +5,9 @@ import static jakarta.persistence.ConstraintMode.NO_CONSTRAINT;
 import java.time.LocalDateTime;
 
 import com.dalcoomi.category.domain.Category;
+import com.dalcoomi.category.domain.OwnerType;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
-import com.dalcoomi.transaction.domain.OwnerType;
 import com.dalcoomi.transaction.domain.TransactionType;
 
 import io.hypersistence.utils.hibernate.id.Tsid;
@@ -41,8 +41,8 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 	@JoinColumn(name = "creator_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
 	private MemberJpaEntity member;
 
-	@Column(name = "owner_id", nullable = false)
-	private Long ownerId;
+	@Column(name = "group_id", nullable = true)
+	private Long groupId;
 
 	@Column(name = "name", nullable = false)
 	private String name;
@@ -65,11 +65,11 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 	private OwnerType ownerType;
 
 	@Builder
-	public CategoryJpaEntity(Long id, MemberJpaEntity member, Long ownerId, String name, String iconUrl,
+	public CategoryJpaEntity(Long id, MemberJpaEntity member, Long groupId, String name, String iconUrl,
 		Boolean isActive, TransactionType transactionType, OwnerType ownerType, LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
-		this.ownerId = ownerId;
+		this.groupId = groupId;
 		this.name = name;
 		this.iconUrl = iconUrl;
 		this.isActive = isActive;
@@ -82,7 +82,7 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 		return CategoryJpaEntity.builder()
 			.id(category.getId())
 			.member(MemberJpaEntity.from(category.getMember()))
-			.ownerId(category.getOwnerId())
+			.groupId(category.getGroupId())
 			.name(category.getName())
 			.iconUrl(category.getIconUrl())
 			.isActive(category.getIsActive())
@@ -96,7 +96,7 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 		return Category.builder()
 			.id(this.id)
 			.member(this.member.toModel())
-			.ownerId(this.ownerId)
+			.groupId(this.groupId)
 			.name(this.name)
 			.iconUrl(this.iconUrl)
 			.isActive(this.isActive)

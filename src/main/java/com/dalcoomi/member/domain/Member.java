@@ -74,11 +74,7 @@ public class Member {
 	}
 
 	private String validateGender(String gender) {
-		if (isBlank(gender)) {
-			gender = "밝히고 싶지 않음";
-		}
-
-		if (gender.length() > GENDER_LENGTH) {
+		if (!isBlank(gender) && gender.length() > GENDER_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_GENDER.getMessage());
 		}
 

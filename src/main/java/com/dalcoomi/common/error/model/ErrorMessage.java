@@ -43,6 +43,8 @@ public enum ErrorMessage {
 	UNSUPPORTED_TRANSACTION_TYPE("지원하지 않는 거래 타입입니다."),
 	UNSUPPORTED_OWNER_TYPE("지원하지 않는 집합 속성입니다."),
 
+	CATEGORY_NOT_FOUND("카테고리가 존재하지 않습니다."),
+	CATEGORY_INVALID_GROUP_ID("유효하지 않는 그룹 id입니다."),
 	CATEGORY_INVALID_NAME("유효하지 않는 카테고리명입니다."),
 	CATEGORY_INVALID_ICON_URL("유효하지 않는 아이콘입니다."),
 
