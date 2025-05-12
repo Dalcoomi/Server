@@ -11,7 +11,7 @@ import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
-import com.dalcoomi.transaction.dto.TransactionInfo;
+import com.dalcoomi.transaction.dto.TransactionsInfo;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,20 +23,21 @@ public class TransactionService {
 	private final MemberRepository memberRepository;
 	private final CategoryRepository categoryRepository;
 
-	public void createTransaction(Long memberId, TransactionInfo transactionInfo) {
+	@Transactional
+	public void createTransaction(Long memberId, Long categoryId, Transaction transaction) {
 		Member member = memberRepository.findById(memberId);
+		Category category = categoryRepository.findById(categoryId);
 
-		Category category = categoryRepository.findById(transactionInfo.categoryId());
-
-		Transaction transaction = Transaction.of(member, category, transactionInfo);
+		transaction.updateMember(member);
+		transaction.updateCategory(category);
 
 		transactionRepository.save(transaction);
 	}
 
 	@Transactional
-	public List<TransactionInfo> getTransactionsByMemberIdAndYearAndMonth(Long memberId, int year, int month) {
+	public TransactionsInfo getTransactionsByMemberIdAndYearAndMonth(Long memberId, int year, int month) {
 		List<Transaction> transactions = transactionRepository.findByMemberIdAndYearAndMonth(memberId, year, month);
 
-		return transactions.stream().map(TransactionInfo::from).toList();
+		return TransactionsInfo.from(transactions);
 	}
 }

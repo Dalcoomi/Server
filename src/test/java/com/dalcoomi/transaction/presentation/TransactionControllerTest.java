@@ -38,7 +38,7 @@ import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
-import com.dalcoomi.transaction.dto.request.CreateMyTransactionRequest;
+import com.dalcoomi.transaction.dto.request.TransactionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
@@ -89,7 +89,7 @@ class TransactionControllerTest {
 		String content = "앙";
 		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 1, 12, 0);
 
-		CreateMyTransactionRequest request = new CreateMyTransactionRequest(category.getId(), amount, content,
+		TransactionRequest request = new TransactionRequest(category.getId(), amount, content,
 			transactionDate, EXPENSE);
 
 		// when & then
@@ -104,6 +104,7 @@ class TransactionControllerTest {
 		List<Transaction> transactions = transactionRepository.findByMemberIdAndYearAndMonth(member.getId(),
 			transactionDate.getYear(), transactionDate.getMonthValue());
 
+		assertThat(transactions.getFirst().getMember().getId()).isEqualTo(member.getId());
 		assertThat(transactions.getFirst().getAmount()).isEqualTo(amount);
 		assertThat(transactions.getFirst().getContent()).isEqualTo(content);
 		assertThat(transactions.getFirst().getTransactionDate()).isEqualTo(transactionDate);
@@ -149,6 +150,11 @@ class TransactionControllerTest {
 				.param("month", String.valueOf(month))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.income").value(0))
+			.andExpect(jsonPath("$.expense").value(
+				transaction1.getAmount() + transaction2.getAmount() + transaction3.getAmount()))
+			.andExpect(jsonPath("$.total").value(
+				-(transaction1.getAmount() + transaction2.getAmount() + transaction3.getAmount())))
 			.andExpect(jsonPath("$.transactions").isArray())
 			.andExpect(jsonPath("$.transactions.length()").value(3))
 			.andExpect(jsonPath("$.transactions[0].content").value(transaction3.getContent()))
@@ -187,6 +193,9 @@ class TransactionControllerTest {
 				.param("month", String.valueOf(month))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.income").value(0))
+			.andExpect(jsonPath("$.expense").value(0))
+			.andExpect(jsonPath("$.total").value(0))
 			.andExpect(jsonPath("$.transactions").isArray())
 			.andExpect(jsonPath("$.transactions.length()").value(0))
 			.andDo(print());
