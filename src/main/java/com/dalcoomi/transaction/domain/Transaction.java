@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 import com.dalcoomi.category.domain.Category;
 import com.dalcoomi.member.domain.Member;
-import com.dalcoomi.transaction.dto.TransactionInfo;
+import com.dalcoomi.transaction.dto.request.TransactionRequest;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -19,21 +19,21 @@ public class Transaction {
 	public static final int CONTENT_LENGTH = 100;
 
 	private final Long id;
-	private final Member member;
-	private final Category category;
 	private final Long groupId;
 	private final LocalDateTime transactionDate;
 	private final String content;
 	private final Long amount;
 	private final TransactionType transactionType;
 	private final LocalDateTime deletedAt;
+	private Member member;
+	private Category category;
 
 	@Builder
 	public Transaction(Long id, Member member, Category category, Long groupId, LocalDateTime transactionDate,
 		String content, Long amount, TransactionType transactionType, LocalDateTime deletedAt) {
 		this.id = id;
-		this.member = requireNonNull(member);
-		this.category = requireNonNull(category);
+		this.member = member;
+		this.category = category;
 		this.groupId = groupId;
 		this.transactionDate = requireNonNull(transactionDate);
 		this.content = validateContent(content);
@@ -42,15 +42,21 @@ public class Transaction {
 		this.deletedAt = deletedAt;
 	}
 
-	public static Transaction of(Member member, Category category, TransactionInfo transactionInfo) {
+	public static Transaction from(TransactionRequest request) {
 		return Transaction.builder()
-			.member(member)
-			.category(category)
-			.transactionDate(transactionInfo.transactionDate())
-			.content(transactionInfo.content())
-			.amount(transactionInfo.amount())
-			.transactionType(transactionInfo.transactionType())
+			.amount(request.amount())
+			.content(request.content())
+			.transactionDate(request.transactionDate())
+			.transactionType(request.transactionType())
 			.build();
+	}
+
+	public void updateMember(Member member) {
+		this.member = member;
+	}
+
+	public void updateCategory(Category category) {
+		this.category = category;
 	}
 
 	private String validateContent(String content) {

@@ -6,7 +6,7 @@ import com.dalcoomi.transaction.domain.TransactionType;
 
 import jakarta.validation.constraints.NotNull;
 
-public record CreateMyTransactionRequest(
+public record TransactionRequest(
 	@NotNull(message = "카테고리 ID는 필수입니다.")
 	Long categoryId,
 
