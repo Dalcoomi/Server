@@ -34,7 +34,7 @@ public class TransactionService {
 		transactionRepository.save(transaction);
 	}
 
-	@Transactional
+	@Transactional(readOnly = true)
 	public TransactionsInfo getTransactionsByMemberIdAndYearAndMonth(Long memberId, int year, int month) {
 		List<Transaction> transactions = transactionRepository.findByMemberIdAndYearAndMonth(memberId, year, month);
 
