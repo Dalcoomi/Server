@@ -32,6 +32,7 @@ public record GetMyTransactionResponse(
 
 	@Builder
 	public record GetMyTransactionResponseItem(
+		Long transactionId,
 		String creatorNickname,
 		String categoryName,
 		LocalDateTime transactionDate,
@@ -42,6 +43,7 @@ public record GetMyTransactionResponse(
 
 		public static GetMyTransactionResponseItem from(Transaction transaction) {
 			return GetMyTransactionResponseItem.builder()
+				.transactionId(transaction.getId())
 				.creatorNickname(transaction.getMember().getNickname())
 				.categoryName(transaction.getCategory().getName())
 				.transactionDate(transaction.getTransactionDate())
