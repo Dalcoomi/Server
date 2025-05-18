@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class NicknameProvider {
 
-	private static final String SEPARATOR = "#";
+	private static final String SEPARATOR = " #";
 
 	private final Random random;
 
@@ -15,13 +15,13 @@ public class NicknameProvider {
 		this.random = new SecureRandom();
 	}
 
-	public String generateUniqueNickname(String nickname, int digits) {
+	public String generateUniqueNickname(String name, int digits) {
 		int maxValue = (int)Math.pow(10, digits);
 		int randomNum = random.nextInt(maxValue);
 
 		@SuppressWarnings("java:S3457")
 		String formattedNumber = format("%0" + digits + "d", randomNum);
 
-		return nickname + SEPARATOR + formattedNumber;
+		return name + SEPARATOR + formattedNumber;
 	}
 }
