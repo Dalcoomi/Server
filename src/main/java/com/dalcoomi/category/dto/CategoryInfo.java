@@ -7,6 +7,7 @@ import lombok.Builder;
 
 @Builder
 public record CategoryInfo(
+	Long id,
 	Long groupId,
 	String name,
 	String iconUrl,
@@ -16,6 +17,7 @@ public record CategoryInfo(
 
 	public static CategoryInfo from(Category category) {
 		return CategoryInfo.builder()
+			.id(category.getId())
 			.name(category.getName())
 			.iconUrl(category.getIconUrl())
 			.isActive(category.getIsActive())

@@ -24,6 +24,7 @@ public record GetMyCategoryResponse(
 
 	@Builder
 	public record GetMyCategoryResponseItem(
+		Long id,
 		String name,
 		String iconUrl,
 		OwnerType ownerType
@@ -31,6 +32,7 @@ public record GetMyCategoryResponse(
 
 		public static GetMyCategoryResponseItem from(CategoryInfo categoryInfo) {
 			return GetMyCategoryResponseItem.builder()
+				.id(categoryInfo.id())
 				.name(categoryInfo.name())
 				.iconUrl(categoryInfo.iconUrl())
 				.ownerType(categoryInfo.ownerType())
