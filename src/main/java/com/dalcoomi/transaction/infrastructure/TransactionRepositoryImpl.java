@@ -1,6 +1,7 @@
 package com.dalcoomi.transaction.infrastructure;
 
 import static com.dalcoomi.category.infrastructure.QCategoryJpaEntity.categoryJpaEntity;
+import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_NOT_FOUND;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.transaction.infrastructure.QTransactionJpaEntity.transactionJpaEntity;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -33,6 +35,12 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 			transactions.stream().map(TransactionJpaEntity::from).toList());
 
 		return transactionJpaEntities.stream().map(TransactionJpaEntity::toModel).toList();
+	}
+
+	@Override
+	public Transaction findById(Long transactionId) {
+		return transactionJpaRepository.findById(transactionId)
+			.orElseThrow(() -> new NotFoundException(TRANSACTION_NOT_FOUND)).toModel();
 	}
 
 	@Override

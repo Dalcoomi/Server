@@ -96,8 +96,8 @@ class TransactionControllerTest {
 		String json = objectMapper.writeValueAsString(request);
 
 		mockMvc.perform(post("/api/transaction/my")
-				.contentType("application/json")
-				.content(json))
+				.content(json)
+				.contentType(APPLICATION_JSON))
 			.andExpect(status().isCreated())
 			.andDo(print());
 
@@ -112,7 +112,45 @@ class TransactionControllerTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 개인 거래 내역 조회 성공")
+	@DisplayName("통합 테스트 - 특정 개인 거래 내역 조회 성공")
+	void get_my_transaction_by_id_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+
+		member = memberRepository.save(member);
+
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		Category category = CategoryFixture.getCategory1(member);
+
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
+
+		transaction1 = transactionRepository.save(transaction1);
+
+		// when & then
+		mockMvc.perform(get("/api/transaction/my/{transactionId}", transaction1.getId())
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.transactionId").value(transaction1.getId()))
+			.andExpect(jsonPath("$.amount").value(transaction1.getAmount()))
+			.andExpect(jsonPath("$.content").value(transaction1.getContent()))
+			.andExpect(jsonPath("$.transactionType").value(transaction1.getTransactionType().name()))
+			.andExpect(jsonPath("$.categoryName").value(category.getName()))
+			.andExpect(jsonPath("$.iconUrl").value(category.getIconUrl()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 개인 거래 내역 리스트 조회 성공")
 	void get_my_transactions_with_year_and_month_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();

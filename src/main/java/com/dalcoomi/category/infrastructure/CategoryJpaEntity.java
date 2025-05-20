@@ -1,6 +1,7 @@
 package com.dalcoomi.category.infrastructure;
 
 import static jakarta.persistence.ConstraintMode.NO_CONSTRAINT;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 import java.time.LocalDateTime;
 
@@ -10,13 +11,13 @@ import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.transaction.domain.TransactionType;
 
-import io.hypersistence.utils.hibernate.id.Tsid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -33,7 +34,7 @@ import lombok.NoArgsConstructor;
 public class CategoryJpaEntity extends BaseTimeEntity {
 
 	@Id
-	@Tsid
+	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id", nullable = false, unique = true)
 	private Long id;
 

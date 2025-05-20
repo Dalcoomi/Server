@@ -1,54 +1,34 @@
 package com.dalcoomi.transaction.dto.response;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.TransactionType;
-import com.dalcoomi.transaction.dto.TransactionsInfo;
 
 import lombok.Builder;
 
 @Builder
 public record GetMyTransactionResponse(
-	Long income,
-	Long expense,
-	Long total,
-	List<GetMyTransactionResponseItem> transactions
+	Long transactionId,
+	Long amount,
+	String content,
+	LocalDateTime transactionDate,
+	TransactionType transactionType,
+	Long categoryId,
+	String categoryName,
+	String iconUrl
 ) {
 
-	public static GetMyTransactionResponse from(TransactionsInfo transactionsInfo) {
-		List<GetMyTransactionResponseItem> transactions = transactionsInfo.transactions().stream()
-			.map(GetMyTransactionResponseItem::from)
-			.toList();
-
+	public static GetMyTransactionResponse from(Transaction transaction) {
 		return GetMyTransactionResponse.builder()
-			.income(transactionsInfo.income())
-			.expense(transactionsInfo.expense())
-			.total(transactionsInfo.total())
-			.transactions(transactions)
+			.transactionId(transaction.getId())
+			.amount(transaction.getAmount())
+			.content(transaction.getContent())
+			.transactionDate(transaction.getTransactionDate())
+			.transactionType(transaction.getTransactionType())
+			.categoryId(transaction.getCategory().getId())
+			.categoryName(transaction.getCategory().getName())
+			.iconUrl(transaction.getCategory().getIconUrl())
 			.build();
-	}
-
-	@Builder
-	public record GetMyTransactionResponseItem(
-		String creatorNickname,
-		String categoryName,
-		LocalDateTime transactionDate,
-		String content,
-		Long amount,
-		TransactionType transactionType
-	) {
-
-		public static GetMyTransactionResponseItem from(Transaction transaction) {
-			return GetMyTransactionResponseItem.builder()
-				.creatorNickname(transaction.getMember().getNickname())
-				.categoryName(transaction.getCategory().getName())
-				.transactionDate(transaction.getTransactionDate())
-				.content(transaction.getContent())
-				.amount(transaction.getAmount())
-				.transactionType(transaction.getTransactionType())
-				.build();
-		}
 	}
 }
