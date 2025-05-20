@@ -40,4 +40,8 @@ public class TransactionService {
 
 		return TransactionsInfo.from(transactions);
 	}
+
+	public Transaction getTransactionsById(Long transactionId) {
+		return transactionRepository.findById(transactionId);
+	}
 }
