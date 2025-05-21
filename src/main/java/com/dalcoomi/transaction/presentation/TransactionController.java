@@ -3,9 +3,11 @@ package com.dalcoomi.transaction.presentation;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,11 +49,28 @@ public class TransactionController {
 		return GetMyTransactionsResponse.from(transactionsInfo);
 	}
 
-	@GetMapping("/my/{transactionId}")
+	@GetMapping("/{transactionId}")
 	@ResponseStatus(OK)
-	public GetMyTransactionResponse getMyTransactionById(@PathVariable("transactionId") Long transactionId) {
-		Transaction transaction = transactionService.getTransactionsById(transactionId);
+	public GetMyTransactionResponse getTransactionById(@AuthMember Long memberId,
+		@PathVariable("transactionId") Long transactionId) {
+		Transaction transaction = transactionService.getTransactionsById(memberId, transactionId);
 
 		return GetMyTransactionResponse.from(transaction);
+	}
+
+	@PutMapping("/{transactionId}")
+	@ResponseStatus(OK)
+	public void updateTransaction(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId,
+		@RequestBody TransactionRequest request) {
+		Transaction transaction = Transaction.from(request);
+
+		transactionService.updateTransaction(memberId, transactionId, request.categoryId(), transaction);
+	}
+
+	@DeleteMapping("/{transactionId}")
+	@ResponseStatus(OK)
+	public void deleteTransaction(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId) {
+
+		transactionService.deleteTransaction(memberId, transactionId);
 	}
 }

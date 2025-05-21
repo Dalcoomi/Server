@@ -38,8 +38,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	@Override
-	public Transaction findById(Long transactionId) {
-		return transactionJpaRepository.findById(transactionId)
+	public Transaction findByIdAndMemberId(Long transactionId, Long memberId) {
+		return transactionJpaRepository.findByIdAndMemberIdAndDeletedAtIsNull(transactionId, memberId)
 			.orElseThrow(() -> new NotFoundException(TRANSACTION_NOT_FOUND)).toModel();
 	}
 

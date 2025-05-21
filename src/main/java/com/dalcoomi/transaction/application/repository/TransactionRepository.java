@@ -10,7 +10,7 @@ public interface TransactionRepository {
 
 	List<Transaction> saveAll(List<Transaction> transaction);
 
-	Transaction findById(Long transactionId);
+	Transaction findByIdAndMemberId(Long transactionId, Long memberId);
 
 	List<Transaction> findByMemberIdAndYearAndMonth(Long memberId, int year, int month);
 }
