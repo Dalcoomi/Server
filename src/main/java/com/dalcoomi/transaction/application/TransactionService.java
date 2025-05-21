@@ -41,7 +41,31 @@ public class TransactionService {
 		return TransactionsInfo.from(transactions);
 	}
 
-	public Transaction getTransactionsById(Long transactionId) {
-		return transactionRepository.findById(transactionId);
+	@Transactional(readOnly = true)
+	public Transaction getTransactionsById(Long memberId, Long transactionId) {
+		return transactionRepository.findByIdAndMemberId(transactionId, memberId);
+	}
+
+	@Transactional
+	public void updateTransaction(Long memberId, Long transactionId, Long categoryId, Transaction transaction) {
+		Transaction currentTransaction = transactionRepository.findByIdAndMemberId(transactionId, memberId);
+		Category category = categoryRepository.findById(categoryId);
+
+		currentTransaction.updateCategory(category);
+		currentTransaction.updateAmount(transaction.getAmount());
+		currentTransaction.updateContent(transaction.getContent());
+		currentTransaction.updateTransactionDate(transaction.getTransactionDate());
+		currentTransaction.updateTransactionType(transaction.getTransactionType());
+
+		transactionRepository.save(currentTransaction);
+	}
+
+	@Transactional
+	public void deleteTransaction(Long memberId, Long transactionId) {
+		Transaction transaction = transactionRepository.findByIdAndMemberId(transactionId, memberId);
+
+		transaction.softDelete();
+
+		transactionRepository.save(transaction);
 	}
 }

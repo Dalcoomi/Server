@@ -3,8 +3,10 @@ package com.dalcoomi.transaction.presentation;
 import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -89,8 +91,8 @@ class TransactionControllerTest {
 		String content = "앙";
 		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 1, 12, 0);
 
-		TransactionRequest request = new TransactionRequest(category.getId(), amount, content,
-			transactionDate, EXPENSE);
+		TransactionRequest request = new TransactionRequest(amount, content, transactionDate, EXPENSE,
+			category.getId());
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -112,7 +114,7 @@ class TransactionControllerTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 특정 개인 거래 내역 조회 성공")
+	@DisplayName("통합 테스트 - 특정 거래 내역 조회 성공")
 	void get_my_transaction_by_id_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
@@ -137,7 +139,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// when & then
-		mockMvc.perform(get("/api/transaction/my/{transactionId}", transaction1.getId())
+		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.transactionId").value(transaction1.getId()))
@@ -236,6 +238,88 @@ class TransactionControllerTest {
 			.andExpect(jsonPath("$.total").value(0))
 			.andExpect(jsonPath("$.transactions").isArray())
 			.andExpect(jsonPath("$.transactions.length()").value(0))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 특정 거래 내역 수정 성공")
+	void update_transaction_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+
+		member = memberRepository.save(member);
+
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		Category category = CategoryFixture.getCategory1(member);
+
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
+
+		transaction1 = transactionRepository.save(transaction1);
+
+		Long amount = 20000L;
+		String content = "엉";
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 2, 12, 0);
+
+		TransactionRequest request = new TransactionRequest(amount, content, transactionDate, EXPENSE,
+			category.getId());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(put("/api/transaction/{transactionId}", transaction1.getId())
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Transaction transaction = transactionRepository.findByIdAndMemberId(transaction1.getId(), member.getId());
+
+		assertThat(transaction.getMember().getId()).isEqualTo(member.getId());
+		assertThat(transaction.getAmount()).isEqualTo(amount);
+		assertThat(transaction.getContent()).isEqualTo(content);
+		assertThat(transaction.getTransactionDate()).isEqualTo(transactionDate);
+		assertThat(transaction.getTransactionType()).isEqualTo(EXPENSE);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 특정 거래 내역 삭제 성공")
+	void delete_transaction_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+
+		member = memberRepository.save(member);
+
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		Category category = CategoryFixture.getCategory1(member);
+
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
+
+		transaction1 = transactionRepository.save(transaction1);
+
+		// when & then
+		mockMvc.perform(delete("/api/transaction/{transactionId}", transaction1.getId())
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
 			.andDo(print());
 	}
 }
