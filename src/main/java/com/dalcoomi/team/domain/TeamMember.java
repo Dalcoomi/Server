@@ -1,4 +1,4 @@
-package com.dalcoomi.group.domain;
+package com.dalcoomi.team.domain;
 
 import java.time.LocalDateTime;
 
@@ -8,24 +8,24 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-public class GroupMember {
+public class TeamMember {
 
 	private final Long id;
 	private final LocalDateTime deletedAt;
-	private final Group group;
+	private final Team team;
 	private final Member member;
 
 	@Builder
-	public GroupMember(Long id, Group group, Member member, LocalDateTime deletedAt) {
+	public TeamMember(Long id, Team team, Member member, LocalDateTime deletedAt) {
 		this.id = id;
-		this.group = group;
+		this.team = team;
 		this.member = member;
 		this.deletedAt = deletedAt;
 	}
 
-	public static GroupMember of(Group group, Member member) {
-		return GroupMember.builder()
-			.group(group)
+	public static TeamMember of(Team team, Member member) {
+		return TeamMember.builder()
+			.team(team)
 			.member(member)
 			.build();
 	}

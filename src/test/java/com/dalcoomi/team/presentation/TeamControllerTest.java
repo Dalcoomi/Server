@@ -1,8 +1,8 @@
-package com.dalcoomi.group.presentation;
+package com.dalcoomi.team.presentation;
 
-import static com.dalcoomi.common.error.model.ErrorMessage.GROUP_MEMBER_ALREADY_EXISTS;
-import static com.dalcoomi.common.error.model.ErrorMessage.GROUP_MEMBER_COUNT_EXCEEDED;
-import static com.dalcoomi.common.error.model.ErrorMessage.GROUP_NOT_FOUND;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -28,22 +28,22 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.auth.filter.CustomUserDetails;
-import com.dalcoomi.fixture.GroupFixture;
 import com.dalcoomi.fixture.MemberFixture;
-import com.dalcoomi.group.application.repository.GroupMemberRepository;
-import com.dalcoomi.group.application.repository.GroupRepository;
-import com.dalcoomi.group.domain.Group;
-import com.dalcoomi.group.domain.GroupMember;
-import com.dalcoomi.group.dto.request.GroupRequest;
+import com.dalcoomi.fixture.TeamFixture;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
+import com.dalcoomi.team.application.repository.TeamMemberRepository;
+import com.dalcoomi.team.application.repository.TeamRepository;
+import com.dalcoomi.team.domain.Team;
+import com.dalcoomi.team.domain.TeamMember;
+import com.dalcoomi.team.dto.request.TeamRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class GroupControllerTest {
+class TeamControllerTest {
 
 	private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
@@ -54,17 +54,17 @@ class GroupControllerTest {
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	private GroupRepository groupRepository;
+	private TeamRepository teamRepository;
 
 	@Autowired
 	private MemberRepository memberRepository;
 
 	@Autowired
-	private GroupMemberRepository groupMemberRepository;
+	private TeamMemberRepository teamMemberRepository;
 
 	@Test
 	@DisplayName("통합 테스트 - 그룹 생성 성공")
-	void create_group_success() throws Exception {
+	void create_team_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 
@@ -83,12 +83,12 @@ class GroupControllerTest {
 		Integer count = 2;
 		String goal = "에엥";
 
-		GroupRequest request = new GroupRequest(title, count, goal);
+		TeamRequest request = new TeamRequest(title, count, goal);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		String result = mockMvc.perform(post("/api/group")
+		String result = mockMvc.perform(post("/api/team")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isCreated())
@@ -97,23 +97,23 @@ class GroupControllerTest {
 			.getResponse()
 			.getContentAsString();
 
-		Group group = groupRepository.findByInvitationCode(result);
+		Team team = teamRepository.findByInvitationCode(result);
 
-		assertThat(group.getMember().getId()).isEqualTo(member.getId());
-		assertThat(group.getTitle()).isEqualTo(title);
-		assertThat(group.getCount()).isEqualTo(count);
-		assertThat(group.getGoal()).isEqualTo(goal);
+		assertThat(team.getMember().getId()).isEqualTo(member.getId());
+		assertThat(team.getTitle()).isEqualTo(title);
+		assertThat(team.getMemberLimit()).isEqualTo(count);
+		assertThat(team.getPurpose()).isEqualTo(goal);
 	}
 
 	@Test
 	@DisplayName("통합 테스트 - 그룹 가입 성공")
-	void join_group_success() throws Exception {
+	void join_team_success() throws Exception {
 		// given
 		Member leaderMember = MemberFixture.getMember1();
 		leaderMember = memberRepository.save(leaderMember);
 
-		Group group = GroupFixture.getGroup1(leaderMember);
-		group = groupRepository.save(group);
+		Team team = TeamFixture.getTeam1(leaderMember);
+		team = teamRepository.save(team);
 
 		Member newMember = MemberFixture.getMember2();
 		newMember = memberRepository.save(newMember);
@@ -130,12 +130,12 @@ class GroupControllerTest {
 		String invitationCode = "12345678";
 
 		// when & then
-		mockMvc.perform(post("/api/group/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/team/join/{invitationCode}", invitationCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
 
-		boolean joined = groupMemberRepository.existsByGroupIdAndMemberId(group.getId(), newMember.getId());
+		boolean joined = teamMemberRepository.existsByTeamIdAndMemberId(team.getId(), newMember.getId());
 
 		assertThat(joined).isTrue();
 	}
@@ -147,14 +147,14 @@ class GroupControllerTest {
 		Member leaderMember = MemberFixture.getMember1();
 		leaderMember = memberRepository.save(leaderMember);
 
-		Group group = GroupFixture.getGroup1(leaderMember);
-		group = groupRepository.save(group);
+		Team team = TeamFixture.getTeam1(leaderMember);
+		team = teamRepository.save(team);
 
 		Member member = MemberFixture.getMember2();
 		member = memberRepository.save(member);
 
-		GroupMember groupMember = GroupMember.of(group, member);
-		groupMemberRepository.save(groupMember);
+		TeamMember teamMember = TeamMember.of(team, member);
+		teamMemberRepository.save(teamMember);
 
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
 			member.getId().toString(),
@@ -168,10 +168,10 @@ class GroupControllerTest {
 		String invitationCode = "12345678";
 
 		// when & then
-		mockMvc.perform(post("/api/group/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/team/join/{invitationCode}", invitationCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isConflict())
-			.andExpect(jsonPath("$.message").value(GROUP_MEMBER_ALREADY_EXISTS.getMessage()))
+			.andExpect(jsonPath("$.message").value(TEAM_MEMBER_ALREADY_EXISTS.getMessage()))
 			.andDo(print());
 	}
 
@@ -182,11 +182,11 @@ class GroupControllerTest {
 		Member leaderMember = MemberFixture.getMember1();
 		leaderMember = memberRepository.save(leaderMember);
 
-		Group group = GroupFixture.getGroup1(leaderMember);
-		group = groupRepository.save(group);
+		Team team = TeamFixture.getTeam1(leaderMember);
+		team = teamRepository.save(team);
 
-		GroupMember leaderGroupMember = GroupMember.of(group, leaderMember);
-		groupMemberRepository.save(leaderGroupMember);
+		TeamMember leaderTeamMember = TeamMember.of(team, leaderMember);
+		teamMemberRepository.save(leaderTeamMember);
 
 		Member newMember = MemberFixture.getMember2();
 		newMember = memberRepository.save(newMember);
@@ -204,10 +204,10 @@ class GroupControllerTest {
 		String invitationCode = "12345678";
 
 		// when & then
-		mockMvc.perform(post("/api/group/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/team/join/{invitationCode}", invitationCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isConflict())
-			.andExpect(jsonPath("$.message").value(GROUP_MEMBER_COUNT_EXCEEDED.getMessage()))
+			.andExpect(jsonPath("$.message").value(TEAM_MEMBER_COUNT_EXCEEDED.getMessage()))
 			.andDo(print());
 	}
 
@@ -230,10 +230,10 @@ class GroupControllerTest {
 		String invalidCode = "NOTEXIST";
 
 		// when & then
-		mockMvc.perform(post("/api/group/join/{invitationCode}", invalidCode)
+		mockMvc.perform(post("/api/team/join/{invitationCode}", invalidCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isNotFound())
-			.andExpect(jsonPath("$.message").value(GROUP_NOT_FOUND.getMessage()))
+			.andExpect(jsonPath("$.message").value(TEAM_NOT_FOUND.getMessage()))
 			.andDo(print());
 	}
 }

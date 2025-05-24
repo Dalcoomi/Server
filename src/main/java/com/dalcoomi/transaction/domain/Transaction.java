@@ -22,7 +22,7 @@ public class Transaction {
 	public static final int CONTENT_LENGTH = 100;
 
 	private final Long id;
-	private final Long groupId;
+	private final Long teamId;
 	private Member member;
 	private Category category;
 	private Long amount;
@@ -32,12 +32,12 @@ public class Transaction {
 	private LocalDateTime deletedAt;
 
 	@Builder
-	public Transaction(Long id, Member member, Category category, Long groupId, LocalDateTime transactionDate,
+	public Transaction(Long id, Member member, Category category, Long teamId, LocalDateTime transactionDate,
 		String content, Long amount, TransactionType transactionType, LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
 		this.category = category;
-		this.groupId = groupId;
+		this.teamId = teamId;
 		this.amount = validateAmount(amount);
 		this.content = validateContent(content);
 		this.transactionDate = requireNonNull(transactionDate);

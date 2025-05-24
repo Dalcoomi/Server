@@ -1,4 +1,4 @@
-package com.dalcoomi.group.presentation;
+package com.dalcoomi.team.presentation;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
@@ -11,30 +11,30 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dalcoomi.auth.config.AuthMember;
-import com.dalcoomi.group.application.GroupService;
-import com.dalcoomi.group.domain.Group;
-import com.dalcoomi.group.dto.request.GroupRequest;
+import com.dalcoomi.team.application.TeamService;
+import com.dalcoomi.team.domain.Team;
+import com.dalcoomi.team.dto.request.TeamRequest;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/group")
+@RequestMapping("/api/team")
 @RequiredArgsConstructor
-public class GroupController {
+public class TeamController {
 
-	private final GroupService groupService;
+	private final TeamService teamService;
 
 	@PostMapping
 	@ResponseStatus(CREATED)
-	public String createGroup(@AuthMember Long memberId, @RequestBody GroupRequest request) {
-		Group group = Group.from(request);
+	public String createTeam(@AuthMember Long memberId, @RequestBody TeamRequest request) {
+		Team team = Team.from(request);
 
-		return groupService.createGroup(memberId, group);
+		return teamService.createTeam(memberId, team);
 	}
 
 	@PostMapping("/join/{invitationCode}")
 	@ResponseStatus(OK)
-	public void joinGroup(@AuthMember Long memberId, @PathVariable("invitationCode") String invitationCode) {
-		groupService.joinGroup(memberId, invitationCode);
+	public void joinTeam(@AuthMember Long memberId, @PathVariable("invitationCode") String invitationCode) {
+		teamService.joinTeam(memberId, invitationCode);
 	}
 }
