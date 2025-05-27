@@ -18,7 +18,7 @@ public class CategoryService {
 	private final CategoryRepository categoryRepository;
 
 	public List<CategoryInfo> getMyCategoryWithTransactionType(Long memberId, TransactionType transactionType) {
-		List<Category> categories = categoryRepository.findByMemberIdAndTransactionType(memberId, transactionType);
+		List<Category> categories = categoryRepository.findByCreatorIdAndTransactionType(memberId, transactionType);
 
 		return categories.stream().map(CategoryInfo::from).toList();
 	}

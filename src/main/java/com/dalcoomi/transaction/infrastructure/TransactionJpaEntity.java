@@ -40,7 +40,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "creator_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
-	private MemberJpaEntity member;
+	private MemberJpaEntity creator;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
@@ -66,11 +66,11 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	private TransactionType transactionType;
 
 	@Builder
-	public TransactionJpaEntity(Long id, MemberJpaEntity member, CategoryJpaEntity category, Long teamId,
+	public TransactionJpaEntity(Long id, MemberJpaEntity creator, CategoryJpaEntity category, Long teamId,
 		LocalDateTime transactionDate, String content, Long amount, TransactionType transactionType,
 		LocalDateTime deletedAt) {
 		this.id = id;
-		this.member = member;
+		this.creator = creator;
 		this.category = category;
 		this.teamId = teamId;
 		this.transactionDate = transactionDate;
@@ -83,7 +83,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	public static TransactionJpaEntity from(Transaction transaction) {
 		return TransactionJpaEntity.builder()
 			.id(transaction.getId())
-			.member(MemberJpaEntity.from(transaction.getMember()))
+			.creator(MemberJpaEntity.from(transaction.getCreator()))
 			.category(CategoryJpaEntity.from(transaction.getCategory()))
 			.teamId(transaction.getTeamId())
 			.transactionDate(transaction.getTransactionDate())
@@ -97,7 +97,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	public Transaction toModel() {
 		return Transaction.builder()
 			.id(this.id)
-			.member(this.member.toModel())
+			.creator(this.creator.toModel())
 			.category(this.category.toModel())
 			.teamId(this.teamId)
 			.transactionDate(this.transactionDate)

@@ -11,7 +11,6 @@ import lombok.Getter;
 public class TeamMember {
 
 	private final Long id;
-	private final LocalDateTime deletedAt;
 	private final Team team;
 	private final Member member;
 
@@ -20,7 +19,6 @@ public class TeamMember {
 		this.id = id;
 		this.team = team;
 		this.member = member;
-		this.deletedAt = deletedAt;
 	}
 
 	public static TeamMember of(Team team, Member member) {

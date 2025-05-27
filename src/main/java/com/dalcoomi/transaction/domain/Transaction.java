@@ -23,7 +23,7 @@ public class Transaction {
 
 	private final Long id;
 	private final Long teamId;
-	private Member member;
+	private Member creator;
 	private Category category;
 	private Long amount;
 	private String content;
@@ -32,10 +32,10 @@ public class Transaction {
 	private LocalDateTime deletedAt;
 
 	@Builder
-	public Transaction(Long id, Member member, Category category, Long teamId, LocalDateTime transactionDate,
+	public Transaction(Long id, Member creator, Category category, Long teamId, LocalDateTime transactionDate,
 		String content, Long amount, TransactionType transactionType, LocalDateTime deletedAt) {
 		this.id = id;
-		this.member = member;
+		this.creator = creator;
 		this.category = category;
 		this.teamId = teamId;
 		this.amount = validateAmount(amount);
@@ -54,8 +54,8 @@ public class Transaction {
 			.build();
 	}
 
-	public void updateMember(Member member) {
-		this.member = member;
+	public void updateCreator(Member creator) {
+		this.creator = creator;
 	}
 
 	public void updateCategory(Category category) {

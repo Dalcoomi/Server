@@ -22,7 +22,7 @@ public class Category {
 	private static final int ICON_URL_LENGTH = 255;
 
 	private final Long id;
-	private final Member member;
+	private final Member creator;
 	private final Long teamId;
 	private final String name;
 	private final String iconUrl;
@@ -32,10 +32,10 @@ public class Category {
 	private final LocalDateTime deletedAt;
 
 	@Builder
-	public Category(Long id, Member member, Long teamId, String name, String iconUrl, Boolean isActive,
+	public Category(Long id, Member creator, Long teamId, String name, String iconUrl, Boolean isActive,
 		TransactionType transactionType, OwnerType ownerType, LocalDateTime deletedAt) {
 		this.id = id;
-		this.member = member;
+		this.creator = creator;
 		this.teamId = validateTeamId(teamId);
 		this.name = validateName(name);
 		this.iconUrl = validateIconUrl(iconUrl);

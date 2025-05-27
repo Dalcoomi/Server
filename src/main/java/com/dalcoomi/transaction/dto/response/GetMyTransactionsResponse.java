@@ -44,7 +44,7 @@ public record GetMyTransactionsResponse(
 		public static GetMyTransactionResponseItem from(Transaction transaction) {
 			return GetMyTransactionResponseItem.builder()
 				.transactionId(transaction.getId())
-				.creatorNickname(transaction.getMember().getNickname())
+				.creatorNickname(transaction.getCreator().getNickname())
 				.categoryName(transaction.getCategory().getName())
 				.transactionDate(transaction.getTransactionDate())
 				.content(transaction.getContent())

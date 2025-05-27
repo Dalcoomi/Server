@@ -1,9 +1,22 @@
 package com.dalcoomi.team.infrastructure;
 
+import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
+import static com.dalcoomi.team.infrastructure.QTeamJpaEntity.teamJpaEntity;
+import static com.dalcoomi.team.infrastructure.QTeamMemberJpaEntity.teamMemberJpaEntity;
+import static java.util.stream.Collectors.toMap;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
+import com.dalcoomi.common.jpa.DynamicQuery;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.domain.TeamMember;
+import com.dalcoomi.team.dto.QTeamMemberProjection_TeamMemberCountDto;
+import com.dalcoomi.team.dto.TeamMemberProjection;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
 
@@ -12,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class TeamMemberRepositoryImpl implements TeamMemberRepository {
 
 	private final TeamMemberJpaRepository teamMemberJpaRepository;
+	private final JPAQueryFactory jpaQueryFactory;
 
 	@Override
 	public TeamMember save(TeamMember teamMember) {
@@ -20,11 +34,53 @@ public class TeamMemberRepositoryImpl implements TeamMemberRepository {
 
 	@Override
 	public boolean existsByTeamIdAndMemberId(Long teamId, Long memberId) {
-		return teamMemberJpaRepository.existsByTeamIdAndMemberIdAndDeletedAtIsNull(teamId, memberId);
+		return teamMemberJpaRepository.existsByTeamIdAndMemberId(teamId, memberId);
+	}
+
+	@Override
+	public List<TeamMember> find(@Nullable Long teamId, @Nullable Long memberId) {
+		return jpaQueryFactory
+			.selectFrom(teamMemberJpaEntity)
+			.join(teamMemberJpaEntity.team, teamJpaEntity).fetchJoin()
+			.join(teamMemberJpaEntity.member, memberJpaEntity).fetchJoin()
+			.where(
+				DynamicQuery.generateEq(teamId, teamJpaEntity.id::eq),
+				DynamicQuery.generateEq(memberId, memberJpaEntity.id::eq),
+				memberJpaEntity.deletedAt.isNull()
+			)
+			.fetch()
+			.stream()
+			.map(TeamMemberJpaEntity::toModel)
+			.toList();
 	}
 
 	@Override
 	public int countByTeamId(Long teamId) {
-		return teamMemberJpaRepository.countByTeamIdAndDeletedAtIsNull(teamId);
+		return teamMemberJpaRepository.countByTeamId(teamId);
+	}
+
+	@Override
+	public Map<Long, Integer> countByTeamIds(List<Long> teamIds) {
+		List<TeamMemberProjection.TeamMemberCountDto> results = jpaQueryFactory
+			.select(new QTeamMemberProjection_TeamMemberCountDto(
+				teamMemberJpaEntity.team.id,
+				teamMemberJpaEntity.count().castToNum(Integer.class)
+			))
+			.from(teamMemberJpaEntity)
+			.join(teamMemberJpaEntity.member, memberJpaEntity)
+			.where(teamMemberJpaEntity.team.id.in(teamIds), memberJpaEntity.deletedAt.isNull())
+			.groupBy(teamMemberJpaEntity.team.id)
+			.fetch();
+
+		return results.stream()
+			.collect(toMap(
+				TeamMemberProjection.TeamMemberCountDto::teamId,
+				TeamMemberProjection.TeamMemberCountDto::count
+			));
+	}
+
+	@Override
+	public void deleteByTeamIdAndMemberId(Long teamId, Long memberId) {
+		teamMemberJpaRepository.deleteByTeamIdAndMemberId(teamId, memberId);
 	}
 }

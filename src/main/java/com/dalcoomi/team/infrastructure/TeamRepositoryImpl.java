@@ -26,15 +26,23 @@ public class TeamRepositoryImpl implements TeamRepository {
 
 	@Override
 	public Set<String> findExistingCodes(Set<String> candidates) {
-		return teamJpaRepository.findByInvitationCodeInAndDeletedAtIsNull(candidates)
-			.stream()
-			.map(TeamJpaEntity::getInvitationCode)
-			.collect(toSet());
+		return teamJpaRepository.findByInvitationCodeIn(candidates)
+			.stream().map(TeamJpaEntity::getInvitationCode).collect(toSet());
+	}
+
+	@Override
+	public Team findById(Long teamId) {
+		return teamJpaRepository.findById(teamId).orElseThrow(() -> new NotFoundException(TEAM_NOT_FOUND)).toModel();
 	}
 
 	@Override
 	public Team findByInvitationCode(String invitationCode) {
-		return teamJpaRepository.findByInvitationCodeAndDeletedAtIsNull(invitationCode)
+		return teamJpaRepository.findByInvitationCode(invitationCode)
 			.orElseThrow(() -> new NotFoundException(TEAM_NOT_FOUND)).toModel();
+	}
+
+	@Override
+	public void deleteById(Long teamId) {
+		teamJpaRepository.deleteById(teamId);
 	}
 }

@@ -40,7 +40,7 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "creator_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
-	private MemberJpaEntity member;
+	private MemberJpaEntity creator;
 
 	@Column(name = "team_id", nullable = true)
 	private Long teamId;
@@ -66,10 +66,10 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 	private OwnerType ownerType;
 
 	@Builder
-	public CategoryJpaEntity(Long id, MemberJpaEntity member, Long teamId, String name, String iconUrl,
+	public CategoryJpaEntity(Long id, MemberJpaEntity creator, Long teamId, String name, String iconUrl,
 		Boolean isActive, TransactionType transactionType, OwnerType ownerType, LocalDateTime deletedAt) {
 		this.id = id;
-		this.member = member;
+		this.creator = creator;
 		this.teamId = teamId;
 		this.name = name;
 		this.iconUrl = iconUrl;
@@ -82,7 +82,7 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 	public static CategoryJpaEntity from(Category category) {
 		return CategoryJpaEntity.builder()
 			.id(category.getId())
-			.member(MemberJpaEntity.from(category.getMember()))
+			.creator(MemberJpaEntity.from(category.getCreator()))
 			.teamId(category.getTeamId())
 			.name(category.getName())
 			.iconUrl(category.getIconUrl())
@@ -96,7 +96,7 @@ public class CategoryJpaEntity extends BaseTimeEntity {
 	public Category toModel() {
 		return Category.builder()
 			.id(this.id)
-			.member(this.member.toModel())
+			.creator(this.creator.toModel())
 			.teamId(this.teamId)
 			.name(this.name)
 			.iconUrl(this.iconUrl)

@@ -2,8 +2,6 @@ package com.dalcoomi.team.infrastructure;
 
 import static jakarta.persistence.ConstraintMode.NO_CONSTRAINT;
 
-import java.time.LocalDateTime;
-
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.team.domain.TeamMember;
@@ -42,15 +40,11 @@ public class TeamMemberJpaEntity extends BaseTimeEntity {
 	@JoinColumn(name = "member_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
 	private MemberJpaEntity member;
 
-	@Column(name = "deleted_at", nullable = true)
-	private LocalDateTime deletedAt;
-
 	@Builder
-	public TeamMemberJpaEntity(Long id, TeamJpaEntity team, MemberJpaEntity member, LocalDateTime deletedAt) {
+	public TeamMemberJpaEntity(Long id, TeamJpaEntity team, MemberJpaEntity member) {
 		this.id = id;
 		this.team = team;
 		this.member = member;
-		this.deletedAt = deletedAt;
 	}
 
 	public static TeamMemberJpaEntity from(TeamMember teamMember) {
@@ -58,7 +52,6 @@ public class TeamMemberJpaEntity extends BaseTimeEntity {
 			.id(teamMember.getId())
 			.team(TeamJpaEntity.from(teamMember.getTeam()))
 			.member(MemberJpaEntity.from(teamMember.getMember()))
-			.deletedAt(teamMember.getDeletedAt())
 			.build();
 	}
 
@@ -67,7 +60,6 @@ public class TeamMemberJpaEntity extends BaseTimeEntity {
 			.id(this.id)
 			.team(this.team.toModel())
 			.member(this.member.toModel())
-			.deletedAt(this.deletedAt)
 			.build();
 	}
 }

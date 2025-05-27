@@ -10,5 +10,9 @@ public interface TeamRepository {
 
 	Set<String> findExistingCodes(Set<String> candidates);
 
+	Team findById(Long id);
+
 	Team findByInvitationCode(String invitationCode);
+
+	void deleteById(Long teamId);
 }

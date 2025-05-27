@@ -45,17 +45,17 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 	}
 
 	@Override
-	public List<Category> findByMemberIdAndTransactionType(Long memberId, TransactionType transactionType) {
+	public List<Category> findByCreatorIdAndTransactionType(Long creatorId, TransactionType transactionType) {
 		List<CategoryJpaEntity> categories = jpaQueryFactory
 			.select(categoryJpaEntity)
 			.from(categoryJpaEntity)
-			.join(categoryJpaEntity.member, memberJpaEntity)
+			.join(categoryJpaEntity.creator, memberJpaEntity)
 			.where(
-				categoryJpaEntity.deletedAt.isNull(),
-				memberJpaEntity.deletedAt.isNull(),
 				categoryJpaEntity.transactionType.eq(transactionType),
 				categoryJpaEntity.ownerType.eq(ADMIN)
-					.or(categoryJpaEntity.ownerType.eq(MEMBER).and(categoryJpaEntity.member.id.eq(memberId)))
+					.or(categoryJpaEntity.ownerType.eq(MEMBER).and(categoryJpaEntity.creator.id.eq(creatorId))),
+				categoryJpaEntity.deletedAt.isNull(),
+				memberJpaEntity.deletedAt.isNull()
 			)
 			.orderBy(categoryJpaEntity.name.asc())
 			.fetch();

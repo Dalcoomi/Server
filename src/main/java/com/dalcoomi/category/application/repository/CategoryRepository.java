@@ -13,5 +13,5 @@ public interface CategoryRepository {
 
 	Category findById(Long categoryId);
 
-	List<Category> findByMemberIdAndTransactionType(Long memberId, TransactionType transactionType);
+	List<Category> findByCreatorIdAndTransactionType(Long creatorId, TransactionType transactionType);
 }

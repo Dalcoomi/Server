@@ -6,7 +6,6 @@ import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.lang.String.format;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.team.dto.request.TeamRequest;
@@ -25,20 +24,17 @@ public class Team {
 	private final String title;
 	private final Integer memberLimit;
 	private final String purpose;
-	private final LocalDateTime deletedAt;
-	private Member member;
+	private Member leader;
 	private String invitationCode;
 
 	@Builder
-	public Team(Long id, Member member, String title, String invitationCode, Integer memberLimit, String purpose,
-		LocalDateTime deletedAt) {
+	public Team(Long id, Member leader, String title, String invitationCode, Integer memberLimit, String purpose) {
 		this.id = id;
-		this.member = member;
+		this.leader = leader;
 		this.title = title;
 		this.invitationCode = invitationCode;
 		this.memberLimit = validateMemberLimit(memberLimit);
 		this.purpose = validatePurpose(purpose);
-		this.deletedAt = deletedAt;
 	}
 
 	public static Team from(TeamRequest request) {
@@ -62,7 +58,7 @@ public class Team {
 	}
 
 	public void updateMember(Member member) {
-		this.member = member;
+		this.leader = member;
 	}
 
 	public void updateInvitationCode(String invitationCode) {

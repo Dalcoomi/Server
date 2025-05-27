@@ -2,8 +2,6 @@ package com.dalcoomi.team.infrastructure;
 
 import static jakarta.persistence.ConstraintMode.NO_CONSTRAINT;
 
-import java.time.LocalDateTime;
-
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.team.domain.Team;
@@ -35,8 +33,8 @@ public class TeamJpaEntity extends BaseTimeEntity {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "reader_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
-	private MemberJpaEntity member;
+	@JoinColumn(name = "leader_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
+	private MemberJpaEntity leader;
 
 	@Column(name = "title", nullable = false)
 	private String title;
@@ -50,42 +48,36 @@ public class TeamJpaEntity extends BaseTimeEntity {
 	@Column(name = "purpose", nullable = true)
 	private String purpose;
 
-	@Column(name = "deleted_at", nullable = true)
-	private LocalDateTime deletedAt;
-
 	@Builder
-	public TeamJpaEntity(Long id, MemberJpaEntity member, String title, String invitationCode, Integer memberLimit,
-		String purpose, LocalDateTime deletedAt) {
+	public TeamJpaEntity(Long id, MemberJpaEntity leader, String title, String invitationCode, Integer memberLimit,
+		String purpose) {
 		this.id = id;
-		this.member = member;
+		this.leader = leader;
 		this.title = title;
 		this.invitationCode = invitationCode;
 		this.memberLimit = memberLimit;
 		this.purpose = purpose;
-		this.deletedAt = deletedAt;
 	}
 
 	public static TeamJpaEntity from(Team team) {
 		return TeamJpaEntity.builder()
 			.id(team.getId())
-			.member(MemberJpaEntity.from(team.getMember()))
+			.leader(MemberJpaEntity.from(team.getLeader()))
 			.title(team.getTitle())
 			.invitationCode(team.getInvitationCode())
 			.memberLimit(team.getMemberLimit())
 			.purpose(team.getPurpose())
-			.deletedAt(team.getDeletedAt())
 			.build();
 	}
 
 	public Team toModel() {
 		return Team.builder()
 			.id(this.id)
-			.member(this.member.toModel())
+			.leader(this.leader.toModel())
 			.title(this.title)
 			.invitationCode(this.invitationCode)
 			.memberLimit(this.memberLimit)
 			.purpose(this.purpose)
-			.deletedAt(this.deletedAt)
 			.build();
 	}
 }

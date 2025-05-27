@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TeamJpaRepository extends JpaRepository<TeamJpaEntity, Long> {
 
-	List<TeamJpaEntity> findByInvitationCodeInAndDeletedAtIsNull(Set<String> candidates);
+	List<TeamJpaEntity> findByInvitationCodeIn(Set<String> candidates);
 
-	Optional<TeamJpaEntity> findByInvitationCodeAndDeletedAtIsNull(String invitationCode);
+	Optional<TeamJpaEntity> findByInvitationCode(String invitationCode);
+
+	Optional<TeamJpaEntity> findByIdAndLeaderId(Long teamId, Long leaderId);
 }

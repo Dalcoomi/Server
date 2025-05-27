@@ -15,7 +15,7 @@ public final class CategoryFixture {
 		boolean isActive = true;
 
 		return Category.builder()
-			.member(member)
+			.creator(member)
 			.name(name)
 			.iconUrl(iconUrl)
 			.isActive(isActive)
@@ -30,7 +30,7 @@ public final class CategoryFixture {
 		boolean isActive = true;
 
 		return Category.builder()
-			.member(member)
+			.creator(member)
 			.name(name)
 			.iconUrl(iconUrl)
 			.isActive(isActive)
@@ -45,7 +45,7 @@ public final class CategoryFixture {
 		boolean isActive = true;
 
 		return Category.builder()
-			.member(member)
+			.creator(member)
 			.name(name)
 			.iconUrl(iconUrl)
 			.isActive(isActive)

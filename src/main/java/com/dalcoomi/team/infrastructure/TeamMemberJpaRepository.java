@@ -4,7 +4,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TeamMemberJpaRepository extends JpaRepository<TeamMemberJpaEntity, Long> {
 
-	boolean existsByTeamIdAndMemberIdAndDeletedAtIsNull(Long teamId, Long memberId);
+	boolean existsByTeamIdAndMemberId(Long teamId, Long memberId);
 
-	int countByTeamIdAndDeletedAtIsNull(Long teamId);
+	int countByTeamId(Long teamId);
+
+	void deleteByTeamIdAndMemberId(Long teamId, Long memberId);
 }
