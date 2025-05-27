@@ -8,7 +8,7 @@ import lombok.Builder;
 @Builder
 public record CategoryInfo(
 	Long id,
-	Long groupId,
+	Long teamId,
 	String name,
 	String iconUrl,
 	Boolean isActive,

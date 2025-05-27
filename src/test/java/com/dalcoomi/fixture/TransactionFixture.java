@@ -16,7 +16,7 @@ public final class TransactionFixture {
 		Long amount = 10000L;
 
 		return Transaction.builder()
-			.member(member)
+			.creator(member)
 			.category(category)
 			.transactionDate(transactionDate)
 			.content(content)
@@ -31,7 +31,7 @@ public final class TransactionFixture {
 		Long amount = 15000L;
 
 		return Transaction.builder()
-			.member(member)
+			.creator(member)
 			.category(category)
 			.transactionDate(transactionDate)
 			.content(content)
@@ -46,7 +46,7 @@ public final class TransactionFixture {
 		Long amount = 20000L;
 
 		return Transaction.builder()
-			.member(member)
+			.creator(member)
 			.category(category)
 			.transactionDate(transactionDate)
 			.content(content)
@@ -61,8 +61,72 @@ public final class TransactionFixture {
 		Long amount = 12000L;
 
 		return Transaction.builder()
-			.member(member)
+			.creator(member)
 			.category(category)
+			.transactionDate(transactionDate)
+			.content(content)
+			.amount(amount)
+			.transactionType(EXPENSE)
+			.build();
+	}
+
+	public static Transaction getTeamTransactionWithExpense1(Member member, Long teamId, Category category) {
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 5, 15, 14, 0);
+		String content = "5월 식사";
+		Long amount = 22000L;
+
+		return Transaction.builder()
+			.creator(member)
+			.category(category)
+			.teamId(teamId)
+			.transactionDate(transactionDate)
+			.content(content)
+			.amount(amount)
+			.transactionType(EXPENSE)
+			.build();
+	}
+
+	public static Transaction getTeamTransactionWithExpense2(Member member, Long teamId, Category category) {
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 5, 15, 16, 0);
+		String content = "5월 식사";
+		Long amount = 20000L;
+
+		return Transaction.builder()
+			.creator(member)
+			.category(category)
+			.teamId(teamId)
+			.transactionDate(transactionDate)
+			.content(content)
+			.amount(amount)
+			.transactionType(EXPENSE)
+			.build();
+	}
+
+	public static Transaction getTeamTransactionWithExpense3(Member member, Long teamId, Category category) {
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 5, 15, 18, 0);
+		String content = "5월 식사";
+		Long amount = 32000L;
+
+		return Transaction.builder()
+			.creator(member)
+			.category(category)
+			.teamId(teamId)
+			.transactionDate(transactionDate)
+			.content(content)
+			.amount(amount)
+			.transactionType(EXPENSE)
+			.build();
+	}
+
+	public static Transaction getTeamTransactionWithExpense4(Member member, Long teamId, Category category) {
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 5, 15, 20, 0);
+		String content = "5월 식사";
+		Long amount = 52000L;
+
+		return Transaction.builder()
+			.creator(member)
+			.category(category)
+			.teamId(teamId)
 			.transactionDate(transactionDate)
 			.content(content)
 			.amount(amount)

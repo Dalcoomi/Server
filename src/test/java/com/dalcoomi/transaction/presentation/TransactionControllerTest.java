@@ -103,10 +103,10 @@ class TransactionControllerTest {
 			.andExpect(status().isCreated())
 			.andDo(print());
 
-		List<Transaction> transactions = transactionRepository.findByMemberIdAndYearAndMonth(member.getId(),
+		List<Transaction> transactions = transactionRepository.findByCreatorIdAndYearAndMonth(member.getId(),
 			transactionDate.getYear(), transactionDate.getMonthValue());
 
-		assertThat(transactions.getFirst().getMember().getId()).isEqualTo(member.getId());
+		assertThat(transactions.getFirst().getCreator().getId()).isEqualTo(member.getId());
 		assertThat(transactions.getFirst().getAmount()).isEqualTo(amount);
 		assertThat(transactions.getFirst().getContent()).isEqualTo(content);
 		assertThat(transactions.getFirst().getTransactionDate()).isEqualTo(transactionDate);
@@ -282,9 +282,9 @@ class TransactionControllerTest {
 			.andExpect(status().isOk())
 			.andDo(print());
 
-		Transaction transaction = transactionRepository.findByIdAndMemberId(transaction1.getId(), member.getId());
+		Transaction transaction = transactionRepository.findByIdAndCreatorId(transaction1.getId(), member.getId());
 
-		assertThat(transaction.getMember().getId()).isEqualTo(member.getId());
+		assertThat(transaction.getCreator().getId()).isEqualTo(member.getId());
 		assertThat(transaction.getAmount()).isEqualTo(amount);
 		assertThat(transaction.getContent()).isEqualTo(content);
 		assertThat(transaction.getTransactionDate()).isEqualTo(transactionDate);

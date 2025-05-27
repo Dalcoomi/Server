@@ -38,13 +38,13 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	@Override
-	public Transaction findByIdAndMemberId(Long transactionId, Long memberId) {
-		return transactionJpaRepository.findByIdAndMemberIdAndDeletedAtIsNull(transactionId, memberId)
+	public Transaction findByIdAndCreatorId(Long transactionId, Long creatorId) {
+		return transactionJpaRepository.findByIdAndCreatorIdAndDeletedAtIsNull(transactionId, creatorId)
 			.orElseThrow(() -> new NotFoundException(TRANSACTION_NOT_FOUND)).toModel();
 	}
 
 	@Override
-	public List<Transaction> findByMemberIdAndYearAndMonth(Long memberId, int year, int month) {
+	public List<Transaction> findByCreatorIdAndYearAndMonth(Long creatorId, int year, int month) {
 		LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0, 0);
 		LocalDateTime endDate = startDate.plusMonths(1).minusNanos(1);
 
@@ -52,9 +52,9 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 			.select(transactionJpaEntity)
 			.from(transactionJpaEntity)
 			.join(transactionJpaEntity.category, categoryJpaEntity)
-			.join(transactionJpaEntity.member, memberJpaEntity)
+			.join(transactionJpaEntity.creator, memberJpaEntity)
 			.where(
-				transactionJpaEntity.member.id.eq(memberId),
+				transactionJpaEntity.creator.id.eq(creatorId),
 				transactionJpaEntity.transactionDate.between(startDate, endDate),
 				transactionJpaEntity.deletedAt.isNull(),
 				memberJpaEntity.deletedAt.isNull(),
@@ -64,5 +64,16 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 			.fetch();
 
 		return transactionJpaEntities.stream().map(TransactionJpaEntity::toModel).toList();
+	}
+
+	@Override
+	public List<Transaction> findByTeamId(Long teamId) {
+		return transactionJpaRepository.findAllByTeamIdAndDeletedAtIsNull(teamId).stream()
+			.map(TransactionJpaEntity::toModel).toList();
+	}
+
+	@Override
+	public void deleteByTeamId(Long groupId) {
+		transactionJpaRepository.deleteAllByTeamId(groupId);
 	}
 }

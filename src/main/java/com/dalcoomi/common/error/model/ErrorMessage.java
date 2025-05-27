@@ -44,7 +44,7 @@ public enum ErrorMessage {
 	UNSUPPORTED_OWNER_TYPE("지원하지 않는 집합 속성입니다."),
 
 	CATEGORY_NOT_FOUND("카테고리가 존재하지 않습니다."),
-	CATEGORY_INVALID_GROUP_ID("유효하지 않는 그룹 id입니다."),
+	CATEGORY_INVALID_TEAM_ID("유효하지 않는 그룹 id입니다."),
 	CATEGORY_INVALID_NAME("유효하지 않는 카테고리명입니다."),
 	CATEGORY_INVALID_ICON_URL("유효하지 않는 아이콘입니다."),
 
@@ -52,14 +52,14 @@ public enum ErrorMessage {
 	TRANSACTION_INVALID_CONTENT("유효하지 않는 거래 내용입니다."),
 	TRANSACTION_INVALID_AMOUNT("유효하지 않는 금액입니다."),
 
-	GROUP_NOT_FOUND("존재하지 않는 그룹입니다."),
-	GROUP_INVALID_INVITATION_CODE("유효하지 않는 초대 코드입니다."),
-	GROUP_INVALID_COUNT("그룹 인원 수는 1명 이상 %d명 이하여야 합니다."),
-	GROUP_INVALID_GOAL("유효하지 않는 목표입니다."),
+	TEAM_NOT_FOUND("존재하지 않는 그룹입니다."),
+	TEAM_INVALID_INVITATION_CODE("유효하지 않는 초대 코드입니다."),
+	TEAM_INVALID_MEMBER_LIMIT("그룹 인원 수는 1명 이상 %d명 이하여야 합니다."),
+	TEAM_INVALID_PURPOSE("유효하지 않는 목표입니다."),
 
-	GROUP_MEMBER_ALREADY_EXISTS("이미 해당 그룹에 가입된 회원입니다."),
-	GROUP_MEMBER_COUNT_EXCEEDED("그룹 인원 제한을 초과했습니다."),
-	GROUP_MEMBER_NOT_FOUND("해당 그룹 멤버를 찾을 수 없습니다.");
+	TEAM_MEMBER_ALREADY_EXISTS("이미 해당 그룹에 가입된 회원입니다."),
+	TEAM_MEMBER_COUNT_EXCEEDED("그룹 인원 제한을 초과했습니다."),
+	TEAM_MEMBER_NOT_FOUND("해당 그룹 멤버를 찾을 수 없습니다.");
 
 	private final String message;
 }

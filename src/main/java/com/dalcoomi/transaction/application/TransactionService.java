@@ -28,7 +28,7 @@ public class TransactionService {
 		Member member = memberRepository.findById(memberId);
 		Category category = categoryRepository.findById(categoryId);
 
-		transaction.updateMember(member);
+		transaction.updateCreator(member);
 		transaction.updateCategory(category);
 
 		transactionRepository.save(transaction);
@@ -36,19 +36,19 @@ public class TransactionService {
 
 	@Transactional(readOnly = true)
 	public TransactionsInfo getTransactionsByMemberIdAndYearAndMonth(Long memberId, int year, int month) {
-		List<Transaction> transactions = transactionRepository.findByMemberIdAndYearAndMonth(memberId, year, month);
+		List<Transaction> transactions = transactionRepository.findByCreatorIdAndYearAndMonth(memberId, year, month);
 
 		return TransactionsInfo.from(transactions);
 	}
 
 	@Transactional(readOnly = true)
 	public Transaction getTransactionsById(Long memberId, Long transactionId) {
-		return transactionRepository.findByIdAndMemberId(transactionId, memberId);
+		return transactionRepository.findByIdAndCreatorId(transactionId, memberId);
 	}
 
 	@Transactional
 	public void updateTransaction(Long memberId, Long transactionId, Long categoryId, Transaction transaction) {
-		Transaction currentTransaction = transactionRepository.findByIdAndMemberId(transactionId, memberId);
+		Transaction currentTransaction = transactionRepository.findByIdAndCreatorId(transactionId, memberId);
 		Category category = categoryRepository.findById(categoryId);
 
 		currentTransaction.updateCategory(category);
@@ -62,7 +62,7 @@ public class TransactionService {
 
 	@Transactional
 	public void deleteTransaction(Long memberId, Long transactionId) {
-		Transaction transaction = transactionRepository.findByIdAndMemberId(transactionId, memberId);
+		Transaction transaction = transactionRepository.findByIdAndCreatorId(transactionId, memberId);
 
 		transaction.softDelete();
 

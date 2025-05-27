@@ -1,6 +1,7 @@
 package com.dalcoomi.transaction.infrastructure;
 
 import static jakarta.persistence.ConstraintMode.NO_CONSTRAINT;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 import java.time.LocalDateTime;
 
@@ -10,13 +11,13 @@ import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.TransactionType;
 
-import io.hypersistence.utils.hibernate.id.Tsid;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -33,20 +34,20 @@ import lombok.NoArgsConstructor;
 public class TransactionJpaEntity extends BaseTimeEntity {
 
 	@Id
-	@Tsid
+	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id", nullable = false, unique = true)
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "creator_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
-	private MemberJpaEntity member;
+	private MemberJpaEntity creator;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
 	private CategoryJpaEntity category;
 
-	@Column(name = "group_id", nullable = true)
-	private Long groupId;
+	@Column(name = "team_id", nullable = true)
+	private Long teamId;
 
 	@Column(name = "transaction_date", nullable = false)
 	private LocalDateTime transactionDate;
@@ -65,13 +66,13 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	private TransactionType transactionType;
 
 	@Builder
-	public TransactionJpaEntity(Long id, MemberJpaEntity member, CategoryJpaEntity category, Long groupId,
+	public TransactionJpaEntity(Long id, MemberJpaEntity creator, CategoryJpaEntity category, Long teamId,
 		LocalDateTime transactionDate, String content, Long amount, TransactionType transactionType,
 		LocalDateTime deletedAt) {
 		this.id = id;
-		this.member = member;
+		this.creator = creator;
 		this.category = category;
-		this.groupId = groupId;
+		this.teamId = teamId;
 		this.transactionDate = transactionDate;
 		this.content = content;
 		this.amount = amount;
@@ -82,9 +83,9 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	public static TransactionJpaEntity from(Transaction transaction) {
 		return TransactionJpaEntity.builder()
 			.id(transaction.getId())
-			.member(MemberJpaEntity.from(transaction.getMember()))
+			.creator(MemberJpaEntity.from(transaction.getCreator()))
 			.category(CategoryJpaEntity.from(transaction.getCategory()))
-			.groupId(transaction.getGroupId())
+			.teamId(transaction.getTeamId())
 			.transactionDate(transaction.getTransactionDate())
 			.content(transaction.getContent())
 			.amount(transaction.getAmount())
@@ -96,9 +97,9 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	public Transaction toModel() {
 		return Transaction.builder()
 			.id(this.id)
-			.member(this.member.toModel())
+			.creator(this.creator.toModel())
 			.category(this.category.toModel())
-			.groupId(this.groupId)
+			.teamId(this.teamId)
 			.transactionDate(this.transactionDate)
 			.content(this.content)
 			.amount(this.amount)
