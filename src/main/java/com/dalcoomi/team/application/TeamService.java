@@ -48,6 +48,10 @@ public class TeamService {
 
 		Team savedTeam = teamRepository.save(team);
 
+		TeamMember teamMember = TeamMember.of(savedTeam, member);
+
+		teamMemberRepository.save(teamMember);
+
 		return savedTeam.getInvitationCode();
 	}
 
