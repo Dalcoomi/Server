@@ -1,5 +1,6 @@
 package com.dalcoomi.team.infrastructure;
 
+import static com.dalcoomi.common.jpa.DynamicQuery.generateEq;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.team.infrastructure.QTeamJpaEntity.teamJpaEntity;
 import static com.dalcoomi.team.infrastructure.QTeamMemberJpaEntity.teamMemberJpaEntity;
@@ -11,7 +12,6 @@ import java.util.Map;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
-import com.dalcoomi.common.jpa.DynamicQuery;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.domain.TeamMember;
 import com.dalcoomi.team.dto.QTeamMemberProjection_TeamMemberCountDto;
@@ -44,8 +44,8 @@ public class TeamMemberRepositoryImpl implements TeamMemberRepository {
 			.join(teamMemberJpaEntity.team, teamJpaEntity).fetchJoin()
 			.join(teamMemberJpaEntity.member, memberJpaEntity).fetchJoin()
 			.where(
-				DynamicQuery.generateEq(teamId, teamJpaEntity.id::eq),
-				DynamicQuery.generateEq(memberId, memberJpaEntity.id::eq),
+				generateEq(teamId, teamJpaEntity.id::eq),
+				generateEq(memberId, memberJpaEntity.id::eq),
 				memberJpaEntity.deletedAt.isNull()
 			)
 			.fetch()

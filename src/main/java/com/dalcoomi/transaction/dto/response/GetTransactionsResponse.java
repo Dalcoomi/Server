@@ -10,19 +10,19 @@ import com.dalcoomi.transaction.dto.TransactionsInfo;
 import lombok.Builder;
 
 @Builder
-public record GetMyTransactionsResponse(
+public record GetTransactionsResponse(
 	Long income,
 	Long expense,
 	Long total,
 	List<GetMyTransactionResponseItem> transactions
 ) {
 
-	public static GetMyTransactionsResponse from(TransactionsInfo transactionsInfo) {
+	public static GetTransactionsResponse from(TransactionsInfo transactionsInfo) {
 		List<GetMyTransactionResponseItem> transactions = transactionsInfo.transactions().stream()
 			.map(GetMyTransactionResponseItem::from)
 			.toList();
 
-		return GetMyTransactionsResponse.builder()
+		return GetTransactionsResponse.builder()
 			.income(transactionsInfo.income())
 			.expense(transactionsInfo.expense())
 			.total(transactionsInfo.total())

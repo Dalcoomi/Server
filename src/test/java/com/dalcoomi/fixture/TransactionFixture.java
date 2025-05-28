@@ -26,7 +26,7 @@ public final class TransactionFixture {
 	}
 
 	public static Transaction getTransactionWithExpense2(Member member, Category category) {
-		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 15, 12, 30);
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 11, 12, 30);
 		String content = "점심 식사";
 		Long amount = 15000L;
 
@@ -41,7 +41,7 @@ public final class TransactionFixture {
 	}
 
 	public static Transaction getTransactionWithExpense3(Member member, Category category) {
-		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 30, 18, 0);
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 12, 18, 0);
 		String content = "저녁 식사";
 		Long amount = 20000L;
 
@@ -71,7 +71,7 @@ public final class TransactionFixture {
 	}
 
 	public static Transaction getTeamTransactionWithExpense1(Member member, Long teamId, Category category) {
-		LocalDateTime transactionDate = LocalDateTime.of(2025, 5, 15, 14, 0);
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 15, 14, 0);
 		String content = "5월 식사";
 		Long amount = 22000L;
 
@@ -87,7 +87,7 @@ public final class TransactionFixture {
 	}
 
 	public static Transaction getTeamTransactionWithExpense2(Member member, Long teamId, Category category) {
-		LocalDateTime transactionDate = LocalDateTime.of(2025, 5, 15, 16, 0);
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 15, 16, 0);
 		String content = "5월 식사";
 		Long amount = 20000L;
 
@@ -103,7 +103,7 @@ public final class TransactionFixture {
 	}
 
 	public static Transaction getTeamTransactionWithExpense3(Member member, Long teamId, Category category) {
-		LocalDateTime transactionDate = LocalDateTime.of(2025, 5, 15, 18, 0);
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 15, 18, 0);
 		String content = "5월 식사";
 		Long amount = 32000L;
 
