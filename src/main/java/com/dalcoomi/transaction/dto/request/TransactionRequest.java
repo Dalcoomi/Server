@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record TransactionRequest(
+	Long teamId,
+
 	@NotNull(message = "금액은 필수입니다.")
 	@Positive(message = "자연수를 입력해주세요.")
 	Long amount,

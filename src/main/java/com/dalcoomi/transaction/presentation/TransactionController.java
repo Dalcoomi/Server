@@ -3,6 +3,7 @@ package com.dalcoomi.transaction.presentation;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,10 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dalcoomi.auth.config.AuthMember;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
 import com.dalcoomi.transaction.dto.response.GetMyTransactionResponse;
-import com.dalcoomi.transaction.dto.response.GetMyTransactionsResponse;
+import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,29 +33,31 @@ public class TransactionController {
 
 	private final TransactionService transactionService;
 
-	@PostMapping("/my")
+	@PostMapping
 	@ResponseStatus(CREATED)
-	public void createMyTransaction(@AuthMember Long memberId, @RequestBody TransactionRequest request) {
+	public void createTransaction(@AuthMember Long memberId, @RequestBody TransactionRequest request) {
 		Transaction transaction = Transaction.from(request);
 
 		transactionService.createTransaction(memberId, request.categoryId(), transaction);
 	}
 
-	@GetMapping("/my")
+	@GetMapping
 	@ResponseStatus(OK)
-	public GetMyTransactionsResponse getMyTransactionsWithYearAndMonth(@AuthMember Long memberId,
-		@RequestParam("year") Integer year, @RequestParam("month") Integer month) {
-		TransactionsInfo transactionsInfo = transactionService.getTransactionsByMemberIdAndYearAndMonth(memberId, year,
-			month);
+	public GetTransactionsResponse getTransactions(@AuthMember Long memberId,
+		@RequestParam("teamId") @Nullable Long teamId, @RequestParam("year") Integer year,
+		@RequestParam("month") Integer month) {
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(memberId, teamId, year, month);
 
-		return GetMyTransactionsResponse.from(transactionsInfo);
+		TransactionsInfo transactionsInfo = transactionService.getTransactions(criteria);
+
+		return GetTransactionsResponse.from(transactionsInfo);
 	}
 
 	@GetMapping("/{transactionId}")
 	@ResponseStatus(OK)
-	public GetMyTransactionResponse getTransactionById(@AuthMember Long memberId,
+	public GetMyTransactionResponse getMyTransaction(@AuthMember Long memberId,
 		@PathVariable("transactionId") Long transactionId) {
-		Transaction transaction = transactionService.getTransactionsById(memberId, transactionId);
+		Transaction transaction = transactionService.getMyTransaction(memberId, transactionId);
 
 		return GetMyTransactionResponse.from(transaction);
 	}

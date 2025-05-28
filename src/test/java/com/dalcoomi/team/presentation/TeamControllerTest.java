@@ -50,6 +50,7 @@ import com.dalcoomi.team.dto.request.LeaveTeamRequest;
 import com.dalcoomi.team.dto.request.TeamRequest;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
@@ -508,9 +509,10 @@ class TeamControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		LeaveTeamRequest request = new LeaveTeamRequest(team.getId(), nextLeader.getNickname());
-		String json = objectMapper.writeValueAsString(request);
 
 		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
 		mockMvc.perform(delete("/api/team/leave")
 				.content(json)
 				.contentType(APPLICATION_JSON))
@@ -538,7 +540,6 @@ class TeamControllerTest {
 		teamMemberRepository.save(lastTeamMember);
 
 		Category category = CategoryFixture.getCategory1(lastMember);
-
 		category = categoryRepository.save(category);
 
 		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(lastMember, team.getId(),
@@ -549,9 +550,7 @@ class TeamControllerTest {
 			category);
 		Transaction transaction4 = TransactionFixture.getTeamTransactionWithExpense4(lastMember, team.getId(),
 			category);
-
 		List<Transaction> transactions = Arrays.asList(transaction1, transaction2, transaction3, transaction4);
-
 		transactionRepository.saveAll(transactions);
 
 		// 인증 설정
@@ -566,9 +565,10 @@ class TeamControllerTest {
 
 		Long teamId = team.getId();
 		LeaveTeamRequest request = new LeaveTeamRequest(teamId, null);
-		String json = objectMapper.writeValueAsString(request);
 
 		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
 		mockMvc.perform(delete("/api/team/leave")
 				.content(json)
 				.contentType(APPLICATION_JSON))
@@ -582,7 +582,9 @@ class TeamControllerTest {
 			.isInstanceOf(NotFoundException.class)
 			.hasMessageContaining(TEAM_NOT_FOUND.getMessage());
 
-		List<Transaction> teamTransactions = transactionRepository.findByTeamId(teamId);
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(lastTeamMember.getId(), teamId, null, null);
+
+		List<Transaction> teamTransactions = transactionRepository.findTransactions(criteria);
 		assertThat(teamTransactions).isEmpty();
 	}
 }

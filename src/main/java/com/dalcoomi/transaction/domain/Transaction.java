@@ -47,6 +47,7 @@ public class Transaction {
 
 	public static Transaction from(TransactionRequest request) {
 		return Transaction.builder()
+			.teamId(request.teamId())
 			.amount(request.amount())
 			.content(request.content())
 			.transactionDate(request.transactionDate())

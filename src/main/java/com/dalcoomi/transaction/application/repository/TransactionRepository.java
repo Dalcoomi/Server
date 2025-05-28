@@ -3,6 +3,7 @@ package com.dalcoomi.transaction.application.repository;
 import java.util.List;
 
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 
 public interface TransactionRepository {
 
@@ -12,9 +13,7 @@ public interface TransactionRepository {
 
 	Transaction findByIdAndCreatorId(Long transactionId, Long creatorId);
 
-	List<Transaction> findByCreatorIdAndYearAndMonth(Long creatorId, int year, int month);
-
-	List<Transaction> findByTeamId(Long teamId);
+	List<Transaction> findTransactions(TransactionSearchCriteria criteria);
 
 	void deleteByTeamId(Long groupId);
 }

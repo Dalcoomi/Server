@@ -2,10 +2,10 @@ package com.dalcoomi.transaction.infrastructure;
 
 import static com.dalcoomi.category.infrastructure.QCategoryJpaEntity.categoryJpaEntity;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_NOT_FOUND;
+import static com.dalcoomi.common.jpa.DynamicQuery.generateEq;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.transaction.infrastructure.QTransactionJpaEntity.transactionJpaEntity;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -44,32 +45,23 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	@Override
-	public List<Transaction> findByCreatorIdAndYearAndMonth(Long creatorId, int year, int month) {
-		LocalDateTime startDate = LocalDateTime.of(year, month, 1, 0, 0, 0);
-		LocalDateTime endDate = startDate.plusMonths(1).minusNanos(1);
-
-		List<TransactionJpaEntity> transactionJpaEntities = jpaQueryFactory
-			.select(transactionJpaEntity)
-			.from(transactionJpaEntity)
-			.join(transactionJpaEntity.category, categoryJpaEntity)
+	public List<Transaction> findTransactions(TransactionSearchCriteria criteria) {
+		return jpaQueryFactory
+			.selectFrom(transactionJpaEntity)
 			.join(transactionJpaEntity.creator, memberJpaEntity)
+			.join(transactionJpaEntity.category, categoryJpaEntity)
 			.where(
-				transactionJpaEntity.creator.id.eq(creatorId),
-				transactionJpaEntity.transactionDate.between(startDate, endDate),
+				generateEq(criteria.memberId(), transactionJpaEntity.creator.id::eq),
+				generateEq(criteria.teamId(), transactionJpaEntity.teamId::eq),
+				generateEq(criteria.year(), transactionJpaEntity.transactionDate.year()::eq),
+				generateEq(criteria.month(), transactionJpaEntity.transactionDate.month()::eq),
 				transactionJpaEntity.deletedAt.isNull(),
 				memberJpaEntity.deletedAt.isNull(),
 				categoryJpaEntity.deletedAt.isNull()
 			)
 			.orderBy(transactionJpaEntity.transactionDate.desc())
-			.fetch();
-
-		return transactionJpaEntities.stream().map(TransactionJpaEntity::toModel).toList();
-	}
-
-	@Override
-	public List<Transaction> findByTeamId(Long teamId) {
-		return transactionJpaRepository.findAllByTeamIdAndDeletedAtIsNull(teamId).stream()
-			.map(TransactionJpaEntity::toModel).toList();
+			.fetch()
+			.stream().map(TransactionJpaEntity::toModel).toList();
 	}
 
 	@Override
