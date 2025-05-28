@@ -1,6 +1,6 @@
 package com.dalcoomi.member.application;
 
-import static com.dalcoomi.common.constant.ImageConstant.DEFAULT_PROFILE_IMAGE;
+import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
 
 import org.springframework.stereotype.Service;

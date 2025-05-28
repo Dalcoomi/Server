@@ -1,5 +1,6 @@
 package com.dalcoomi.team.presentation;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
@@ -124,6 +125,60 @@ class TeamControllerTest {
 		assertThat(team.getTitle()).isEqualTo(title);
 		assertThat(team.getMemberLimit()).isEqualTo(count);
 		assertThat(team.getPurpose()).isEqualTo(goal);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 최대 그룹 수 초과 시 팀 생성 실패")
+	void create_team_max_team_count_exceeded_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		Team team1 = TeamFixture.getTeam1(member);
+		team1 = teamRepository.save(team1);
+		TeamMember teamMember1 = TeamMember.of(team1, member);
+		teamMemberRepository.save(teamMember1);
+
+		Team team2 = TeamFixture.getTeam2(member);
+		team2 = teamRepository.save(team2);
+		TeamMember teamMember2 = TeamMember.of(team2, member);
+		teamMemberRepository.save(teamMember2);
+
+		Team team3 = TeamFixture.getTeam3(member);
+		team3 = teamRepository.save(team3);
+		TeamMember teamMember3 = TeamMember.of(team3, member);
+		teamMemberRepository.save(teamMember3);
+
+		Team team4 = TeamFixture.getTeam4(member);
+		team4 = teamRepository.save(team4);
+		TeamMember teamMember4 = TeamMember.of(team4, member);
+		teamMemberRepository.save(teamMember4);
+
+		Team team5 = TeamFixture.getTeam5(member);
+		team5 = teamRepository.save(team5);
+		TeamMember teamMember5 = TeamMember.of(team5, member);
+		teamMemberRepository.save(teamMember5);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		TeamRequest request = new TeamRequest("새 팀", 3, "새 목표");
+		String json = objectMapper.writeValueAsString(request);
+
+		// when & then
+		mockMvc.perform(post("/api/team")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.message").value(TEAM_COUNT_EXCEEDED.getMessage()))
+			.andDo(print());
 	}
 
 	@Test

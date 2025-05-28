@@ -1,5 +1,7 @@
 package com.dalcoomi.team.application;
 
+import static com.dalcoomi.common.constant.TeamConstants.MAX_TEAM_LIMIT;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
@@ -41,6 +43,9 @@ public class TeamService {
 	@Transactional
 	public String createTeam(Long memberId, Team team) {
 		Member member = memberRepository.findById(memberId);
+
+		validateMaxTeamCount(memberId);
+
 		String uniqueCode = findUniqueInvitationCode();
 
 		team.updateMember(member);
@@ -63,6 +68,8 @@ public class TeamService {
 		if (teamMemberRepository.existsByTeamIdAndMemberId(team.getId(), memberId)) {
 			throw new ConflictException(TEAM_MEMBER_ALREADY_EXISTS);
 		}
+
+		validateMaxTeamCount(memberId);
 
 		int currentMemberCount = teamMemberRepository.countByTeamId(team.getId());
 
@@ -147,5 +154,13 @@ public class TeamService {
 			.filter(code -> !existingCodes.contains(code))
 			.findFirst()
 			.orElseGet(Team::generateInvitationCode);
+	}
+
+	private void validateMaxTeamCount(Long memberId) {
+		int currentTeamCount = teamMemberRepository.countByMemberId(memberId);
+
+		if (currentTeamCount >= MAX_TEAM_LIMIT) {
+			throw new ConflictException(TEAM_COUNT_EXCEEDED);
+		}
 	}
 }

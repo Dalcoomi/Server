@@ -8,5 +8,7 @@ public interface TeamMemberJpaRepository extends JpaRepository<TeamMemberJpaEnti
 
 	int countByTeamId(Long teamId);
 
+	int countByMemberId(Long memberId);
+
 	void deleteByTeamIdAndMemberId(Long teamId, Long memberId);
 }

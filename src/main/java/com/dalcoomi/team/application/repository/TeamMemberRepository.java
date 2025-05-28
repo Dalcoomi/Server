@@ -15,6 +15,8 @@ public interface TeamMemberRepository {
 
 	int countByTeamId(Long teamId);
 
+	int countByMemberId(Long memberId);
+
 	Map<Long, Integer> countByTeamIds(List<Long> teamIds);
 
 	void deleteByTeamIdAndMemberId(Long teamId, Long memberId);
