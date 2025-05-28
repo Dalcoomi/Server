@@ -1,5 +1,8 @@
 package com.dalcoomi.team.domain;
 
+import static com.dalcoomi.common.constant.TeamConstants.INVITATION_CODE_LENGTH;
+import static com.dalcoomi.common.constant.TeamConstants.MAX_MEMBER_LIMIT;
+import static com.dalcoomi.common.constant.TeamConstants.PURPOSE_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_MEMBER_LIMIT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_PURPOSE;
 import static io.micrometer.common.util.StringUtils.isBlank;
@@ -15,10 +18,6 @@ import lombok.Getter;
 
 @Getter
 public class Team {
-
-	public static final int INVITATION_CODE_LENGTH = 8;
-	public static final int MAX_MEMBER_LIMIT = 10;
-	public static final int PURPOSE_LENGTH = 100;
 
 	private final Long id;
 	private final String title;
