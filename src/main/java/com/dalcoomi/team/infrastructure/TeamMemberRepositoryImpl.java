@@ -60,6 +60,11 @@ public class TeamMemberRepositoryImpl implements TeamMemberRepository {
 	}
 
 	@Override
+	public int countByMemberId(Long memberId) {
+		return teamMemberJpaRepository.countByMemberId(memberId);
+	}
+
+	@Override
 	public Map<Long, Integer> countByTeamIds(List<Long> teamIds) {
 		List<TeamMemberProjection.TeamMemberCountDto> results = jpaQueryFactory
 			.select(new QTeamMemberProjection_TeamMemberCountDto(

@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class TokenConstant {
+public class TokenConstants {
 
 	public static final String BEARER_PREFIX = "Bearer ";
 	public static final String ACCESS_TOKEN_TYPE = "access";

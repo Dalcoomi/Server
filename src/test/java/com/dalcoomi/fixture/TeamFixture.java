@@ -34,4 +34,49 @@ public final class TeamFixture {
 			.purpose(purpose)
 			.build();
 	}
+
+	public static Team getTeam3(Member leader) {
+		String title = "그룹3";
+		String invitationCode = "34589439";
+		Integer memberLimit = 7;
+		String purpose = "저축";
+
+		return Team.builder()
+			.leader(leader)
+			.title(title)
+			.invitationCode(invitationCode)
+			.memberLimit(memberLimit)
+			.purpose(purpose)
+			.build();
+	}
+
+	public static Team getTeam4(Member leader) {
+		String title = "그룹4";
+		String invitationCode = "65454321";
+		Integer memberLimit = 10;
+		String purpose = "밥";
+
+		return Team.builder()
+			.leader(leader)
+			.title(title)
+			.invitationCode(invitationCode)
+			.memberLimit(memberLimit)
+			.purpose(purpose)
+			.build();
+	}
+
+	public static Team getTeam5(Member leader) {
+		String title = "그룹5";
+		String invitationCode = "18271323";
+		Integer memberLimit = 5;
+		String purpose = "몰라";
+
+		return Team.builder()
+			.leader(leader)
+			.title(title)
+			.invitationCode(invitationCode)
+			.memberLimit(memberLimit)
+			.purpose(purpose)
+			.build();
+	}
 }
