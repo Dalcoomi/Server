@@ -7,5 +7,4 @@ import lombok.NoArgsConstructor;
 public class TeamConstants {
 
 	public static final int MAX_TEAM_LIMIT = 5;
-	public static final int MAX_MEMBER_LIMIT = 10;
 }
