@@ -160,7 +160,7 @@ public class GlobalExceptionHandler {
 	protected ErrorResponse handleIllegalArgumentException(IllegalArgumentException exception) {
 		log.error(exception.getMessage(), exception);
 
-		return new ErrorResponse(SERVER_ERROR.getMessage());
+		return new ErrorResponse(exception.getMessage());
 	}
 
 	// 기타 500 예외
