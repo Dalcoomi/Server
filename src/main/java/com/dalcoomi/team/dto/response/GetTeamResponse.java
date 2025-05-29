@@ -11,6 +11,7 @@ import lombok.Builder;
 public record GetTeamResponse(
 	Long teamId,
 	String title,
+	String invitationCode,
 	Integer memberLimit,
 	String purpose,
 	String leaderNickname,
@@ -23,6 +24,7 @@ public record GetTeamResponse(
 		return GetTeamResponse.builder()
 			.teamId(teamInfo.team().getId())
 			.title(teamInfo.team().getTitle())
+			.invitationCode(teamInfo.team().getInvitationCode())
 			.memberLimit(teamInfo.team().getMemberLimit())
 			.purpose(teamInfo.team().getPurpose())
 			.leaderNickname(teamInfo.team().getLeader().getNickname())
