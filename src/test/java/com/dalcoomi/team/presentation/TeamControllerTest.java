@@ -396,14 +396,14 @@ class TeamControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.groups").isArray())
 			.andExpect(jsonPath("$.groups").value(hasSize(2)))
-			.andExpect(jsonPath("$.groups[0].teamId").value(team1.getId()))
-			.andExpect(jsonPath("$.groups[0].title").value(team1.getTitle()))
-			.andExpect(jsonPath("$.groups[0].memberCount").value(2))
-			.andExpect(jsonPath("$.groups[0].memberLimit").value(team1.getMemberLimit()))
-			.andExpect(jsonPath("$.groups[1].teamId").value(team2.getId()))
-			.andExpect(jsonPath("$.groups[1].title").value(team2.getTitle()))
-			.andExpect(jsonPath("$.groups[1].memberCount").value(1))
-			.andExpect(jsonPath("$.groups[1].memberLimit").value(team2.getMemberLimit()))
+			.andExpect(jsonPath("$.groups[0].teamId").value(team2.getId()))
+			.andExpect(jsonPath("$.groups[0].title").value(team2.getTitle()))
+			.andExpect(jsonPath("$.groups[0].memberCount").value(1))
+			.andExpect(jsonPath("$.groups[0].memberLimit").value(team2.getMemberLimit()))
+			.andExpect(jsonPath("$.groups[1].teamId").value(team1.getId()))
+			.andExpect(jsonPath("$.groups[1].title").value(team1.getTitle()))
+			.andExpect(jsonPath("$.groups[1].memberCount").value(2))
+			.andExpect(jsonPath("$.groups[1].memberLimit").value(team1.getMemberLimit()))
 			.andDo(print());
 	}
 

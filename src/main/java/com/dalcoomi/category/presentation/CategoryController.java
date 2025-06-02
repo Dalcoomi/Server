@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dalcoomi.auth.config.AuthMember;
 import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.category.dto.CategoryInfo;
-import com.dalcoomi.category.dto.response.GetMyCategoryResponse;
+import com.dalcoomi.category.dto.response.GetCategoriesResponse;
 import com.dalcoomi.transaction.domain.TransactionType;
 
 import lombok.RequiredArgsConstructor;
@@ -27,10 +27,20 @@ public class CategoryController {
 
 	@GetMapping("/my")
 	@ResponseStatus(OK)
-	public GetMyCategoryResponse getMyCategoryWithTransactionType(@AuthMember Long memberId,
+	public GetCategoriesResponse getMyCategoryWithTransactionType(@AuthMember Long memberId,
 		@RequestParam("transactionType") TransactionType transactionType) {
-		List<CategoryInfo> categoryInfos = categoryService.getMyCategoryWithTransactionType(memberId, transactionType);
+		List<CategoryInfo> categoryInfos = categoryService.getMyCategories(memberId, transactionType);
 
-		return GetMyCategoryResponse.from(categoryInfos);
+		return GetCategoriesResponse.from(categoryInfos);
+	}
+
+	@GetMapping("/team")
+	@ResponseStatus(OK)
+	public GetCategoriesResponse getTeamCategoryWithTransactionType(@AuthMember Long memberId,
+		@RequestParam("teamId") Long teamId,
+		@RequestParam("transactionType") TransactionType transactionType) {
+		List<CategoryInfo> categoryInfos = categoryService.getTeamCategories(memberId, teamId, transactionType);
+
+		return GetCategoriesResponse.from(categoryInfos);
 	}
 }

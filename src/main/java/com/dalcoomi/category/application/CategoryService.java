@@ -1,5 +1,7 @@
 package com.dalcoomi.category.application;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
+
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -7,6 +9,8 @@ import org.springframework.stereotype.Service;
 import com.dalcoomi.category.application.repository.CategoryRepository;
 import com.dalcoomi.category.domain.Category;
 import com.dalcoomi.category.dto.CategoryInfo;
+import com.dalcoomi.common.error.exception.NotFoundException;
+import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.transaction.domain.TransactionType;
 
 import lombok.RequiredArgsConstructor;
@@ -16,10 +20,29 @@ import lombok.RequiredArgsConstructor;
 public class CategoryService {
 
 	private final CategoryRepository categoryRepository;
+	private final TeamMemberRepository teamMemberRepository;
 
-	public List<CategoryInfo> getMyCategoryWithTransactionType(Long memberId, TransactionType transactionType) {
-		List<Category> categories = categoryRepository.findByCreatorIdAndTransactionType(memberId, transactionType);
+	public List<CategoryInfo> getMyCategories(Long memberId, TransactionType transactionType) {
+		List<Category> categories = categoryRepository.findMyCategories(memberId, transactionType);
 
 		return categories.stream().map(CategoryInfo::from).toList();
+	}
+
+	public List<CategoryInfo> getTeamCategories(Long memberId, Long teamId, TransactionType transactionType) {
+		validateTeamMember(teamId, memberId);
+
+		List<Category> categories = categoryRepository.findTeamCategories(teamId, transactionType);
+
+		return categories.stream().map(CategoryInfo::from).toList();
+	}
+
+	private void validateTeamMember(Long teamId, Long memberId) {
+		if (teamId == null) {
+			return;
+		}
+
+		if (!teamMemberRepository.existsByTeamIdAndMemberId(teamId, memberId)) {
+			throw new NotFoundException(TEAM_MEMBER_NOT_FOUND);
+		}
 	}
 }
