@@ -3,6 +3,7 @@ package com.dalcoomi.transaction.infrastructure;
 import static com.dalcoomi.category.infrastructure.QCategoryJpaEntity.categoryJpaEntity;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_NOT_FOUND;
 import static com.dalcoomi.common.jpa.DynamicQuery.generateEq;
+import static com.dalcoomi.common.jpa.DynamicQuery.generateEqOrIsNull;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.transaction.infrastructure.QTransactionJpaEntity.transactionJpaEntity;
 
@@ -51,8 +52,9 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 			.join(transactionJpaEntity.creator, memberJpaEntity)
 			.join(transactionJpaEntity.category, categoryJpaEntity)
 			.where(
+				generateEqOrIsNull(criteria.teamId(), transactionJpaEntity.teamId::eq,
+					transactionJpaEntity.teamId.isNull()),
 				generateEq(criteria.memberId(), transactionJpaEntity.creator.id::eq),
-				generateEq(criteria.teamId(), transactionJpaEntity.teamId::eq),
 				generateEq(criteria.year(), transactionJpaEntity.transactionDate.year()::eq),
 				generateEq(criteria.month(), transactionJpaEntity.transactionDate.month()::eq),
 				transactionJpaEntity.deletedAt.isNull(),

@@ -1,12 +1,15 @@
 package com.dalcoomi.member.presentation;
 
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,10 +19,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
+import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.fixture.MemberFixture;
 import com.dalcoomi.fixture.SocialConnectionFixture;
 import com.dalcoomi.member.application.repository.MemberRepository;
@@ -34,6 +44,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
 class MemberControllerTest {
+
+	private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -107,9 +119,38 @@ class MemberControllerTest {
 		String json = objectMapper.writeValueAsString(request);
 
 		mockMvc.perform(post("/api/member/sign-up")
-				.contentType("application/json")
+				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isConflict())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 회원 조회 성공")
+	void get_member_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(get("/api/member")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.email").value(member.getEmail()))
+			.andExpect(jsonPath("$.name").value(member.getName()))
+			.andExpect(jsonPath("$.nickname").value(member.getNickname()))
+			.andExpect(jsonPath("$.profileImageUrl").value(member.getProfileImageUrl()))
 			.andDo(print());
 	}
 }

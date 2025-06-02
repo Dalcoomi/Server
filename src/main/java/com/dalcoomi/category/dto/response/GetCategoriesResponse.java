@@ -8,16 +8,16 @@ import com.dalcoomi.category.dto.CategoryInfo;
 import lombok.Builder;
 
 @Builder
-public record GetMyCategoryResponse(
+public record GetCategoriesResponse(
 	List<GetMyCategoryResponseItem> categories
 ) {
 
-	public static GetMyCategoryResponse from(List<CategoryInfo> categoryInfos) {
+	public static GetCategoriesResponse from(List<CategoryInfo> categoryInfos) {
 		List<GetMyCategoryResponseItem> categories = categoryInfos.stream()
 			.map(GetMyCategoryResponseItem::from)
 			.toList();
 
-		return GetMyCategoryResponse.builder()
+		return GetCategoriesResponse.builder()
 			.categories(categories)
 			.build();
 	}

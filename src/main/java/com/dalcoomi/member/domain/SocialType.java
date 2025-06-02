@@ -11,7 +11,7 @@ public enum SocialType {
 	KAKAO;
 
 	@JsonCreator
-	public static SocialType of(String value) {
+	public static SocialType from(String value) {
 		for (SocialType type : SocialType.values()) {
 			if (type.name().equalsIgnoreCase(value)) { // 대소문자 구분 없이 처리
 				return type;

@@ -45,7 +45,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 	}
 
 	@Override
-	public List<Category> findByCreatorIdAndTransactionType(Long creatorId, TransactionType transactionType) {
+	public List<Category> findMyCategories(Long creatorId, TransactionType transactionType) {
 		List<CategoryJpaEntity> categories = jpaQueryFactory
 			.select(categoryJpaEntity)
 			.from(categoryJpaEntity)
@@ -54,6 +54,25 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 				categoryJpaEntity.transactionType.eq(transactionType),
 				categoryJpaEntity.ownerType.eq(ADMIN)
 					.or(categoryJpaEntity.ownerType.eq(MEMBER).and(categoryJpaEntity.creator.id.eq(creatorId))),
+				categoryJpaEntity.deletedAt.isNull(),
+				memberJpaEntity.deletedAt.isNull()
+			)
+			.orderBy(categoryJpaEntity.name.asc())
+			.fetch();
+
+		return categories.stream().map(CategoryJpaEntity::toModel).toList();
+	}
+
+	@Override
+	public List<Category> findTeamCategories(Long teamId, TransactionType transactionType) {
+		List<CategoryJpaEntity> categories = jpaQueryFactory
+			.select(categoryJpaEntity)
+			.from(categoryJpaEntity)
+			.join(categoryJpaEntity.creator, memberJpaEntity)
+			.where(
+				categoryJpaEntity.transactionType.eq(transactionType),
+				categoryJpaEntity.ownerType.eq(ADMIN)
+					.or(categoryJpaEntity.ownerType.eq(MEMBER).and(categoryJpaEntity.teamId.eq(teamId))),
 				categoryJpaEntity.deletedAt.isNull(),
 				memberJpaEntity.deletedAt.isNull()
 			)

@@ -29,8 +29,13 @@ import com.dalcoomi.category.application.repository.CategoryRepository;
 import com.dalcoomi.category.domain.Category;
 import com.dalcoomi.fixture.CategoryFixture;
 import com.dalcoomi.fixture.MemberFixture;
+import com.dalcoomi.fixture.TeamFixture;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
+import com.dalcoomi.team.application.repository.TeamMemberRepository;
+import com.dalcoomi.team.application.repository.TeamRepository;
+import com.dalcoomi.team.domain.Team;
+import com.dalcoomi.team.domain.TeamMember;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
@@ -53,12 +58,17 @@ class CategoryControllerTest {
 	@Autowired
 	private CategoryRepository categoryRepository;
 
+	@Autowired
+	private TeamRepository teamRepository;
+
+	@Autowired
+	private TeamMemberRepository teamMemberRepository;
+
 	@Test
 	@DisplayName("통합 테스트 - 개인 지출 카테고리 조회 성공")
 	void get_my_category_with_transaction_type_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
-
 		member = memberRepository.save(member);
 
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
@@ -94,6 +104,53 @@ class CategoryControllerTest {
 			.andExpect(jsonPath("$.categories[0].ownerType").value(category3.getOwnerType().name()))
 			.andExpect(jsonPath("$.categories[1].ownerType").value(category1.getOwnerType().name()))
 			.andExpect(jsonPath("$.categories[2].ownerType").value(category2.getOwnerType().name()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 지출 카테고리 조회 성공")
+	void get_team_category_with_transaction_type_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		Team team = TeamFixture.getTeam1(member);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member);
+		teamMemberRepository.save(teamMember1);
+
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		Category category1 = CategoryFixture.getCategory1(member);
+		Category category2 = CategoryFixture.getCategory2(member);
+		Category category3 = CategoryFixture.getCategory3(member);
+
+		List<Category> categories = List.of(category1, category2, category3);
+
+		categoryRepository.saveAll(categories);
+
+		// when & then
+		mockMvc.perform(get("/api/category/team")
+				.param("teamId", team.getId().toString())
+				.param("transactionType", String.valueOf(EXPENSE))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.categories").isArray())
+			.andExpect(jsonPath("$.categories.length()").value(2))
+			.andExpect(jsonPath("$.categories[0].name").value(category1.getName()))
+			.andExpect(jsonPath("$.categories[1].name").value(category2.getName()))
+			.andExpect(jsonPath("$.categories[0].iconUrl").value(category1.getIconUrl()))
+			.andExpect(jsonPath("$.categories[1].iconUrl").value(category2.getIconUrl()))
+			.andExpect(jsonPath("$.categories[0].ownerType").value(category1.getOwnerType().name()))
+			.andExpect(jsonPath("$.categories[1].ownerType").value(category2.getOwnerType().name()))
 			.andDo(print());
 	}
 }

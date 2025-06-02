@@ -13,5 +13,7 @@ public interface CategoryRepository {
 
 	Category findById(Long categoryId);
 
-	List<Category> findByCreatorIdAndTransactionType(Long creatorId, TransactionType transactionType);
+	List<Category> findMyCategories(Long creatorId, TransactionType transactionType);
+
+	List<Category> findTeamCategories(Long teamId, TransactionType transactionType);
 }

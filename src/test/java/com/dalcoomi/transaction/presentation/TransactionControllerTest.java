@@ -168,7 +168,7 @@ class TransactionControllerTest {
 			.andExpect(status().isCreated())
 			.andDo(print());
 
-		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(member.getId(), null,
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(member.getId(), team.getId(),
 			transactionDate.getYear(), transactionDate.getMonthValue());
 
 		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
@@ -229,18 +229,16 @@ class TransactionControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.income").value(0))
 			.andExpect(jsonPath("$.expense").value(
-				transaction1.getAmount() + transaction2.getAmount() + transaction3.getAmount()
-					+ transaction5.getAmount() + transaction6.getAmount() + transaction7.getAmount()))
+				transaction1.getAmount() + transaction2.getAmount() + transaction3.getAmount()))
 			.andExpect(jsonPath("$.total").value(
-				-(transaction1.getAmount() + transaction2.getAmount() + transaction3.getAmount()
-					+ transaction5.getAmount() + transaction6.getAmount() + transaction7.getAmount())))
+				-(transaction1.getAmount() + transaction2.getAmount() + transaction3.getAmount())))
 			.andExpect(jsonPath("$.transactions").isArray())
-			.andExpect(jsonPath("$.transactions.length()").value(6))
-			.andExpect(jsonPath("$.transactions[0].content").value(transaction7.getContent()))
-			.andExpect(jsonPath("$.transactions[1].content").value(transaction6.getContent()))
-			.andExpect(jsonPath("$.transactions[2].content").value(transaction5.getContent()))
-			.andExpect(jsonPath("$.transactions[0].amount").value(transaction7.getAmount()))
-			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction7.getTransactionType().name()))
+			.andExpect(jsonPath("$.transactions.length()").value(3))
+			.andExpect(jsonPath("$.transactions[0].content").value(transaction3.getContent()))
+			.andExpect(jsonPath("$.transactions[1].content").value(transaction2.getContent()))
+			.andExpect(jsonPath("$.transactions[2].content").value(transaction1.getContent()))
+			.andExpect(jsonPath("$.transactions[0].amount").value(transaction3.getAmount()))
+			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
 			.andExpect(jsonPath("$.transactions[0].categoryName").value(category.getName()))
 			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member.getNickname()))
 			.andDo(print());
