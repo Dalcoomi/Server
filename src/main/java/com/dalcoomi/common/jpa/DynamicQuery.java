@@ -1,6 +1,7 @@
 package com.dalcoomi.common.jpa;
 
-import java.util.Objects;
+import static java.util.Objects.isNull;
+
 import java.util.function.Function;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -13,8 +14,17 @@ import lombok.RequiredArgsConstructor;
 public class DynamicQuery {
 
 	public static <T> BooleanExpression generateEq(T value, Function<T, BooleanExpression> function) {
-		if (Objects.isNull(value)) {
+		if (isNull(value)) {
 			return null;
+		}
+
+		return function.apply(value);
+	}
+
+	public static <T> BooleanExpression generateEqOrIsNull(T value, Function<T, BooleanExpression> function,
+		BooleanExpression nullCondition) {
+		if (isNull(value)) {
+			return nullCondition;
 		}
 
 		return function.apply(value);
@@ -22,7 +32,7 @@ public class DynamicQuery {
 
 	@SuppressWarnings("rawtypes")
 	public static <T extends SimpleExpression> BooleanExpression generateIsNull(Boolean value, T field) {
-		if (Objects.isNull(value)) {
+		if (isNull(value)) {
 			return null;
 		}
 

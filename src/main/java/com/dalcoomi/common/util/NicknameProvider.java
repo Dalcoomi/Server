@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class NicknameProvider {
 
-	private static final String SEPARATOR = " #";
+	private static final String SEPARATOR = "#";
 
 	private final Random random;
 
