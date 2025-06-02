@@ -86,7 +86,7 @@ public class TeamService {
 	public TeamsInfo getMyTeams(Long memberId) {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 
-		List<Team> teams = teamMembers.stream().map(TeamMember::getTeam).toList();
+		List<Team> teams = teamMembers.stream().map(TeamMember::getTeam).toList().reversed();
 
 		List<Long> teamIds = teams.stream().map(Team::getId).toList();
 
