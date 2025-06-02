@@ -58,4 +58,8 @@ public class MemberService {
 
 		return member.getId();
 	}
+
+	public Member getMember(Long memberId) {
+		return memberRepository.findById(memberId);
+	}
 }
