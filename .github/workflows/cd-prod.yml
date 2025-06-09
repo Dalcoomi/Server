@@ -1,0 +1,194 @@
+name: Dalcoomi CD for Prod
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  move-files:
+    name: move-files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with Submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULE_PAT }}
+          fetch-depth: 0
+
+      - name: Public IP
+        id: ip
+        uses: haythem/public-ip@v1.3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Github Actions IP 보안그룹 추가
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      - name: AWS EC2 Create Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_PROD_HOST }}
+          username: ${{ secrets.EC2_PROD_USERNAME }}
+          key: ${{ secrets.EC2_PROD_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          timeout: 60s
+          script: |
+            mkdir -p /home/ubuntu/dalcoomi/
+            mkdir -p /home/ubuntu/dalcoomi/logs/spring
+
+      - name: Docker env File
+        run:
+          cp src/main/resources/config/prod.env ./infra/.env
+
+      - name: AWS EC2 Copy Files
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_PROD_HOST }}
+          username: ${{ secrets.EC2_PROD_USERNAME }}
+          key: ${{ secrets.EC2_PROD_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          timeout: 60s
+          source: "infra"
+          target: "/home/ubuntu/dalcoomi"
+
+      - name: Github Actions IP 보안그룹 삭제
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+  deploy:
+    name: deploy
+    needs: move-files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with Submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULE_PAT }}
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'corretto'
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Gradle 실행 권한 부여
+        run: chmod +x gradlew
+
+      - name: Build without test
+        run: ./gradlew build -x test
+
+      - name: Docker Buildx setting
+        uses: docker/setup-buildx-action@v3.8.0
+
+      - name: Dockerhub Login
+        uses: docker/login-action@v3.3.0
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Dockerhub build and push
+        uses: docker/build-push-action@v6.10.0
+        with:
+          context: .
+          file: ./infra/Dockerfile-prod
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO }}:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO }}:${{ github.sha }}
+          build-args: |
+            "SPRING_ACTIVE_PROFILE=prod"
+          platforms: |
+            linux/amd64
+            linux/arm64
+
+      - name: Public IP
+        id: ip
+        uses: haythem/public-ip@v1.3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Github Actions IP 보안그룹 추가
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      - name: AWS EC2 Server Deploy
+        uses: appleboy/ssh-action@master
+        env:
+          COMPOSE: "dalcoomi/infra/docker-compose-prod.yml"
+        with:
+          envs: COMPOSE
+          host: ${{ secrets.EC2_PROD_HOST }}
+          username: ${{ secrets.EC2_PROD_USERNAME }}
+          key: ${{ secrets.EC2_PROD_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          timeout: 300s
+          script: |
+            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+            
+            # 헬스체크를 위한 기존 컨테이너 확인
+            if [ "$(docker ps -q -f name=dalcoomi-spring-prod)" ]; then
+              echo "기존 컨테이너 중지 중..."
+              docker-compose -f $COMPOSE down
+            fi
+            
+            # 최신 이미지 pull
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO }}:latest
+            
+            # 새 컨테이너 시작
+            docker-compose -f $COMPOSE up -d
+            
+            # 사용하지 않는 이미지만 정리 (볼륨은 보존)
+            docker image prune -f
+            
+            # 컨테이너 상태 확인
+            sleep 30
+            if [ "$(docker ps -q -f name=dalcoomi-spring-prod)" ]; then
+              echo "✅ 배포 성공: 컨테이너가 정상적으로 실행 중입니다."
+              docker ps -f name=dalcoomi
+            else
+              echo "❌ 배포 실패: 컨테이너가 실행되지 않았습니다."
+              docker logs dalcoomi-spring-prod --tail 50
+              exit 1
+            fi
+            
+            echo "##### Dalcoomi Server Prod 배포 완료 #####"
+
+      - name: Github Actions IP 보안그룹 삭제
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      - name: Deployment Status Notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🎉 배포가 성공적으로 완료되었습니다!"
+          else
+            echo "🚨 배포 중 오류가 발생했습니다."
+          fi

@@ -1,0 +1,80 @@
+package com.dalcoomi.transaction.presentation;
+
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
+
+import org.springframework.lang.Nullable;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.dalcoomi.auth.config.AuthMember;
+import com.dalcoomi.transaction.application.TransactionService;
+import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
+import com.dalcoomi.transaction.dto.TransactionsInfo;
+import com.dalcoomi.transaction.dto.request.TransactionRequest;
+import com.dalcoomi.transaction.dto.response.GetMyTransactionResponse;
+import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
+
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/transaction")
+@RequiredArgsConstructor
+public class TransactionController {
+
+	private final TransactionService transactionService;
+
+	@PostMapping
+	@ResponseStatus(CREATED)
+	public void createTransaction(@AuthMember Long memberId, @RequestBody TransactionRequest request) {
+		Transaction transaction = Transaction.from(request);
+
+		transactionService.createTransaction(memberId, request.categoryId(), transaction);
+	}
+
+	@GetMapping
+	@ResponseStatus(OK)
+	public GetTransactionsResponse getTransactions(@AuthMember Long memberId,
+		@RequestParam("teamId") @Nullable Long teamId, @RequestParam("year") Integer year,
+		@RequestParam("month") Integer month) {
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(memberId, teamId, year, month);
+
+		TransactionsInfo transactionsInfo = transactionService.getTransactions(criteria);
+
+		return GetTransactionsResponse.from(transactionsInfo);
+	}
+
+	@GetMapping("/{transactionId}")
+	@ResponseStatus(OK)
+	public GetMyTransactionResponse getMyTransaction(@AuthMember Long memberId,
+		@PathVariable("transactionId") Long transactionId) {
+		Transaction transaction = transactionService.getMyTransaction(memberId, transactionId);
+
+		return GetMyTransactionResponse.from(transaction);
+	}
+
+	@PutMapping("/{transactionId}")
+	@ResponseStatus(OK)
+	public void updateTransaction(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId,
+		@RequestBody TransactionRequest request) {
+		Transaction transaction = Transaction.from(request);
+
+		transactionService.updateTransaction(memberId, transactionId, request.categoryId(), transaction);
+	}
+
+	@DeleteMapping("/{transactionId}")
+	@ResponseStatus(OK)
+	public void deleteTransaction(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId) {
+
+		transactionService.deleteTransaction(memberId, transactionId);
+	}
+}
