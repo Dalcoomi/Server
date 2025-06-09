@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-	public static final String ALLOWED_METHOD_NAMES = "GET,HEAD,POST,PUT,DELETE,TRACE,OPTIONS,PATCH";
+	public static final String ALLOWED_METHOD_NAMES = "GET,POST,PUT,PATCH,DELETE,TRACE,OPTIONS,HEAD";
 
 	@Value("${cors.allowed-origins}")
 	private List<String> allowedOrigins;
@@ -27,7 +27,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 		registry.addMapping("/**")
 			.allowedOrigins(allowedOrigins.toArray(new String[0]))
 			.allowedMethods(ALLOWED_METHOD_NAMES.split(","))
-			.exposedHeaders("Authorization", "Authorization-Refresh", LOCATION)
+			.exposedHeaders("Authorization", LOCATION)
 			.allowCredentials(true);
 	}
 
