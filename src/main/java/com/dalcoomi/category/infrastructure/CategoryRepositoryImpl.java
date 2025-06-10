@@ -57,7 +57,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 				categoryJpaEntity.deletedAt.isNull(),
 				memberJpaEntity.deletedAt.isNull()
 			)
-			.orderBy(categoryJpaEntity.name.asc())
+			.orderBy(categoryJpaEntity.id.asc())
 			.fetch();
 
 		return categories.stream().map(CategoryJpaEntity::toModel).toList();
@@ -76,7 +76,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 				categoryJpaEntity.deletedAt.isNull(),
 				memberJpaEntity.deletedAt.isNull()
 			)
-			.orderBy(categoryJpaEntity.name.asc())
+			.orderBy(categoryJpaEntity.id.asc())
 			.fetch();
 
 		return categories.stream().map(CategoryJpaEntity::toModel).toList();
