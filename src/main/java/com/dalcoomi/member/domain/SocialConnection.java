@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 public class SocialConnection {
 
-	private static final int SOCIAL_ID_LENGTH = 30;
+	private static final int SOCIAL_ID_LENGTH = 50;
 
 	private final Long id;
 	private final Member member;
