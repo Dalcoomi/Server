@@ -49,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		log.info("들어온 요청 - URI: {}, Query: {}, Method: {}", requestUri, queryString != null ? queryString : "쿼리 스트링 없음",
 			method);
 
-		if ("OPTIONS".equalsIgnoreCase(method) || isAllowedUri(requestUri)) {
+		if ("HEAD".equalsIgnoreCase(method) || isAllowedUri(requestUri)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
