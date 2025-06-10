@@ -49,12 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		log.info("들어온 요청 - URI: {}, Query: {}, Method: {}", requestUri, queryString != null ? queryString : "쿼리 스트링 없음",
 			method);
 
-		if ("OPTIONS".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method)) {
-			log.info("OPTIONS, HEAD 요청이므로 JWT 필터 통과");
-			filterChain.doFilter(request, response);
-			return;
-		}
-
 		if (isAllowedUri(requestUri)) {
 			filterChain.doFilter(request, response);
 			return;
