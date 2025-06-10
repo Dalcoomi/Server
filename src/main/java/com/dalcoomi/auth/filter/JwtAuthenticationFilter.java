@@ -44,11 +44,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		@NonNull FilterChain filterChain) throws ServletException, IOException {
 		String requestUri = request.getRequestURI();
 		String queryString = request.getQueryString();
+		String method = request.getMethod();
 
 		log.info("들어온 요청 - URI: {}, Query: {}, Method: {}", requestUri, queryString != null ? queryString : "쿼리 스트링 없음",
-			request.getMethod());
+			method);
 
-		if (isAllowedUri(requestUri)) {
+		if ("OPTIONS".equalsIgnoreCase(method) || isAllowedUri(requestUri)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
