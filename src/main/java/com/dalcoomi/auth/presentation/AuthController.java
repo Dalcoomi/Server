@@ -18,9 +18,7 @@ import com.dalcoomi.member.dto.SocialInfo;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -31,9 +29,6 @@ public class AuthController {
 	@PostMapping("/login")
 	@ResponseStatus(OK)
 	public LoginResponse login(@RequestBody @Valid LoginRequest request) {
-		log.info("request.socialId() = {}", request.socialId());
-		log.info("request.socialType() = {}", request.socialType());
-
 		SocialInfo socialInfo = SocialInfo.builder()
 			.socialId(request.socialId())
 			.socialType(request.socialType())
