@@ -20,8 +20,12 @@ public class AuthService {
 
 	@Transactional
 	public TokenInfo login(SocialInfo socialInfo) {
+		log.info("socialType={}", socialInfo.socialType());
+
 		Long memberId = socialConnectionRepository.findMemberIdBySocialIdAndSocialType(socialInfo.socialId(),
 			socialInfo.socialType());
+
+		log.info("memberId: {}", memberId);
 
 		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId);
 
