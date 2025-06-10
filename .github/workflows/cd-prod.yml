@@ -1,14 +1,17 @@
 name: Dalcoomi Server CD for Prod
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: [ "Dalcoomi Server CI" ]
+    types: [ completed ]
+    branches: [ main ]
 
 jobs:
   move-files:
     name: move-files
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     steps:
       - name: Checkout with Submodule
         uses: actions/checkout@v4
