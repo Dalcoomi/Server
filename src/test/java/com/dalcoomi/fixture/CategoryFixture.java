@@ -40,7 +40,7 @@ public final class CategoryFixture {
 	}
 
 	public static Category getCategory3(Member member) {
-		String name = "게임";
+		String name = "마트";
 		String iconUrl = "https://example.com/111222333";
 		boolean isActive = true;
 
