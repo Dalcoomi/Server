@@ -1,5 +1,6 @@
 package com.dalcoomi.common.config;
 
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.LOCATION;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 		registry.addMapping("/**")
 			.allowedOrigins(allowedOrigins.toArray(new String[0]))
 			.allowedMethods(ALLOWED_METHOD_NAMES.split(","))
-			.exposedHeaders("Authorization", LOCATION)
+			.exposedHeaders(AUTHORIZATION, LOCATION)
 			.allowCredentials(true);
 	}
 
