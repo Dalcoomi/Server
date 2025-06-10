@@ -54,8 +54,7 @@ public class SecurityConfig {
 				sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(request ->
 				request.requestMatchers(ALLOWED_URIS).permitAll().anyRequest().authenticated())
-			// .addFilterAfter(jwtAuthenticationFilter(), LogoutFilter.class)
-			.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+			.addFilterAfter(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 			.exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
 				log.error("(유효하지 않는 URL) 시큐리티 필터 에러: {}", authException.getMessage(), authException);
 
