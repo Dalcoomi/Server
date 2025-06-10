@@ -8,7 +8,7 @@ Configuration:
         value: "%d{yyyy-MM-dd HH:mm:ss} [%p] [%c{1.1.1.*}] %m%n"
 
       - name: log-dir
-        value: "logs"
+        value: "/logs"
 
   Appenders:
     RollingFile:
