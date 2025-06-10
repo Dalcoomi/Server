@@ -1,6 +1,7 @@
 package com.dalcoomi.auth.config;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import java.util.Arrays;
 
@@ -12,9 +13,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.filter.JwtAuthenticationFilter;
@@ -50,11 +50,10 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.csrf(AbstractHttpConfigurer::disable)
 			.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-			.sessionManagement(sessionManagement ->
-				sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS))
 			.authorizeHttpRequests(request ->
 				request.requestMatchers(ALLOWED_URIS).permitAll().anyRequest().authenticated())
-			.addFilterAfter(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+			.addFilterAfter(jwtAuthenticationFilter(), LogoutFilter.class)
 			.exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
 				log.error("(유효하지 않는 URL) 시큐리티 필터 에러: {}", authException.getMessage(), authException);
 
