@@ -21,7 +21,7 @@ import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
-import com.dalcoomi.transaction.dto.response.GetMyTransactionResponse;
+import com.dalcoomi.transaction.dto.response.GetTransactionResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -55,11 +55,11 @@ public class TransactionController {
 
 	@GetMapping("/{transactionId}")
 	@ResponseStatus(OK)
-	public GetMyTransactionResponse getMyTransaction(@AuthMember Long memberId,
-		@PathVariable("transactionId") Long transactionId) {
-		Transaction transaction = transactionService.getMyTransaction(memberId, transactionId);
+	public GetTransactionResponse getTransaction(@AuthMember Long memberId,
+		@PathVariable("transactionId") Long transactionId, @RequestParam("teamId") @Nullable Long teamId) {
+		Transaction transaction = transactionService.getTransaction(memberId, transactionId, teamId);
 
-		return GetMyTransactionResponse.from(transaction);
+		return GetTransactionResponse.from(transaction);
 	}
 
 	@PutMapping("/{transactionId}")
@@ -73,8 +73,9 @@ public class TransactionController {
 
 	@DeleteMapping("/{transactionId}")
 	@ResponseStatus(OK)
-	public void deleteTransaction(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId) {
+	public void deleteTransaction(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId,
+		@RequestParam("teamId") @Nullable Long teamId) {
 
-		transactionService.deleteTransaction(memberId, transactionId);
+		transactionService.deleteTransaction(memberId, transactionId, teamId);
 	}
 }

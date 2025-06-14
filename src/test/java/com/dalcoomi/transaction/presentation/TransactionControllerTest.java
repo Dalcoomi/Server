@@ -1,5 +1,7 @@
 package com.dalcoomi.transaction.presentation;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_CREATOR_INCONSISTENCY;
+import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_TEAM_INCONSISTENCY;
 import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -85,6 +87,9 @@ class TransactionControllerTest {
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
 
+		Category category = CategoryFixture.getCategory1(member);
+		category = categoryRepository.save(category);
+
 		// 인증 설정
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
 			member.getId().toString(),
@@ -94,9 +99,6 @@ class TransactionControllerTest {
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		Category category = CategoryFixture.getCategory1(member);
-		category = categoryRepository.save(category);
 
 		Long amount = 30000L;
 		String content = "앙";
@@ -139,6 +141,9 @@ class TransactionControllerTest {
 		TeamMember leaderTeamMember = TeamMember.of(team, member);
 		teamMemberRepository.save(leaderTeamMember);
 
+		Category category = CategoryFixture.getCategory1(member);
+		category = categoryRepository.save(category);
+
 		// 인증 설정
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
 			member.getId().toString(),
@@ -148,9 +153,6 @@ class TransactionControllerTest {
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		Category category = CategoryFixture.getCategory1(member);
-		category = categoryRepository.save(category);
 
 		Long amount = 30000L;
 		String content = "앙";
@@ -193,16 +195,6 @@ class TransactionControllerTest {
 		TeamMember teamMember = TeamMember.of(team, member);
 		teamMemberRepository.save(teamMember);
 
-		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-
 		Category category = CategoryFixture.getCategory1(member);
 		category = categoryRepository.save(category);
 
@@ -217,6 +209,16 @@ class TransactionControllerTest {
 		List<Transaction> transactions = Arrays.asList(transaction1, transaction2, transaction3, transaction4,
 			transaction5, transaction6, transaction7, transaction8);
 		transactionRepository.saveAll(transactions);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		int year = 2025;
 		int month = 3;
@@ -291,16 +293,6 @@ class TransactionControllerTest {
 		TeamMember teamMember = TeamMember.of(team, member);
 		teamMemberRepository.save(teamMember);
 
-		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-
 		Category category = CategoryFixture.getCategory1(member);
 		category = categoryRepository.save(category);
 
@@ -310,6 +302,16 @@ class TransactionControllerTest {
 		Transaction transaction4 = TransactionFixture.getTeamTransactionWithExpense4(member, team.getId(), category);
 		List<Transaction> transactions = Arrays.asList(transaction1, transaction2, transaction3, transaction4);
 		transactionRepository.saveAll(transactions);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
+			member.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		int year = 2025;
 		int month = 3;
@@ -380,11 +382,17 @@ class TransactionControllerTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 특정 거래 내역 조회 성공")
+	@DisplayName("통합 테스트 - 개인 특정 거래 내역 조회 성공")
 	void get_my_transaction_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
+
+		Category category = CategoryFixture.getCategory1(member);
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
+		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
@@ -395,12 +403,6 @@ class TransactionControllerTest {
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		Category category = CategoryFixture.getCategory1(member);
-		category = categoryRepository.save(category);
-
-		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
-		transaction1 = transactionRepository.save(transaction1);
 
 		// when & then
 		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
@@ -416,11 +418,114 @@ class TransactionControllerTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 특정 거래 내역 수정 성공")
-	void update_transaction_success() throws Exception {
+	@DisplayName("통합 테스트 - 그룹 특정 거래 내역 조회 성공")
+	void get_team_transaction_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team = TeamFixture.getTeam1(member1);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member1);
+		teamMemberRepository.save(teamMember1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		TeamMember teamMember2 = TeamMember.of(team, member2);
+		teamMemberRepository.save(teamMember2);
+
+		Category category = CategoryFixture.getCategory1(member1);
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member2, team.getId(), category);
+		transaction1 = transactionRepository.save(transaction1);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
+			member1.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+				.param("teamId", String.valueOf(team.getId()))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.transactionId").value(transaction1.getId()))
+			.andExpect(jsonPath("$.creatorNickname").value(transaction1.getCreator().getNickname()))
+			.andExpect(jsonPath("$.amount").value(transaction1.getAmount()))
+			.andExpect(jsonPath("$.content").value(transaction1.getContent()))
+			.andExpect(jsonPath("$.transactionType").value(transaction1.getTransactionType().name()))
+			.andExpect(jsonPath("$.categoryName").value(category.getName()))
+			.andExpect(jsonPath("$.iconUrl").value(category.getIconUrl()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 타 그룹 특정 거래 내역 조회 실패")
+	void get_other_team_transaction_fail() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team = TeamFixture.getTeam1(member1);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member1);
+		teamMemberRepository.save(teamMember1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		Team team2 = TeamFixture.getTeam2(member2);
+		team2 = teamRepository.save(team2);
+
+		TeamMember teamMember2 = TeamMember.of(team2, member2);
+		teamMemberRepository.save(teamMember2);
+
+		Category category = CategoryFixture.getCategory1(member1);
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member2, team2.getId(), category);
+		transaction1 = transactionRepository.save(transaction1);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
+			member1.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+				.param("teamId", String.valueOf(team.getId()))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value(TRANSACTION_TEAM_INCONSISTENCY.getMessage()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 개인 특정 거래 내역 수정 성공")
+	void update_my_transaction_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
+
+		Category category = CategoryFixture.getCategory1(member);
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
+		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
@@ -431,12 +536,6 @@ class TransactionControllerTest {
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		Category category = CategoryFixture.getCategory1(member);
-		category = categoryRepository.save(category);
-
-		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
-		transaction1 = transactionRepository.save(transaction1);
 
 		Long amount = 20000L;
 		String content = "엉";
@@ -453,7 +552,7 @@ class TransactionControllerTest {
 			.andExpect(status().isOk())
 			.andDo(print());
 
-		Transaction transaction = transactionRepository.findByIdAndCreatorId(transaction1.getId(), member.getId());
+		Transaction transaction = transactionRepository.findById(transaction1.getId());
 
 		assertThat(transaction.getCreator().getId()).isEqualTo(member.getId());
 		assertThat(transaction.getAmount()).isEqualTo(amount);
@@ -463,11 +562,69 @@ class TransactionControllerTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 특정 거래 내역 삭제 성공")
-	void delete_transaction_success() throws Exception {
+	@DisplayName("통합 테스트 - 타 그룹원의 특정 거래 내역 수정 실패")
+	void update_other_team_member_transaction_fail() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team = TeamFixture.getTeam1(member1);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member1);
+		teamMemberRepository.save(teamMember1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		TeamMember teamMember2 = TeamMember.of(team, member2);
+		teamMemberRepository.save(teamMember2);
+
+		Category category = CategoryFixture.getCategory1(member1);
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member2, team.getId(), category);
+		transaction1 = transactionRepository.save(transaction1);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
+			member1.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		Long amount = 20000L;
+		String content = "엉";
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 2, 12, 0);
+		TransactionRequest request = new TransactionRequest(team.getId(), amount, content, transactionDate, EXPENSE,
+			category.getId());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(put("/api/transaction/{transactionId}", transaction1.getId())
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value(TRANSACTION_CREATOR_INCONSISTENCY.getMessage()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 개인 특정 거래 내역 삭제 성공")
+	void delete_my_transaction_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
+
+		Category category = CategoryFixture.getCategory1(member);
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
+		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
@@ -479,16 +636,53 @@ class TransactionControllerTest {
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-		Category category = CategoryFixture.getCategory1(member);
-		category = categoryRepository.save(category);
-
-		Transaction transaction1 = TransactionFixture.getTransactionWithExpense1(member, category);
-		transaction1 = transactionRepository.save(transaction1);
-
 		// when & then
 		mockMvc.perform(delete("/api/transaction/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 타 그룹원의 특정 거래 내역 삭제 실패")
+	void delete_other_team_member_transaction_fail() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team = TeamFixture.getTeam1(member1);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member1);
+		teamMemberRepository.save(teamMember1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		TeamMember teamMember2 = TeamMember.of(team, member2);
+		teamMemberRepository.save(teamMember2);
+
+		Category category = CategoryFixture.getCategory1(member1);
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member2, team.getId(), category);
+		transaction1 = transactionRepository.save(transaction1);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
+			member1.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(delete("/api/transaction/{transactionId}", transaction1.getId())
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value(TRANSACTION_CREATOR_INCONSISTENCY.getMessage()))
 			.andDo(print());
 	}
 }

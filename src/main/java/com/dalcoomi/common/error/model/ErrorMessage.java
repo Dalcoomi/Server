@@ -51,6 +51,8 @@ public enum ErrorMessage {
 	TRANSACTION_NOT_FOUND("거래 내역이 존재하지 않습니다."),
 	TRANSACTION_INVALID_CONTENT("유효하지 않는 거래 내용입니다."),
 	TRANSACTION_INVALID_AMOUNT("유효하지 않는 금액입니다."),
+	TRANSACTION_TEAM_INCONSISTENCY("해당 거래 내역의 그룹만 가능합니다."),
+	TRANSACTION_CREATOR_INCONSISTENCY("해당 거래 내역 작성자만 가능합니다."),
 
 	TEAM_NOT_FOUND("존재하지 않는 그룹입니다."),
 	TEAM_INVALID_INVITATION_CODE("유효하지 않는 초대 코드입니다."),

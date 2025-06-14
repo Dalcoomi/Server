@@ -11,7 +11,7 @@ public interface TransactionRepository {
 
 	List<Transaction> saveAll(List<Transaction> transaction);
 
-	Transaction findByIdAndCreatorId(Long transactionId, Long creatorId);
+	Transaction findById(Long transactionId);
 
 	List<Transaction> findTransactions(TransactionSearchCriteria criteria);
 
