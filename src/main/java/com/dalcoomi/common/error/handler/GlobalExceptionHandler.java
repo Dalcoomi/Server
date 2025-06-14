@@ -15,7 +15,6 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import java.time.DateTimeException;
 import java.util.List;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.dalcoomi.common.error.exception.BadRequestException;
 import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.error.exception.DalcoomiException;
 import com.dalcoomi.common.error.exception.ImageException;
