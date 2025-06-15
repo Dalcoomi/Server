@@ -8,8 +8,9 @@ import com.dalcoomi.transaction.domain.TransactionType;
 import lombok.Builder;
 
 @Builder
-public record GetMyTransactionResponse(
+public record GetTransactionResponse(
 	Long transactionId,
+	String creatorNickname,
 	Long amount,
 	String content,
 	LocalDateTime transactionDate,
@@ -19,9 +20,10 @@ public record GetMyTransactionResponse(
 	String iconUrl
 ) {
 
-	public static GetMyTransactionResponse from(Transaction transaction) {
-		return GetMyTransactionResponse.builder()
+	public static GetTransactionResponse from(Transaction transaction) {
+		return GetTransactionResponse.builder()
 			.transactionId(transaction.getId())
+			.creatorNickname(transaction.getCreator().getNickname())
 			.amount(transaction.getAmount())
 			.content(transaction.getContent())
 			.transactionDate(transaction.getTransactionDate())

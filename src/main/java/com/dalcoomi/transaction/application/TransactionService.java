@@ -1,14 +1,18 @@
 package com.dalcoomi.transaction.application;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
+import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_CREATOR_INCONSISTENCY;
+import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_TEAM_INCONSISTENCY;
 
 import java.util.List;
 
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.category.application.repository.CategoryRepository;
 import com.dalcoomi.category.domain.Category;
+import com.dalcoomi.common.error.exception.BadRequestException;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
@@ -52,13 +56,32 @@ public class TransactionService {
 	}
 
 	@Transactional(readOnly = true)
-	public Transaction getMyTransaction(Long memberId, Long transactionId) {
-		return transactionRepository.findByIdAndCreatorId(transactionId, memberId);
+	public Transaction getTransaction(Long memberId, Long transactionId, @Nullable Long teamId) {
+		validateTeamMember(teamId, memberId);
+
+		Transaction transaction = transactionRepository.findById(transactionId);
+
+		validateTransactionTeam(transaction, teamId);
+
+		if (teamId == null) {
+			validateTransactionCreator(transaction, memberId);
+		}
+
+		return transaction;
 	}
 
 	@Transactional
 	public void updateTransaction(Long memberId, Long transactionId, Long categoryId, Transaction transaction) {
-		Transaction currentTransaction = transactionRepository.findByIdAndCreatorId(transactionId, memberId);
+		Long teamId = transaction.getTeamId();
+
+		validateTeamMember(teamId, memberId);
+
+		Transaction currentTransaction = transactionRepository.findById(transactionId);
+
+		validateTransactionTeam(currentTransaction, teamId);
+
+		validateTransactionCreator(currentTransaction, memberId);
+
 		Category category = categoryRepository.findById(categoryId);
 
 		currentTransaction.updateCategory(category);
@@ -71,21 +94,43 @@ public class TransactionService {
 	}
 
 	@Transactional
-	public void deleteTransaction(Long memberId, Long transactionId) {
-		Transaction transaction = transactionRepository.findByIdAndCreatorId(transactionId, memberId);
+	public void deleteTransaction(Long memberId, Long transactionId, @Nullable Long teamId) {
+		validateTeamMember(teamId, memberId);
+
+		Transaction transaction = transactionRepository.findById(transactionId);
+
+		validateTransactionTeam(transaction, teamId);
+
+		validateTransactionCreator(transaction, memberId);
 
 		transaction.softDelete();
 
 		transactionRepository.save(transaction);
 	}
 
-	private void validateTeamMember(Long teamId, Long memberId) {
+	private void validateTeamMember(@Nullable Long teamId, Long memberId) {
 		if (teamId == null) {
 			return;
 		}
 
 		if (!teamMemberRepository.existsByTeamIdAndMemberId(teamId, memberId)) {
 			throw new NotFoundException(TEAM_MEMBER_NOT_FOUND);
+		}
+	}
+
+	private void validateTransactionTeam(Transaction transaction, @Nullable Long teamId) {
+		if (teamId == null) {
+			return;
+		}
+
+		if (!transaction.getTeamId().equals(teamId)) {
+			throw new BadRequestException(TRANSACTION_TEAM_INCONSISTENCY);
+		}
+	}
+
+	private void validateTransactionCreator(Transaction transaction, Long memberId) {
+		if (!transaction.getCreator().getId().equals(memberId)) {
+			throw new BadRequestException(TRANSACTION_CREATOR_INCONSISTENCY);
 		}
 	}
 }
