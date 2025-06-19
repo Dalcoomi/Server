@@ -1,7 +1,13 @@
 package com.dalcoomi.member.application;
 
-import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE;
+import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_1;
+import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_2;
+import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_3;
+import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
+
+import java.security.SecureRandom;
+import java.util.Random;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +40,7 @@ public class MemberService {
 
 		String name = socialInfo.memberInfo().name();
 		String nickname = new NicknameProvider().generateUniqueNickname(name, 4);
+		String randomProfileUrl = getRandomDefaultProfileImage();
 
 		Member member = Member.builder()
 			.email(socialInfo.memberInfo().email())
@@ -41,7 +48,7 @@ public class MemberService {
 			.nickname(nickname)
 			.birthday(socialInfo.memberInfo().birthday())
 			.gender(socialInfo.memberInfo().gender())
-			.profileImageUrl(DEFAULT_PROFILE_IMAGE)
+			.profileImageUrl(randomProfileUrl)
 			.serviceAgreement(socialInfo.memberInfo().serviceAgreement())
 			.collectionAgreement(socialInfo.memberInfo().collectionAgreement())
 			.build();
@@ -61,5 +68,19 @@ public class MemberService {
 
 	public Member getMember(Long memberId) {
 		return memberRepository.findById(memberId);
+	}
+
+	private String getRandomDefaultProfileImage() {
+		String[] defaultImages = {
+			DEFAULT_PROFILE_IMAGE_1,
+			DEFAULT_PROFILE_IMAGE_2,
+			DEFAULT_PROFILE_IMAGE_3,
+			DEFAULT_PROFILE_IMAGE_4
+		};
+
+		Random random = new SecureRandom();
+		int randomIndex = random.nextInt(defaultImages.length);
+
+		return defaultImages[randomIndex];
 	}
 }
