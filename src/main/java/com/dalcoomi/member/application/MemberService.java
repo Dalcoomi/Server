@@ -66,6 +66,7 @@ public class MemberService {
 		return member.getId();
 	}
 
+	@Transactional(readOnly = true)
 	public Member getMember(Long memberId) {
 		return memberRepository.findById(memberId);
 	}

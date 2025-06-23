@@ -68,7 +68,10 @@ class CategoryControllerTest {
 	@DisplayName("통합 테스트 - 개인 지출 카테고리 조회 성공")
 	void get_my_category_with_transaction_type_success() throws Exception {
 		// given
-		Member member = MemberFixture.getMember1();
+		Member admin = MemberFixture.getMember1();
+		admin = memberRepository.save(admin);
+
+		Member member = MemberFixture.getMember2();
 		member = memberRepository.save(member);
 
 		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
@@ -80,8 +83,8 @@ class CategoryControllerTest {
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-		Category category1 = CategoryFixture.getCategory1(member);
-		Category category2 = CategoryFixture.getCategory2(member);
+		Category category1 = CategoryFixture.getCategory1(admin);
+		Category category2 = CategoryFixture.getCategory2(admin);
 		Category category3 = CategoryFixture.getCategory3(member);
 
 		List<Category> categories = List.of(category1, category2, category3);

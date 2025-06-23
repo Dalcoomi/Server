@@ -11,4 +11,12 @@ public class DalcoomiException extends RuntimeException {
 	public DalcoomiException(ErrorMessage errorMessage, Throwable cause) {
 		super(errorMessage.getMessage(), cause);
 	}
+
+	public DalcoomiException(String message) {
+		super(message);
+	}
+
+	public DalcoomiException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }
