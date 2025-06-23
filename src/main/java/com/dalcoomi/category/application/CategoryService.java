@@ -26,32 +26,19 @@ public class CategoryService {
 	private final TeamMemberRepository teamMemberRepository;
 
 	@Transactional(readOnly = true)
-	public List<CategoryInfo> getMyCategories(Long memberId, TransactionType transactionType) {
-		List<Category> categories = categoryRepository.findMyCategories(memberId, transactionType);
-
-		return categories.stream().map(CategoryInfo::from).toList();
-	}
-
-	@Transactional(readOnly = true)
-	public List<CategoryInfo> getTeamCategories(Long memberId, Long teamId, TransactionType transactionType) {
+	public List<CategoryInfo> getCategories(Long memberId, @Nullable Long teamId, TransactionType transactionType) {
 		validateTeamMember(teamId, memberId);
 
-		List<Category> categories = categoryRepository.findTeamCategories(teamId, transactionType);
+		List<Category> categories = findCategories(memberId, teamId, transactionType);
 
 		return categories.stream().map(CategoryInfo::from).toList();
 	}
 
 	@Transactional(readOnly = true)
 	public List<String> fetchCategoryNames(Long memberId, @Nullable Long teamId) {
-		List<Category> categories;
+		validateTeamMember(teamId, memberId);
 
-		if (teamId != null) {
-			validateTeamMember(teamId, memberId);
-
-			categories = categoryRepository.findTeamCategories(teamId, EXPENSE);
-		} else {
-			categories = categoryRepository.findMyCategories(memberId, EXPENSE);
-		}
+		List<Category> categories = findCategories(memberId, teamId, EXPENSE);
 
 		return categories.stream().map(Category::getName).toList();
 	}
@@ -64,5 +51,13 @@ public class CategoryService {
 		if (!teamMemberRepository.existsByTeamIdAndMemberId(teamId, memberId)) {
 			throw new NotFoundException(TEAM_MEMBER_NOT_FOUND);
 		}
+	}
+
+	private List<Category> findCategories(Long memberId, @Nullable Long teamId, TransactionType transactionType) {
+		if (teamId != null) {
+			return categoryRepository.findTeamCategories(teamId, transactionType);
+		}
+
+		return categoryRepository.findMyCategories(memberId, transactionType);
 	}
 }

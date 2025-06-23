@@ -26,7 +26,7 @@ import com.dalcoomi.team.dto.response.GetTeamResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/team")
+@RequestMapping("/api/teams")
 @RequiredArgsConstructor
 public class TeamController {
 
