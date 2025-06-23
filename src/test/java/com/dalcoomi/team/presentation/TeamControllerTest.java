@@ -112,7 +112,7 @@ class TeamControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		String result = mockMvc.perform(post("/api/team")
+		String result = mockMvc.perform(post("/api/teams")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isCreated())
@@ -155,7 +155,7 @@ class TeamControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/team")
+		mockMvc.perform(post("/api/teams")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().is5xxServerError())
@@ -209,7 +209,7 @@ class TeamControllerTest {
 		String json = objectMapper.writeValueAsString(request);
 
 		// when & then
-		mockMvc.perform(post("/api/team")
+		mockMvc.perform(post("/api/teams")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isConflict())
@@ -243,7 +243,7 @@ class TeamControllerTest {
 		String invitationCode = "12345678";
 
 		// when & then
-		mockMvc.perform(post("/api/team/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/teams/join/{invitationCode}", invitationCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
@@ -282,7 +282,7 @@ class TeamControllerTest {
 		String invitationCode = "12345678";
 
 		// when & then
-		mockMvc.perform(post("/api/team/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/teams/join/{invitationCode}", invitationCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isConflict())
 			.andExpect(jsonPath("$.message").value(TEAM_MEMBER_ALREADY_EXISTS.getMessage()))
@@ -318,7 +318,7 @@ class TeamControllerTest {
 		String invitationCode = "12345678";
 
 		// when & then
-		mockMvc.perform(post("/api/team/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/teams/join/{invitationCode}", invitationCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isConflict())
 			.andExpect(jsonPath("$.message").value(TEAM_MEMBER_COUNT_EXCEEDED.getMessage()))
@@ -345,7 +345,7 @@ class TeamControllerTest {
 		String invalidCode = "NOTEXIST";
 
 		// when & then
-		mockMvc.perform(post("/api/team/join/{invitationCode}", invalidCode)
+		mockMvc.perform(post("/api/teams/join/{invitationCode}", invalidCode)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isNotFound())
 			.andExpect(jsonPath("$.message").value(TEAM_NOT_FOUND.getMessage()))
@@ -391,7 +391,7 @@ class TeamControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/team")
+		mockMvc.perform(get("/api/teams")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.groups").isArray())
@@ -425,7 +425,7 @@ class TeamControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/team")
+		mockMvc.perform(get("/api/teams")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.groups").isArray())
@@ -469,7 +469,7 @@ class TeamControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/team/{teamId}", team.getId())
+		mockMvc.perform(get("/api/teams/{teamId}", team.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.teamId").value(team.getId()))
@@ -502,7 +502,7 @@ class TeamControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/team/{teamId}", nonExistentTeamId)
+		mockMvc.perform(get("/api/teams/{teamId}", nonExistentTeamId)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isNotFound())
 			.andExpect(jsonPath("$.message").value(TEAM_NOT_FOUND.getMessage()))
@@ -549,7 +549,7 @@ class TeamControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(delete("/api/team/leave")
+		mockMvc.perform(delete("/api/teams/leave")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -604,7 +604,7 @@ class TeamControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(delete("/api/team/leave")
+		mockMvc.perform(delete("/api/teams/leave")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -660,7 +660,7 @@ class TeamControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(delete("/api/team/leave")
+		mockMvc.perform(delete("/api/teams/leave")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())

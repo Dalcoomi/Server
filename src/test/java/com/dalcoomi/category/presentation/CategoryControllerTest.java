@@ -36,7 +36,6 @@ import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
 import com.dalcoomi.team.domain.TeamMember;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
 @SpringBootTest
@@ -48,9 +47,6 @@ class CategoryControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@Autowired
 	private MemberRepository memberRepository;
@@ -92,7 +88,7 @@ class CategoryControllerTest {
 		categoryRepository.saveAll(categories);
 
 		// when & then
-		mockMvc.perform(get("/api/category/my")
+		mockMvc.perform(get("/api/categories")
 				.param("transactionType", String.valueOf(EXPENSE))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -141,7 +137,7 @@ class CategoryControllerTest {
 		categoryRepository.saveAll(categories);
 
 		// when & then
-		mockMvc.perform(get("/api/category/team")
+		mockMvc.perform(get("/api/categories")
 				.param("teamId", team.getId().toString())
 				.param("transactionType", String.valueOf(EXPENSE))
 				.contentType(APPLICATION_JSON))
