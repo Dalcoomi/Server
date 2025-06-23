@@ -3,6 +3,8 @@ package com.dalcoomi.transaction.presentation;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.util.List;
+
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,26 +14,33 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.dalcoomi.auth.config.AuthMember;
+import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
 import com.dalcoomi.transaction.dto.response.GetTransactionResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
+import com.dalcoomi.transaction.dto.response.UploadReceiptResponse;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/transaction")
+@RequestMapping("/api/transactions")
 @RequiredArgsConstructor
 public class TransactionController {
 
 	private final TransactionService transactionService;
+	private final CategoryService categoryService;
 
 	@PostMapping
 	@ResponseStatus(CREATED)
@@ -39,6 +48,16 @@ public class TransactionController {
 		Transaction transaction = Transaction.from(request);
 
 		transactionService.createTransaction(memberId, request.categoryId(), transaction);
+	}
+
+	@PostMapping("/upload-receipt")
+	@ResponseStatus(OK)
+	public UploadReceiptResponse uploadReceipt(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
+		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") MultipartFile receipt) {
+		List<String> categoryNames = categoryService.fetchCategoryNames(memberId, teamId);
+		List<ReceiptInfo> receiptInfos = transactionService.analyseReceipt(receipt, categoryNames);
+
+		return UploadReceiptResponse.from(receiptInfos);
 	}
 
 	@GetMapping

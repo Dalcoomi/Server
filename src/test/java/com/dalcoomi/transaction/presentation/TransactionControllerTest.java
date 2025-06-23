@@ -110,7 +110,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/transaction")
+		mockMvc.perform(post("/api/transactions")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isCreated())
@@ -164,7 +164,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/transaction")
+		mockMvc.perform(post("/api/transactions")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isCreated())
@@ -224,7 +224,7 @@ class TransactionControllerTest {
 		int month = 3;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
 				.contentType(APPLICATION_JSON))
@@ -267,7 +267,7 @@ class TransactionControllerTest {
 		int month = 12;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
 				.contentType(APPLICATION_JSON))
@@ -317,7 +317,7 @@ class TransactionControllerTest {
 		int month = 3;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("teamId", String.valueOf(team.getId()))
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
@@ -367,7 +367,7 @@ class TransactionControllerTest {
 		int month = 12;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("teamId", String.valueOf(team.getId()))
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
@@ -405,7 +405,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.transactionId").value(transaction1.getId()))
@@ -453,7 +453,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
 				.param("teamId", String.valueOf(team.getId()))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -506,7 +506,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
 				.param("teamId", String.valueOf(team.getId()))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
@@ -546,7 +546,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(put("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(put("/api/transactions/{transactionId}", transaction1.getId())
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -605,7 +605,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(put("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(put("/api/transactions/{transactionId}", transaction1.getId())
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
@@ -637,7 +637,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(delete("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(delete("/api/transactions/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
@@ -679,7 +679,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(delete("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(delete("/api/transactions/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.message").value(TRANSACTION_CREATOR_INCONSISTENCY.getMessage()))

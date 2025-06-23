@@ -24,7 +24,7 @@ import com.dalcoomi.member.dto.response.SignUpResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/member")
+@RequestMapping("/api/members")
 @RequiredArgsConstructor
 public class MemberController {
 
