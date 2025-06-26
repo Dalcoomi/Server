@@ -3,6 +3,7 @@ package com.dalcoomi.transaction.application;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_CREATOR_INCONSISTENCY;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_TEAM_INCONSISTENCY;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA;
 
 import java.util.List;
@@ -30,7 +31,7 @@ import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.dalcoomi.transaction.dto.request.SendBulkToAiServerRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 
@@ -54,7 +55,7 @@ public class TransactionService {
 	private String aiServerUrl;
 
 	@Transactional
-	public void createTransaction(Long memberId, Long categoryId, Transaction transaction) {
+	public void create(Long memberId, Long categoryId, Transaction transaction) {
 		validateTeamMember(transaction.getTeamId(), memberId);
 
 		Member member = memberRepository.findById(memberId);
@@ -67,6 +68,90 @@ public class TransactionService {
 	}
 
 	@Transactional
+	public List<Transaction> create(Long memberId, List<Long> categoryIds, List<Transaction> transactions) {
+		validateTeamMember(transactions.getFirst().getTeamId(), memberId);
+
+		Member member = memberRepository.findById(memberId);
+
+		List<Category> categories = categoryRepository.findAllById(categoryIds);
+
+		if (categories.size() != transactions.size()) {
+			throw new IllegalArgumentException("카테고리와 거래 내역의 개수가 일치하지 않습니다.");
+		}
+
+		for (int i = 0; i < transactions.size(); i++) {
+			Transaction transaction = transactions.get(i);
+			Category category = categories.get(i);
+
+			transaction.updateCreator(member);
+			transaction.updateCategory(category);
+		}
+
+		return transactionRepository.saveAll(transactions);
+	}
+
+	@Transactional(readOnly = true)
+	public TransactionsInfo get(TransactionSearchCriteria criteria) {
+		validateTeamMember(criteria.teamId(), criteria.requesterId());
+
+		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
+
+		return TransactionsInfo.from(transactions);
+	}
+
+	@Transactional(readOnly = true)
+	public Transaction get(Long memberId, Long transactionId, @Nullable Long teamId) {
+		validateTeamMember(teamId, memberId);
+
+		Transaction transaction = transactionRepository.findById(transactionId);
+
+		validateTransactionTeam(transaction, teamId);
+
+		if (teamId == null) {
+			validateTransactionCreator(transaction, memberId);
+		}
+
+		return transaction;
+	}
+
+	@Transactional
+	public void update(Long memberId, Long transactionId, Long categoryId, Transaction transaction) {
+		Long teamId = transaction.getTeamId();
+
+		validateTeamMember(teamId, memberId);
+
+		Transaction currentTransaction = transactionRepository.findById(transactionId);
+
+		validateTransactionTeam(currentTransaction, teamId);
+
+		validateTransactionCreator(currentTransaction, memberId);
+
+		Category category = categoryRepository.findById(categoryId);
+
+		currentTransaction.updateCategory(category);
+		currentTransaction.updateAmount(transaction.getAmount());
+		currentTransaction.updateContent(transaction.getContent());
+		currentTransaction.updateTransactionDate(transaction.getTransactionDate());
+		currentTransaction.updateTransactionType(transaction.getTransactionType());
+
+		transactionRepository.save(currentTransaction);
+	}
+
+	@Transactional
+	public void delete(Long memberId, Long transactionId, @Nullable Long teamId) {
+		validateTeamMember(teamId, memberId);
+
+		Transaction transaction = transactionRepository.findById(transactionId);
+
+		validateTransactionTeam(transaction, teamId);
+
+		validateTransactionCreator(transaction, memberId);
+
+		transaction.softDelete();
+
+		transactionRepository.save(transaction);
+	}
+
 	public List<ReceiptInfo> analyseReceipt(MultipartFile receipt, List<String> categoryNames) {
 		try {
 			MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
@@ -93,73 +178,50 @@ public class TransactionService {
 				.constructCollectionType(List.class, ReceiptInfo.class);
 
 			return objectMapper.readValue(response, listType);
-		} catch (JsonProcessingException je) {
-			log.error("데이터 매핑 오류", je);
+		} catch (Exception e) {
+			log.error("데이터 매핑 오류", e);
 
-			throw new DalcoomiException("영수증 처리 중 오류가 발생했습니다.", je);
+			throw new DalcoomiException("영수증 처리 중 오류가 발생했습니다.", e);
 		}
 	}
 
-	@Transactional(readOnly = true)
-	public TransactionsInfo getTransactions(TransactionSearchCriteria criteria) {
-		validateTeamMember(criteria.teamId(), criteria.requesterId());
+	public void sendToAiServer(String taskId, List<Transaction> transactions) {
+		String updatedTaskId = incrementTaskId(taskId);
 
-		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
+		List<ReceiptInfo> transactionData = transactions.stream()
+			.map(transaction -> ReceiptInfo.builder()
+				.date(transaction.getTransactionDate().toLocalDate())
+				.categoryName(transaction.getCategory().getName())
+				.content(transaction.getContent())
+				.amount(transaction.getAmount())
+				.build())
+			.toList();
 
-		return TransactionsInfo.from(transactions);
-	}
+		SendBulkToAiServerRequest request = SendBulkToAiServerRequest.builder()
+			.taskId(updatedTaskId)
+			.transactions(transactionData)
+			.build();
 
-	@Transactional(readOnly = true)
-	public Transaction getTransaction(Long memberId, Long transactionId, @Nullable Long teamId) {
-		validateTeamMember(teamId, memberId);
+		try {
+			String response = webClient.post()
+				.uri(aiServerUrl + "/transactions")
+				.contentType(APPLICATION_JSON)
+				.bodyValue(request)
+				.retrieve()
+				.onStatus(HttpStatusCode::isError, clientResponse -> {
+					log.error("AI 서버 전송 실패: status={}", clientResponse.statusCode());
 
-		Transaction transaction = transactionRepository.findById(transactionId);
+					return Mono.error(new RuntimeException("AI 서버 전송 중 오류가 발생했습니다."));
+				})
+				.bodyToMono(String.class)
+				.block();
 
-		validateTransactionTeam(transaction, teamId);
+			log.info("AI 서버 전송 성공: taskId={}, response={}", updatedTaskId, response);
+		} catch (Exception e) {
+			log.error("AI 서버 전송 중 오류 발생: taskId={}", updatedTaskId, e);
 
-		if (teamId == null) {
-			validateTransactionCreator(transaction, memberId);
+			throw new DalcoomiException("AI 서버 전송 중 오류가 발생했습니다.", e);
 		}
-
-		return transaction;
-	}
-
-	@Transactional
-	public void updateTransaction(Long memberId, Long transactionId, Long categoryId, Transaction transaction) {
-		Long teamId = transaction.getTeamId();
-
-		validateTeamMember(teamId, memberId);
-
-		Transaction currentTransaction = transactionRepository.findById(transactionId);
-
-		validateTransactionTeam(currentTransaction, teamId);
-
-		validateTransactionCreator(currentTransaction, memberId);
-
-		Category category = categoryRepository.findById(categoryId);
-
-		currentTransaction.updateCategory(category);
-		currentTransaction.updateAmount(transaction.getAmount());
-		currentTransaction.updateContent(transaction.getContent());
-		currentTransaction.updateTransactionDate(transaction.getTransactionDate());
-		currentTransaction.updateTransactionType(transaction.getTransactionType());
-
-		transactionRepository.save(currentTransaction);
-	}
-
-	@Transactional
-	public void deleteTransaction(Long memberId, Long transactionId, @Nullable Long teamId) {
-		validateTeamMember(teamId, memberId);
-
-		Transaction transaction = transactionRepository.findById(transactionId);
-
-		validateTransactionTeam(transaction, teamId);
-
-		validateTransactionCreator(transaction, memberId);
-
-		transaction.softDelete();
-
-		transactionRepository.save(transaction);
 	}
 
 	private void validateTeamMember(@Nullable Long teamId, Long memberId) {
@@ -185,6 +247,26 @@ public class TransactionService {
 	private void validateTransactionCreator(Transaction transaction, Long memberId) {
 		if (!transaction.getCreator().getId().equals(memberId)) {
 			throw new BadRequestException(TRANSACTION_CREATOR_INCONSISTENCY);
+		}
+	}
+
+	private String incrementTaskId(String taskId) {
+		int lastDashIndex = taskId.lastIndexOf('-');
+
+		if (lastDashIndex == -1) {
+			throw new IllegalArgumentException("잘못된 taskId 형식입니다: " + taskId);
+		}
+
+		String prefix = taskId.substring(0, lastDashIndex + 1);
+		String numberPart = taskId.substring(lastDashIndex + 1);
+
+		try {
+			int currentNumber = Integer.parseInt(numberPart);
+			int nextNumber = currentNumber + 1;
+
+			return prefix + nextNumber;
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("taskId의 숫자 부분을 파싱할 수 없습니다: " + taskId, e);
 		}
 	}
 }
