@@ -26,7 +26,7 @@ public class CategoryService {
 	private final TeamMemberRepository teamMemberRepository;
 
 	@Transactional(readOnly = true)
-	public List<CategoryInfo> getCategories(Long memberId, @Nullable Long teamId, TransactionType transactionType) {
+	public List<CategoryInfo> get(Long memberId, @Nullable Long teamId, TransactionType transactionType) {
 		validateTeamMember(teamId, memberId);
 
 		List<Category> categories = findCategories(memberId, teamId, transactionType);

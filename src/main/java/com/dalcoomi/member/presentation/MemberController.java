@@ -58,8 +58,8 @@ public class MemberController {
 
 	@GetMapping
 	@ResponseStatus(OK)
-	public GetMemberResponse getMember(@AuthMember Long memberId) {
-		Member member = memberService.getMember(memberId);
+	public GetMemberResponse get(@AuthMember Long memberId) {
+		Member member = memberService.get(memberId);
 
 		return GetMemberResponse.from(member);
 	}

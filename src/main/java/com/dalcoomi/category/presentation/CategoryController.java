@@ -28,10 +28,9 @@ public class CategoryController {
 
 	@GetMapping
 	@ResponseStatus(OK)
-	public GetCategoriesResponse getTeamCategoryWithTransactionType(@AuthMember Long memberId,
-		@RequestParam("teamId") @Nullable Long teamId,
+	public GetCategoriesResponse get(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
 		@RequestParam("transactionType") TransactionType transactionType) {
-		List<CategoryInfo> categoryInfos = categoryService.getCategories(memberId, teamId, transactionType);
+		List<CategoryInfo> categoryInfos = categoryService.get(memberId, teamId, transactionType);
 
 		return GetCategoriesResponse.from(categoryInfos);
 	}
