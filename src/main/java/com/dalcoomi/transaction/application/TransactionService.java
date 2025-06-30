@@ -204,7 +204,7 @@ public class TransactionService {
 
 		try {
 			String response = webClient.post()
-				.uri(aiServerUrl + "/transactions")
+				.uri(aiServerUrl + "/verification")
 				.contentType(APPLICATION_JSON)
 				.bodyValue(request)
 				.retrieve()
