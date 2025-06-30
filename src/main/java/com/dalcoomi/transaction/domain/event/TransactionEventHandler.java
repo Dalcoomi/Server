@@ -26,12 +26,7 @@ public class TransactionEventHandler {
 			log.info("AI 서버 전송 성공: taskId={}", event.getTaskId());
 
 		} catch (Exception e) {
-			handleAiServerFailure(event, e);
+			log.error("AI 서버 전송 실패: taskId={}, error={}", event.getTaskId(), e.getMessage(), e);
 		}
-	}
-
-	private void handleAiServerFailure(TransactionCreatedEvent event, Exception e) {
-		// 실패 처리 로직
-		log.error("AI 서버 전송 실패: taskId={}, error={}", event.getTaskId(), e.getMessage(), e);
 	}
 }
