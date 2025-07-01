@@ -102,7 +102,7 @@ class TransactionServiceTest {
 	}
 
 	@Test
-	@DisplayName("AI 서버 전송 성공")
+	@DisplayName("다수 거래 내역 AI 서버 전송 성공")
 	void send_to_ai_server_success() {
 		// given
 		Member member = MemberFixture.getMemberWithId1();
@@ -139,7 +139,7 @@ class TransactionServiceTest {
 	}
 
 	@Test
-	@DisplayName("AI 서버 전송 실패")
+	@DisplayName("다수 거래 내역 AI 서버 전송 실패")
 	void send_to_ai_server_fail() {
 		// given
 		Member member = MemberFixture.getMemberWithId1();

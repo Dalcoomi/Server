@@ -1,5 +1,7 @@
 package com.dalcoomi.transaction.application;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.CATEGORY_NOT_FOUND;
+import static com.dalcoomi.common.error.model.ErrorMessage.DOES_NOT_MATCH_CATEGORY_AND_TRANSACTION;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_CREATOR_INCONSISTENCY;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_TEAM_INCONSISTENCY;
@@ -7,6 +9,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
@@ -73,15 +77,30 @@ public class TransactionService {
 
 		Member member = memberRepository.findById(memberId);
 
-		List<Category> categories = categoryRepository.findAllById(categoryIds);
+		List<Category> uniqueCategories = categoryRepository.findAllById(categoryIds);
 
-		if (categories.size() != transactions.size()) {
-			throw new IllegalArgumentException("카테고리와 거래 내역의 개수가 일치하지 않습니다.");
+		Map<Long, Category> categoryMap = uniqueCategories.stream()
+			.collect(Collectors.toMap(Category::getId, category -> category));
+
+		List<Category> orderedCategories = categoryIds.stream()
+			.map(categoryId -> {
+				Category category = categoryMap.get(categoryId);
+
+				if (category == null) {
+					throw new NotFoundException(CATEGORY_NOT_FOUND);
+				}
+
+				return category;
+			})
+			.toList();
+
+		if (orderedCategories.size() != transactions.size()) {
+			throw new IllegalArgumentException(DOES_NOT_MATCH_CATEGORY_AND_TRANSACTION.getMessage());
 		}
 
 		for (int i = 0; i < transactions.size(); i++) {
 			Transaction transaction = transactions.get(i);
-			Category category = categories.get(i);
+			Category category = orderedCategories.get(i);
 
 			transaction.updateCreator(member);
 			transaction.updateCategory(category);
