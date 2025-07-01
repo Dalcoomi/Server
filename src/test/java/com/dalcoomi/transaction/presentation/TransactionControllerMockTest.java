@@ -40,7 +40,6 @@ import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.Transaction;
-import com.dalcoomi.transaction.domain.TransactionType;
 import com.dalcoomi.transaction.domain.event.TransactionEventHandler;
 import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.request.BulkTransactionRequest;
@@ -190,49 +189,33 @@ class TransactionControllerMockTest {
 		String taskId = "1-1";
 
 		List<TransactionRequest> transactionRequests = Arrays.asList(
-			new TransactionRequest(
-				null, // teamId
-				4800L,
-				"커피",
-				LocalDateTime.of(2025, 1, 23, 10, 30),
-				EXPENSE,
-				1L
-			),
-			new TransactionRequest(
-				null,
-				12000L,
-				"칼국수",
-				LocalDateTime.of(2025, 1, 23, 12, 0),
-				EXPENSE,
-				2L
-			)
-		);
+			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, 1L),
+			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE, 2L));
 
 		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
 			.taskId(taskId)
 			.transactions(transactionRequests)
 			.build();
 
-		// Mock 설정 - 저장된 거래 내역들
-		List<Transaction> mockSavedTransactions = Arrays.asList(
-			Transaction.builder()
-				.id(1L)
-				.amount(4800L)
-				.content("커피")
-				.transactionDate(LocalDateTime.of(2025, 1, 23, 10, 30))
-				.transactionType(EXPENSE)
-				.build(),
-			Transaction.builder()
-				.id(2L)
-				.amount(12000L)
-				.content("칼국수")
-				.transactionDate(LocalDateTime.of(2025, 1, 23, 12, 0))
-				.transactionType(EXPENSE)
-				.build()
-		);
+		List<Long> mockCategoryIds = Arrays.asList(transactionRequests.getFirst().categoryId(),
+			transactionRequests.getLast().categoryId());
 
-		given(transactionService.create(eq(memberId), any(List.class), any(List.class)))
-			.willReturn(mockSavedTransactions);
+		List<Transaction> mockSavedTransactions = Arrays.asList(Transaction.builder()
+			.id(1L)
+			.amount(4800L)
+			.content("커피")
+			.transactionDate(LocalDateTime.of(2025, 1, 23, 10, 30))
+			.transactionType(EXPENSE)
+			.build(), Transaction.builder()
+			.id(2L)
+			.amount(12000L)
+			.content("칼국수")
+			.transactionDate(LocalDateTime.of(2025, 1, 23, 12, 0))
+			.transactionType(EXPENSE)
+			.build());
+
+		given(transactionService.create(memberId, mockCategoryIds, mockSavedTransactions)).willReturn(
+			mockSavedTransactions);
 
 		// 인증 설정
 		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId,
@@ -258,26 +241,11 @@ class TransactionControllerMockTest {
 		// given
 		Long memberId = 1L;
 		Long teamId = 2L;
-		String taskId = "team-1";
+		String taskId = "1-1";
 
 		List<TransactionRequest> transactionRequests = Arrays.asList(
-			new TransactionRequest(
-				teamId,
-				25000L,
-				"회식비",
-				LocalDateTime.of(2025, 1, 23, 18, 0),
-				TransactionType.EXPENSE,
-				3L
-			),
-			new TransactionRequest(
-				teamId,
-				15000L,
-				"카페비",
-				LocalDateTime.of(2025, 1, 23, 14, 30),
-				TransactionType.EXPENSE,
-				4L
-			)
-		);
+			new TransactionRequest(teamId, 25000L, "회식비", LocalDateTime.of(2025, 1, 23, 18, 0), EXPENSE, 3L),
+			new TransactionRequest(teamId, 15000L, "카페비", LocalDateTime.of(2025, 1, 23, 14, 30), EXPENSE, 4L));
 
 		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
 			.taskId(taskId)
@@ -285,27 +253,27 @@ class TransactionControllerMockTest {
 			.build();
 
 		// Mock 설정
-		List<Transaction> mockSavedTransactions = Arrays.asList(
-			Transaction.builder()
-				.id(3L)
-				.teamId(teamId)
-				.amount(25000L)
-				.content("회식비")
-				.transactionDate(LocalDateTime.of(2025, 1, 23, 18, 0))
-				.transactionType(TransactionType.EXPENSE)
-				.build(),
-			Transaction.builder()
-				.id(4L)
-				.teamId(teamId)
-				.amount(15000L)
-				.content("카페비")
-				.transactionDate(LocalDateTime.of(2025, 1, 23, 14, 30))
-				.transactionType(TransactionType.EXPENSE)
-				.build()
-		);
+		List<Long> mockCategoryIds = Arrays.asList(transactionRequests.getFirst().categoryId(),
+			transactionRequests.getLast().categoryId());
 
-		given(transactionService.create(eq(memberId), any(List.class), any(List.class)))
-			.willReturn(mockSavedTransactions);
+		List<Transaction> mockSavedTransactions = Arrays.asList(Transaction.builder()
+			.id(3L)
+			.teamId(teamId)
+			.amount(25000L)
+			.content("회식비")
+			.transactionDate(LocalDateTime.of(2025, 1, 23, 18, 0))
+			.transactionType(EXPENSE)
+			.build(), Transaction.builder()
+			.id(4L)
+			.teamId(teamId)
+			.amount(15000L)
+			.content("카페비")
+			.transactionDate(LocalDateTime.of(2025, 1, 23, 14, 30))
+			.transactionType(EXPENSE)
+			.build());
+
+		given(transactionService.create(memberId, mockCategoryIds, mockSavedTransactions)).willReturn(
+			mockSavedTransactions);
 
 		// 인증 설정
 		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId,
