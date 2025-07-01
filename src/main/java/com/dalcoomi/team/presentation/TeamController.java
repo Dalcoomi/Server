@@ -34,39 +34,39 @@ public class TeamController {
 
 	@PostMapping
 	@ResponseStatus(CREATED)
-	public String createTeam(@AuthMember Long memberId, @RequestBody TeamRequest request) {
+	public String create(@AuthMember Long memberId, @RequestBody TeamRequest request) {
 		Team team = Team.from(request);
 
-		return teamService.createTeam(memberId, team);
+		return teamService.create(memberId, team);
 	}
 
 	@PostMapping("/join/{invitationCode}")
 	@ResponseStatus(OK)
-	public void joinTeam(@AuthMember Long memberId, @PathVariable("invitationCode") String invitationCode) {
-		teamService.joinTeam(memberId, invitationCode);
+	public void join(@AuthMember Long memberId, @PathVariable("invitationCode") String invitationCode) {
+		teamService.join(memberId, invitationCode);
 	}
 
 	@GetMapping
 	@ResponseStatus(OK)
-	public GetMyTeamsResponse getMyTeams(@AuthMember Long memberId) {
-		TeamsInfo teamsInfo = teamService.getMyTeams(memberId);
+	public GetMyTeamsResponse get(@AuthMember Long memberId) {
+		TeamsInfo teamsInfo = teamService.get(memberId);
 
 		return GetMyTeamsResponse.from(teamsInfo);
 	}
 
 	@GetMapping("/{teamId}")
 	@ResponseStatus(OK)
-	public GetTeamResponse getTeam(@AuthMember Long memberId, @PathVariable("teamId") Long teamId) {
-		TeamInfo teamInfo = teamService.getTeam(teamId, memberId);
+	public GetTeamResponse get(@AuthMember Long memberId, @PathVariable("teamId") Long teamId) {
+		TeamInfo teamInfo = teamService.get(teamId, memberId);
 
 		return GetTeamResponse.from(teamInfo);
 	}
 
 	@DeleteMapping("/leave")
 	@ResponseStatus(OK)
-	public void leaveTeam(@AuthMember Long memberId, @RequestBody LeaveTeamRequest request) {
+	public void leave(@AuthMember Long memberId, @RequestBody LeaveTeamRequest request) {
 		LeaveTeamInfo leaveTeamInfo = LeaveTeamInfo.of(request.teamId(), request.nextLeaderNickname());
 
-		teamService.leaveTeam(leaveTeamInfo, memberId);
+		teamService.leave(leaveTeamInfo, memberId);
 	}
 }

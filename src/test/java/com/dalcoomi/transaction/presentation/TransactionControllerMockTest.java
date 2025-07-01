@@ -35,7 +35,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.transaction.application.TransactionService;
+import com.dalcoomi.transaction.domain.event.TransactionEventHandler;
 import com.dalcoomi.transaction.dto.ReceiptInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -47,11 +49,17 @@ class TransactionControllerMockTest {
 	@Autowired
 	private MockMvc mockMvc;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@MockitoBean
 	private TransactionService transactionService;
 
 	@MockitoBean
 	private CategoryService categoryService;
+
+	@MockitoBean
+	private TransactionEventHandler eventHandler;
 
 	@Test
 	@DisplayName("통합 테스트 - 개인 영수증 업로드 성공")

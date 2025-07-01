@@ -45,6 +45,11 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 	}
 
 	@Override
+	public List<Category> findAllById(List<Long> categoryIds) {
+		return categoryJpaRepository.findAllById(categoryIds).stream().map(CategoryJpaEntity::toModel).toList();
+	}
+
+	@Override
 	public List<Category> findMyCategories(Long creatorId, TransactionType transactionType) {
 		List<CategoryJpaEntity> categories = jpaQueryFactory
 			.select(categoryJpaEntity)
