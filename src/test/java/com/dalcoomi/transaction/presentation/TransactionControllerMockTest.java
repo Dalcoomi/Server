@@ -1,16 +1,20 @@
 package com.dalcoomi.transaction.presentation;
 
+import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +39,13 @@ import org.springframework.web.multipart.MultipartFile;
 import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.transaction.application.TransactionService;
+import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.domain.TransactionType;
+import com.dalcoomi.transaction.domain.event.TransactionEventHandler;
 import com.dalcoomi.transaction.dto.ReceiptInfo;
+import com.dalcoomi.transaction.dto.request.BulkTransactionRequest;
+import com.dalcoomi.transaction.dto.request.TransactionRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -47,11 +57,17 @@ class TransactionControllerMockTest {
 	@Autowired
 	private MockMvc mockMvc;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@MockitoBean
 	private TransactionService transactionService;
 
 	@MockitoBean
 	private CategoryService categoryService;
+
+	@MockitoBean
+	private TransactionEventHandler eventHandler;
 
 	@Test
 	@DisplayName("통합 테스트 - 개인 영수증 업로드 성공")
@@ -163,6 +179,149 @@ class TransactionControllerMockTest {
 			.andExpect(jsonPath("$.transactions[0].categoryName").value("회식"))
 			.andExpect(jsonPath("$.transactions[0].content").value("삼겹살"))
 			.andExpect(jsonPath("$.transactions[0].amount").value(25000))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 개인 거래 내역 일괄 생성 및 AI 서버 전송 성공")
+	void create_bulk_transactions_and_send_to_ai_server_success() throws Exception {
+		// given
+		Long memberId = 1L;
+		String taskId = "1-1";
+
+		List<TransactionRequest> transactionRequests = Arrays.asList(
+			new TransactionRequest(
+				null, // teamId
+				4800L,
+				"커피",
+				LocalDateTime.of(2025, 1, 23, 10, 30),
+				EXPENSE,
+				1L
+			),
+			new TransactionRequest(
+				null,
+				12000L,
+				"칼국수",
+				LocalDateTime.of(2025, 1, 23, 12, 0),
+				EXPENSE,
+				2L
+			)
+		);
+
+		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+			.taskId(taskId)
+			.transactions(transactionRequests)
+			.build();
+
+		// Mock 설정 - 저장된 거래 내역들
+		List<Transaction> mockSavedTransactions = Arrays.asList(
+			Transaction.builder()
+				.id(1L)
+				.amount(4800L)
+				.content("커피")
+				.transactionDate(LocalDateTime.of(2025, 1, 23, 10, 30))
+				.transactionType(EXPENSE)
+				.build(),
+			Transaction.builder()
+				.id(2L)
+				.amount(12000L)
+				.content("칼국수")
+				.transactionDate(LocalDateTime.of(2025, 1, 23, 12, 0))
+				.transactionType(EXPENSE)
+				.build()
+		);
+
+		given(transactionService.create(eq(memberId), any(List.class), any(List.class)))
+			.willReturn(mockSavedTransactions);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId,
+			memberId.toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(post("/api/transactions/bulk")
+				.content(objectMapper.writeValueAsString(bulkRequest))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 일괄 생성 및 AI 서버 전송 성공")
+	void create_bulk_team_transactions_and_send_to_ai_server_success() throws Exception {
+		// given
+		Long memberId = 1L;
+		Long teamId = 2L;
+		String taskId = "team-1";
+
+		List<TransactionRequest> transactionRequests = Arrays.asList(
+			new TransactionRequest(
+				teamId,
+				25000L,
+				"회식비",
+				LocalDateTime.of(2025, 1, 23, 18, 0),
+				TransactionType.EXPENSE,
+				3L
+			),
+			new TransactionRequest(
+				teamId,
+				15000L,
+				"카페비",
+				LocalDateTime.of(2025, 1, 23, 14, 30),
+				TransactionType.EXPENSE,
+				4L
+			)
+		);
+
+		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+			.taskId(taskId)
+			.transactions(transactionRequests)
+			.build();
+
+		// Mock 설정
+		List<Transaction> mockSavedTransactions = Arrays.asList(
+			Transaction.builder()
+				.id(3L)
+				.teamId(teamId)
+				.amount(25000L)
+				.content("회식비")
+				.transactionDate(LocalDateTime.of(2025, 1, 23, 18, 0))
+				.transactionType(TransactionType.EXPENSE)
+				.build(),
+			Transaction.builder()
+				.id(4L)
+				.teamId(teamId)
+				.amount(15000L)
+				.content("카페비")
+				.transactionDate(LocalDateTime.of(2025, 1, 23, 14, 30))
+				.transactionType(TransactionType.EXPENSE)
+				.build()
+		);
+
+		given(transactionService.create(eq(memberId), any(List.class), any(List.class)))
+			.willReturn(mockSavedTransactions);
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId,
+			memberId.toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(post("/api/transactions/bulk")
+				.content(objectMapper.writeValueAsString(bulkRequest))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
 			.andDo(print());
 	}
 }
