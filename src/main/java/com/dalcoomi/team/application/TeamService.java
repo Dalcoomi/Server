@@ -41,7 +41,7 @@ public class TeamService {
 	private final TransactionRepository transactionRepository;
 
 	@Transactional
-	public String createTeam(Long memberId, Team team) {
+	public String create(Long memberId, Team team) {
 		Member member = memberRepository.findById(memberId);
 
 		validateMaxTeamCount(memberId);
@@ -61,7 +61,7 @@ public class TeamService {
 	}
 
 	@Transactional
-	public void joinTeam(Long memberId, String invitationCode) {
+	public void join(Long memberId, String invitationCode) {
 		Member member = memberRepository.findById(memberId);
 		Team team = teamRepository.findByInvitationCode(invitationCode);
 
@@ -83,7 +83,7 @@ public class TeamService {
 	}
 
 	@Transactional(readOnly = true)
-	public TeamsInfo getMyTeams(Long memberId) {
+	public TeamsInfo get(Long memberId) {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 
 		List<Team> teams = teamMembers.stream().map(TeamMember::getTeam).toList().reversed();
@@ -97,7 +97,7 @@ public class TeamService {
 	}
 
 	@Transactional(readOnly = true)
-	public TeamInfo getTeam(Long teamId, Long memberId) {
+	public TeamInfo get(Long teamId, Long memberId) {
 		List<TeamMember> teamMembers = teamMemberRepository.find(teamId, null);
 
 		if (teamMembers.isEmpty()) {
@@ -117,7 +117,7 @@ public class TeamService {
 	}
 
 	@Transactional
-	public void leaveTeam(LeaveTeamInfo leaveTeamInfo, Long memberId) {
+	public void leave(LeaveTeamInfo leaveTeamInfo, Long memberId) {
 		List<TeamMember> teamMember = teamMemberRepository.find(leaveTeamInfo.teamId(), memberId);
 
 		if (teamMember.isEmpty()) {

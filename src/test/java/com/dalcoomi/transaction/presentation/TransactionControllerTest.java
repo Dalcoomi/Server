@@ -48,6 +48,7 @@ import com.dalcoomi.team.domain.TeamMember;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
+import com.dalcoomi.transaction.dto.request.BulkTransactionRequest;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -110,7 +111,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/transaction")
+		mockMvc.perform(post("/api/transactions")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isCreated())
@@ -164,7 +165,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/transaction")
+		mockMvc.perform(post("/api/transactions")
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isCreated())
@@ -224,7 +225,7 @@ class TransactionControllerTest {
 		int month = 3;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
 				.contentType(APPLICATION_JSON))
@@ -267,7 +268,7 @@ class TransactionControllerTest {
 		int month = 12;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
 				.contentType(APPLICATION_JSON))
@@ -317,7 +318,7 @@ class TransactionControllerTest {
 		int month = 3;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("teamId", String.valueOf(team.getId()))
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
@@ -367,7 +368,7 @@ class TransactionControllerTest {
 		int month = 12;
 
 		// when & then
-		mockMvc.perform(get("/api/transaction")
+		mockMvc.perform(get("/api/transactions")
 				.param("teamId", String.valueOf(team.getId()))
 				.param("year", String.valueOf(year))
 				.param("month", String.valueOf(month))
@@ -405,7 +406,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.transactionId").value(transaction1.getId()))
@@ -453,7 +454,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
 				.param("teamId", String.valueOf(team.getId()))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -506,7 +507,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
 				.param("teamId", String.valueOf(team.getId()))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
@@ -546,7 +547,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(put("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(put("/api/transactions/{transactionId}", transaction1.getId())
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -605,7 +606,7 @@ class TransactionControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(put("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(put("/api/transactions/{transactionId}", transaction1.getId())
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
@@ -637,7 +638,7 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(delete("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(delete("/api/transactions/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
@@ -679,10 +680,103 @@ class TransactionControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(delete("/api/transaction/{transactionId}", transaction1.getId())
+		mockMvc.perform(delete("/api/transactions/{transactionId}", transaction1.getId())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.message").value(TRANSACTION_CREATOR_INCONSISTENCY.getMessage()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 개인 거래 내역 일괄 생성 및 AI 서버 전송 성공")
+	void create_bulk_transactions_and_send_to_ai_server_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Category category = CategoryFixture.getCategory1(member1);
+		category = categoryRepository.save(category);
+
+		String taskId = "1-1";
+
+		List<TransactionRequest> transactionRequests = Arrays.asList(
+			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, category.getId()),
+			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
+				category.getId()));
+
+		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+			.taskId(taskId)
+			.transactions(transactionRequests)
+			.build();
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
+			member1.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(post("/api/transactions/bulk")
+				.content(objectMapper.writeValueAsString(bulkRequest))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 일괄 생성 및 AI 서버 전송 성공")
+	void create_bulk_team_transactions_and_send_to_ai_server_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team = TeamFixture.getTeam1(member1);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member1);
+		teamMemberRepository.save(teamMember1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		TeamMember teamMember2 = TeamMember.of(team, member2);
+		teamMemberRepository.save(teamMember2);
+
+		Category category = CategoryFixture.getCategory1(member1);
+		category = categoryRepository.save(category);
+
+		String taskId = "1-1";
+
+		List<TransactionRequest> transactionRequests = Arrays.asList(
+			new TransactionRequest(team.getId(), 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE,
+				category.getId()),
+			new TransactionRequest(team.getId(), 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
+				category.getId()));
+
+		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+			.taskId(taskId)
+			.transactions(transactionRequests)
+			.build();
+
+		// 인증 설정
+		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
+			member1.getId().toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		// when & then
+		mockMvc.perform(post("/api/transactions/bulk")
+				.content(objectMapper.writeValueAsString(bulkRequest))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
 			.andDo(print());
 	}
 }

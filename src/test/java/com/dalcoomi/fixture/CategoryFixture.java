@@ -53,4 +53,36 @@ public final class CategoryFixture {
 			.ownerType(MEMBER)
 			.build();
 	}
+
+	public static Category getTeamCategory1(Member member, Long teamId) {
+		String name = "회식";
+		String iconUrl = "https://example.com/11223344";
+		boolean isActive = true;
+
+		return Category.builder()
+			.creator(member)
+			.teamId(teamId)
+			.name(name)
+			.iconUrl(iconUrl)
+			.isActive(isActive)
+			.transactionType(EXPENSE)
+			.ownerType(MEMBER)
+			.build();
+	}
+
+	public static Category getTeamCategory2(Member member, Long teamId) {
+		String name = "대관";
+		String iconUrl = "https://example.com/112233344";
+		boolean isActive = true;
+
+		return Category.builder()
+			.creator(member)
+			.teamId(teamId)
+			.name(name)
+			.iconUrl(iconUrl)
+			.isActive(isActive)
+			.transactionType(EXPENSE)
+			.ownerType(MEMBER)
+			.build();
+	}
 }

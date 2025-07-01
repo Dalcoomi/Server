@@ -4,6 +4,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,27 +20,17 @@ import com.dalcoomi.transaction.domain.TransactionType;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/category")
+@RequestMapping("/api/categories")
 @RequiredArgsConstructor
 public class CategoryController {
 
 	private final CategoryService categoryService;
 
-	@GetMapping("/my")
+	@GetMapping
 	@ResponseStatus(OK)
-	public GetCategoriesResponse getMyCategoryWithTransactionType(@AuthMember Long memberId,
+	public GetCategoriesResponse get(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
 		@RequestParam("transactionType") TransactionType transactionType) {
-		List<CategoryInfo> categoryInfos = categoryService.getMyCategories(memberId, transactionType);
-
-		return GetCategoriesResponse.from(categoryInfos);
-	}
-
-	@GetMapping("/team")
-	@ResponseStatus(OK)
-	public GetCategoriesResponse getTeamCategoryWithTransactionType(@AuthMember Long memberId,
-		@RequestParam("teamId") Long teamId,
-		@RequestParam("transactionType") TransactionType transactionType) {
-		List<CategoryInfo> categoryInfos = categoryService.getTeamCategories(memberId, teamId, transactionType);
+		List<CategoryInfo> categoryInfos = categoryService.get(memberId, teamId, transactionType);
 
 		return GetCategoriesResponse.from(categoryInfos);
 	}

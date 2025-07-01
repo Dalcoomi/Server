@@ -91,7 +91,7 @@ class MemberControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/member/sign-up")
+		mockMvc.perform(post("/api/members/sign-up")
 				.contentType("application/json")
 				.content(json))
 			.andExpect(status().isCreated())
@@ -118,7 +118,7 @@ class MemberControllerTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/member/sign-up")
+		mockMvc.perform(post("/api/members/sign-up")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isConflict())
@@ -144,7 +144,7 @@ class MemberControllerTest {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// when & then
-		mockMvc.perform(get("/api/member")
+		mockMvc.perform(get("/api/members")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.email").value(member.getEmail()))

@@ -24,7 +24,7 @@ import com.dalcoomi.member.dto.response.SignUpResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/member")
+@RequestMapping("/api/members")
 @RequiredArgsConstructor
 public class MemberController {
 
@@ -58,8 +58,8 @@ public class MemberController {
 
 	@GetMapping
 	@ResponseStatus(OK)
-	public GetMemberResponse getMember(@AuthMember Long memberId) {
-		Member member = memberService.getMember(memberId);
+	public GetMemberResponse get(@AuthMember Long memberId) {
+		Member member = memberService.get(memberId);
 
 		return GetMemberResponse.from(member);
 	}
