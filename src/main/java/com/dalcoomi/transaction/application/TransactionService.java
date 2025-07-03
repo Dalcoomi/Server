@@ -36,8 +36,8 @@ import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
 import com.dalcoomi.transaction.dto.request.SendBulkToAiServerRequest;
+import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -171,7 +171,7 @@ public class TransactionService {
 		transactionRepository.save(transaction);
 	}
 
-	public List<ReceiptInfo> analyseReceipt(MultipartFile receipt, List<String> categoryNames) {
+	public AiReceiptResponse analyseReceipt(MultipartFile receipt, List<String> categoryNames) {
 		try {
 			MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
 
@@ -193,10 +193,7 @@ public class TransactionService {
 
 			log.info("AI 서버 응답: {}", response);
 
-			CollectionType listType = objectMapper.getTypeFactory()
-				.constructCollectionType(List.class, ReceiptInfo.class);
-
-			return objectMapper.readValue(response, listType);
+			return objectMapper.readValue(response, AiReceiptResponse.class);
 		} catch (Exception e) {
 			log.error("데이터 매핑 오류", e);
 

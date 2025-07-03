@@ -25,11 +25,11 @@ import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.event.TransactionCreatedEvent;
-import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
 import com.dalcoomi.transaction.dto.request.BulkTransactionRequest;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
+import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
 import com.dalcoomi.transaction.dto.response.UploadReceiptResponse;
@@ -59,9 +59,9 @@ public class TransactionController {
 	public UploadReceiptResponse uploadReceipt(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
 		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") MultipartFile receipt) {
 		List<String> categoryNames = categoryService.fetchCategoryNames(memberId, teamId);
-		List<ReceiptInfo> receiptInfos = transactionService.analyseReceipt(receipt, categoryNames);
+		AiReceiptResponse aiResponse = transactionService.analyseReceipt(receipt, categoryNames);
 
-		return UploadReceiptResponse.from(receiptInfos);
+		return UploadReceiptResponse.from(aiResponse);
 	}
 
 	@PostMapping("/bulk")

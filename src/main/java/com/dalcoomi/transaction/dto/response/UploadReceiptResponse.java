@@ -9,15 +9,17 @@ import lombok.Builder;
 
 @Builder
 public record UploadReceiptResponse(
+	String taskId,
 	List<UploadReceiptResponseItem> transactions
 ) {
 
-	public static UploadReceiptResponse from(List<ReceiptInfo> receiptInfos) {
-		List<UploadReceiptResponseItem> transactions = receiptInfos.stream()
+	public static UploadReceiptResponse from(AiReceiptResponse aiResponse) {
+		List<UploadReceiptResponseItem> transactions = aiResponse.transactions().stream()
 			.map(UploadReceiptResponseItem::from)
 			.toList();
 
 		return UploadReceiptResponse.builder()
+			.taskId(aiResponse.taskId())
 			.transactions(transactions)
 			.build();
 	}
