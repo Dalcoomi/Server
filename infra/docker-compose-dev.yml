@@ -1,6 +1,6 @@
 services:
   dalcoomi:
-    image: ${GHCR_USERNAME}/${GHCR_REPOSITORY}:dev-latest
+    image: ghcr.io/${GHCR_USERNAME}/${GHCR_REPOSITORY}:dev-latest
     container_name: dalcoomi-spring-dev
     restart: unless-stopped
     extra_hosts:
