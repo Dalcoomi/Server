@@ -158,14 +158,14 @@ jobs:
             # 헬스체크를 위한 기존 컨테이너 확인
             if [ "$(docker ps -q -f name=dalcoomi-spring-dev)" ]; then
               echo "기존 컨테이너 중지 중..."
-              docker-compose -f $COMPOSE down
+              docker compose -f $COMPOSE down
             fi
             
             # 최신 이미지 pull
             docker pull ghcr.io/${{ secrets.GHCR_DEV_REPO }}:dev-latest
             
             # 새 컨테이너 시작
-            docker-compose -f $COMPOSE up -d
+            docker compose -f $COMPOSE up -d
             
             # 사용하지 않는 이미지만 정리 (볼륨은 보존)
             docker image prune -f
