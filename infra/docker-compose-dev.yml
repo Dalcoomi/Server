@@ -1,0 +1,43 @@
+services:
+  dalcoomi:
+    image: ${GHCR_USERNAME}/${GHCR_REPOSITORY}:dev-latest
+    container_name: dalcoomi-spring-dev
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_ACTIVE_PROFILE: ${SPRING_ACTIVE_PROFILE}
+    volumes:
+      - ../logs/spring:/logs
+    depends_on:
+      - redis
+    networks:
+      - dalcoomi-dev-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: dalcoomi-redis-dev
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+      - ./redis-dev.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - dalcoomi-dev-network
+    # 메모리 제한 (EC2 t2.micro 고려)
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  dalcoomi-dev-network:
+    driver: bridge
