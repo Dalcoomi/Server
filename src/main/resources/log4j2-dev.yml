@@ -38,7 +38,7 @@ Configuration:
 
   Loggers:
     Root:
-      level: DEBUG
+      level: INFO
       AppenderRef:
         - ref: Console_Appender
         - ref: RollingFile_Appender
