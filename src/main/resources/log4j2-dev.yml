@@ -1,0 +1,44 @@
+Configuration:
+  name: Dev-Logger
+  status: info
+
+  Properties:
+    Property:
+      - name: LOG_PATTERN_CONSOLE
+        value: "%d{HH:mm:ss} [%p] [%c{1.1.1.*}] %m%n"
+      - name: LOG_PATTERN_FILE
+        value: "%d{yyyy-MM-dd HH:mm:ss} [%p] [%c{1.1.1.*}] %m%n"
+      - name: log-dir
+        value: "/logs"
+
+  Appenders:
+    Console:
+      - name: Console_Appender
+        PatternLayout:
+          pattern: "${LOG_PATTERN_CONSOLE}"
+
+    RollingFile:
+      - name: RollingFile_Appender
+        fileName: "${log-dir}/logfile-${date:yyyy-MM-dd}.log"
+        filePattern: "${log-dir}/logfile-%d{yyyy-MM-dd}.%i.txt"
+        PatternLayout:
+          pattern: "${LOG_PATTERN_FILE}"
+
+        Policies:
+          SizeBasedTriggeringPolicy:
+            size: "50 MB"
+
+        DefaultRollOverStrategy:
+          max: 10
+          Delete:
+            basePath: "${log-dir}"
+            maxDepth: "1"
+            IfLastModified:
+              age: "P3D"
+
+  Loggers:
+    Root:
+      level: INFO
+      AppenderRef:
+        - ref: Console_Appender
+        - ref: RollingFile_Appender

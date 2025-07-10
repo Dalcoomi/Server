@@ -33,6 +33,7 @@ public class SecurityConfig {
 
 	private static final String[] ALLOWED_URIS = {
 		"/",
+		"/health",
 		"/login/**",
 		"/api/auth/login",
 		"/api/members/sign-up",

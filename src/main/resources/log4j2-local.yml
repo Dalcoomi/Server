@@ -24,7 +24,7 @@ Configuration:
       AppenderRef:
         ref: Console_Appender
     Logger:
-      - name: com.tnt
+      - name: com.dalcoomi
         additivity: false
         level: DEBUG
         AppenderRef:
