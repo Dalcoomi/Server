@@ -48,7 +48,7 @@ import com.dalcoomi.team.domain.TeamMember;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
-import com.dalcoomi.transaction.dto.request.BulkTransactionRequest;
+import com.dalcoomi.transaction.dto.request.SaveReceiptRequest;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -704,7 +704,7 @@ class TransactionControllerTest {
 			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
 				category.getId()));
 
-		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+		SaveReceiptRequest bulkRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)
 			.transactions(transactionRequests)
 			.build();
@@ -757,7 +757,7 @@ class TransactionControllerTest {
 			new TransactionRequest(team.getId(), 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
 				category.getId()));
 
-		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+		SaveReceiptRequest bulkRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)
 			.transactions(transactionRequests)
 			.build();

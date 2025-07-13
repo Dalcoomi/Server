@@ -22,12 +22,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.dalcoomi.auth.config.AuthMember;
 import com.dalcoomi.category.application.CategoryService;
+import com.dalcoomi.common.util.lock.ReceiptLockKeyGenerator;
+import com.dalcoomi.common.util.lock.RedisLockUtil;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.event.TransactionCreatedEvent;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
-import com.dalcoomi.transaction.dto.request.BulkTransactionRequest;
+import com.dalcoomi.transaction.dto.request.SaveReceiptRequest;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
 import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionResponse;
@@ -45,6 +47,7 @@ public class TransactionController {
 	private final TransactionService transactionService;
 	private final CategoryService categoryService;
 	private final ApplicationEventPublisher applicationEventPublisher;
+	private final ReceiptLockKeyGenerator lockKeyGenerator;
 
 	@PostMapping
 	@ResponseStatus(CREATED)
@@ -54,19 +57,23 @@ public class TransactionController {
 		transactionService.create(memberId, request.categoryId(), transaction);
 	}
 
-	@PostMapping("/upload-receipt")
+	@PostMapping("/receipts/upload")
 	@ResponseStatus(OK)
 	public UploadReceiptResponse uploadReceipt(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
 		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") MultipartFile receipt) {
-		List<String> categoryNames = categoryService.fetchCategoryNames(memberId, teamId);
-		AiReceiptResponse aiResponse = transactionService.analyseReceipt(receipt, categoryNames);
+		String lockKey = lockKeyGenerator.generateUploadLockKey(memberId, teamId, receipt);
 
-		return UploadReceiptResponse.from(aiResponse);
+		return RedisLockUtil.acquireAndRunLock(lockKey, () -> {
+			List<String> categoryNames = categoryService.fetchCategoryNames(memberId, teamId);
+			AiReceiptResponse aiResponse = transactionService.analyseReceipt(receipt, categoryNames);
+
+			return UploadReceiptResponse.from(aiResponse);
+		});
 	}
 
-	@PostMapping("/bulk")
+	@PostMapping("/receipts/save")
 	@ResponseStatus(OK)
-	public void createAndSendToAiServer(@AuthMember Long memberId, @RequestBody BulkTransactionRequest request) {
+	public void saveReceipt(@AuthMember Long memberId, @RequestBody SaveReceiptRequest request) {
 		List<Transaction> transactions = request.transactions().stream().map(Transaction::from).toList();
 		List<Long> categoryIds = request.transactions().stream().map(TransactionRequest::categoryId).toList();
 

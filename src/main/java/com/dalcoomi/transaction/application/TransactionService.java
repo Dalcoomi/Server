@@ -35,7 +35,7 @@ import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
-import com.dalcoomi.transaction.dto.request.SendBulkToAiServerRequest;
+import com.dalcoomi.transaction.dto.request.SendReceiptTransactions;
 import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -213,7 +213,7 @@ public class TransactionService {
 				.build())
 			.toList();
 
-		SendBulkToAiServerRequest request = SendBulkToAiServerRequest.builder()
+		SendReceiptTransactions request = SendReceiptTransactions.builder()
 			.taskId(updatedTaskId)
 			.transactions(transactionData)
 			.build();

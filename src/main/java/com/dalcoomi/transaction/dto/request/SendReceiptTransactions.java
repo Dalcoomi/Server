@@ -7,7 +7,7 @@ import com.dalcoomi.transaction.dto.ReceiptInfo;
 import lombok.Builder;
 
 @Builder
-public record SendBulkToAiServerRequest(
+public record SendReceiptTransactions(
 	String taskId,
 	List<ReceiptInfo> transactions
 ) {
