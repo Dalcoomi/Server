@@ -47,6 +47,7 @@ public class TransactionController {
 	private final TransactionService transactionService;
 	private final CategoryService categoryService;
 	private final ApplicationEventPublisher applicationEventPublisher;
+	private final RedisLockUtil redisLockUtil;
 	private final ReceiptLockKeyGenerator lockKeyGenerator;
 
 	@PostMapping
@@ -63,7 +64,7 @@ public class TransactionController {
 		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") MultipartFile receipt) {
 		String lockKey = lockKeyGenerator.generateUploadLockKey(memberId, teamId, receipt);
 
-		return RedisLockUtil.acquireAndRunLock(lockKey, () -> {
+		return redisLockUtil.acquireAndRunLock(lockKey, () -> {
 			List<String> categoryNames = categoryService.fetchCategoryNames(memberId, teamId);
 			AiReceiptResponse aiResponse = transactionService.analyseReceipt(receipt, categoryNames);
 
@@ -74,12 +75,20 @@ public class TransactionController {
 	@PostMapping("/receipts/save")
 	@ResponseStatus(OK)
 	public void saveReceipt(@AuthMember Long memberId, @RequestBody SaveReceiptRequest request) {
-		List<Transaction> transactions = request.transactions().stream().map(Transaction::from).toList();
-		List<Long> categoryIds = request.transactions().stream().map(TransactionRequest::categoryId).toList();
+		String lockKey = lockKeyGenerator.generateSaveLockKey(memberId, request.taskId());
 
-		List<Transaction> savedTransactions = transactionService.create(memberId, categoryIds, transactions);
+		redisLockUtil.acquireAndRunLock(lockKey, () -> {
+			List<Transaction> transactions = request.transactions().stream().map(Transaction::from).toList();
+			List<Long> categoryIds = request.transactions().stream().map(TransactionRequest::categoryId).toList();
 
-		applicationEventPublisher.publishEvent(new TransactionCreatedEvent(this, request.taskId(), savedTransactions));
+			List<Transaction> savedTransactions = transactionService.create(memberId, categoryIds, transactions);
+
+			applicationEventPublisher.publishEvent(
+				new TransactionCreatedEvent(this, request.taskId(), savedTransactions)
+			);
+
+			return null;
+		});
 	}
 
 	@GetMapping
