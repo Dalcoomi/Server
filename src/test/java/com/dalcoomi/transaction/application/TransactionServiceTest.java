@@ -55,7 +55,6 @@ class TransactionServiceTest {
 		MockMultipartFile receipt = new MockMultipartFile(
 			"receipt", "test.jpg", "image/jpeg", "test".getBytes());
 		List<String> categoryNames = Arrays.asList("카페", "식비");
-
 		String mockResponse = "{\"taskId\":\"1-1\",\"transactions\":[{\"date\":\"2025-01-23\",\"categoryName\":\"카페\",\"content\":\"커피\",\"amount\":4800}]}";
 
 		// WebClient Mock 체이닝

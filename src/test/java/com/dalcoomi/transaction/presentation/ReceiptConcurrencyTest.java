@@ -216,6 +216,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			.transactions(transactionRequests)
 			.build();
 
+		// 인증 설정
 		setAuthentication(member.getId());
 
 		int threadCount = 5;
@@ -283,6 +284,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		given(categoryService.fetchCategoryNames(eq(memberId), isNull())).willReturn(Arrays.asList("카페", "식비"));
 		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(response);
 
+		// 인증 설정
 		setAuthentication(memberId);
 
 		int threadCount = 5;
@@ -359,6 +361,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			"team receipt content".getBytes()
 		);
 
+		// 인증 설정
 		setAuthentication(memberId);
 
 		int threadCount = 3;
@@ -411,6 +414,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		Category category = CategoryFixture.getCategory1(member);
 		category = categoryRepository.save(category);
 
+		// 인증 설정
 		setAuthentication(member.getId());
 
 		int threadCount = 5;
@@ -471,6 +475,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		Category category = CategoryFixture.getCategory1(member);
 		category = categoryRepository.save(category);
 
+		// 인증 설정
 		setAuthentication(member.getId());
 
 		String taskId = "1-1";
