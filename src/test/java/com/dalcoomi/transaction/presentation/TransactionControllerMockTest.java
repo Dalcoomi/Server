@@ -37,20 +37,17 @@ import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.event.TransactionEventHandler;
 import com.dalcoomi.transaction.dto.ReceiptInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource("classpath:application-test.properties")
+@AutoConfigureMockMvc(addFilters = false)
 class TransactionControllerMockTest {
 
 	private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
 	@Autowired
 	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@MockitoBean
 	private TransactionService transactionService;
@@ -66,7 +63,7 @@ class TransactionControllerMockTest {
 	void upload_my_receipt_success() throws Exception {
 		// given
 		Long memberId = 1L;
-
+		String taskId = "1-1";
 		List<ReceiptInfo> mockReceiptInfos = Arrays.asList(
 			ReceiptInfo.builder()
 				.date(LocalDate.of(2025, 1, 23))
@@ -81,11 +78,11 @@ class TransactionControllerMockTest {
 				.amount(12000L)
 				.build()
 		);
+		AiReceiptResponse response = AiReceiptResponse.builder().taskId(taskId).transactions(mockReceiptInfos).build();
 
 		// Mock 설정
 		given(categoryService.fetchCategoryNames(eq(memberId), isNull())).willReturn(Arrays.asList("카페", "식비"));
-		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(
-			mockReceiptInfos);
+		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(response);
 
 		MockMultipartFile receiptFile = new MockMultipartFile(
 			"receipt",
@@ -95,20 +92,14 @@ class TransactionControllerMockTest {
 		);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId,
-			memberId.toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(memberId);
 
 		// when & then
-		mockMvc.perform(multipart("/api/transactions/upload-receipt")
+		mockMvc.perform(multipart("/api/transactions/receipts/upload")
 				.file(receiptFile)
 				.contentType(MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.taskId").value(taskId))
 			.andExpect(jsonPath("$.transactions").isArray())
 			.andExpect(jsonPath("$.transactions.length()").value(2))
 			.andExpect(jsonPath("$.transactions[0].transactionDate").value("2025-01-23"))
@@ -128,7 +119,7 @@ class TransactionControllerMockTest {
 		// given
 		Long memberId = 1L;
 		Long teamId = 2L;
-
+		String taskId = "1-1";
 		List<ReceiptInfo> mockReceiptInfos = Collections.singletonList(
 			ReceiptInfo.builder()
 				.date(LocalDate.of(2025, 1, 23))
@@ -137,11 +128,11 @@ class TransactionControllerMockTest {
 				.amount(25000L)
 				.build()
 		);
+		AiReceiptResponse response = AiReceiptResponse.builder().taskId(taskId).transactions(mockReceiptInfos).build();
 
 		// Mock 설정
 		given(categoryService.fetchCategoryNames(memberId, teamId)).willReturn(Arrays.asList("회식", "대관"));
-		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(
-			mockReceiptInfos);
+		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(response);
 
 		MockMultipartFile receiptFile = new MockMultipartFile(
 			"receipt",
@@ -151,26 +142,30 @@ class TransactionControllerMockTest {
 		);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId,
-			memberId.toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(memberId);
 
 		// when & then
-		mockMvc.perform(multipart("/api/transactions/upload-receipt")
+		mockMvc.perform(multipart("/api/transactions/receipts/upload")
 				.file(receiptFile)
 				.param("teamId", teamId.toString())
 				.contentType(MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.taskId").value(taskId))
 			.andExpect(jsonPath("$.transactions").isArray())
 			.andExpect(jsonPath("$.transactions.length()").value(1))
 			.andExpect(jsonPath("$.transactions[0].categoryName").value("회식"))
 			.andExpect(jsonPath("$.transactions[0].content").value("삼겹살"))
 			.andExpect(jsonPath("$.transactions[0].amount").value(25000))
 			.andDo(print());
+	}
+
+	private void setAuthentication(Long memberId) {
+		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 }
