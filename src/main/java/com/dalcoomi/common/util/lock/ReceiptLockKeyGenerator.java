@@ -1,7 +1,8 @@
 package com.dalcoomi.common.util.lock;
 
+import java.security.MessageDigest;
+
 import org.springframework.stereotype.Component;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
@@ -9,8 +10,15 @@ public class ReceiptLockKeyGenerator {
 
 	public String generateUploadLockKey(Long memberId, Long teamId, MultipartFile receipt) {
 		try {
-			// 파일 해시값으로 동일 파일 중복 업로드 방지
-			String fileHash = DigestUtils.md5DigestAsHex(receipt.getBytes());
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] hashBytes = digest.digest(receipt.getBytes());
+			StringBuilder result = new StringBuilder();
+
+			for (byte b : hashBytes) {
+				result.append(String.format("%02x", b));
+			}
+
+			String fileHash = result.toString();
 			String teamKey = teamId != null ? teamId.toString() : "personal";
 
 			return String.format("receipt:upload:%d:%s:%s", memberId, teamKey, fileHash);
