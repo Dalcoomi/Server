@@ -70,15 +70,6 @@ class CategoryControllerTest {
 		Member member = MemberFixture.getMember2();
 		member = memberRepository.save(member);
 
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-
 		Category category1 = CategoryFixture.getCategory1(admin);
 		Category category2 = CategoryFixture.getCategory2(admin);
 		Category category3 = CategoryFixture.getCategory3(member);
@@ -86,6 +77,9 @@ class CategoryControllerTest {
 		List<Category> categories = List.of(category1, category2, category3);
 
 		categoryRepository.saveAll(categories);
+
+		// 인증 설정
+		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/categories")
@@ -119,15 +113,6 @@ class CategoryControllerTest {
 		TeamMember teamMember1 = TeamMember.of(team, member);
 		teamMemberRepository.save(teamMember1);
 
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-
 		Category category1 = CategoryFixture.getCategory1(member);
 		Category category2 = CategoryFixture.getCategory2(member);
 		Category category3 = CategoryFixture.getCategory3(member);
@@ -135,6 +120,9 @@ class CategoryControllerTest {
 		List<Category> categories = List.of(category1, category2, category3);
 
 		categoryRepository.saveAll(categories);
+
+		// 인증 설정
+		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/categories")
@@ -151,5 +139,15 @@ class CategoryControllerTest {
 			.andExpect(jsonPath("$.categories[0].ownerType").value(category1.getOwnerType().name()))
 			.andExpect(jsonPath("$.categories[1].ownerType").value(category2.getOwnerType().name()))
 			.andDo(print());
+	}
+
+	private void setAuthentication(Long memberId) {
+		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 }

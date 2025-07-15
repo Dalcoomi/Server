@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 @Builder
-public record BulkTransactionRequest(
+public record SaveReceiptRequest(
 	@NotNull(message = "작업 ID는 필수입니다.")
 	String taskId,
 

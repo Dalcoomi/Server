@@ -1,7 +1,9 @@
 name: "🔨 Refactor"
 description: "리팩터링 해야 할 부분이 있어요."
-title: "OO 리팩터링"
+title: "OO 리팩터링 하기"
+assignees: "fakerdeft"
 labels: "♻ refactor"
+type: "Task"
 body:
   - type: textarea
     attributes:

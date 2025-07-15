@@ -134,14 +134,7 @@ class MemberControllerTest {
 		member = memberRepository.save(member);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/members")
@@ -152,5 +145,15 @@ class MemberControllerTest {
 			.andExpect(jsonPath("$.nickname").value(member.getNickname()))
 			.andExpect(jsonPath("$.profileImageUrl").value(member.getProfileImageUrl()))
 			.andDo(print());
+	}
+
+	private void setAuthentication(Long memberId) {
+		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 }

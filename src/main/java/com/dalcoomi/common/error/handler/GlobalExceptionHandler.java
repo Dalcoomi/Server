@@ -25,6 +25,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.dalcoomi.common.error.exception.BadRequestException;
+import com.dalcoomi.common.error.exception.ConcurrentRequestException;
 import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.error.exception.DalcoomiException;
 import com.dalcoomi.common.error.exception.ImageException;
@@ -126,6 +127,14 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(CONFLICT)
 	@ExceptionHandler(ConflictException.class)
 	protected ErrorResponse handleConflictException(ConflictException exception) {
+		log.error(exception.getMessage(), exception);
+
+		return new ErrorResponse(exception.getMessage());
+	}
+
+	@ResponseStatus(CONFLICT)
+	@ExceptionHandler(ConcurrentRequestException.class)
+	public ErrorResponse handleConcurrentRequest(ConcurrentRequestException exception) {
 		log.error(exception.getMessage(), exception);
 
 		return new ErrorResponse(exception.getMessage());
