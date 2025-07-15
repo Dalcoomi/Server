@@ -19,12 +19,6 @@ public class RedisLockUtil {
 	private final LockManager lockManager;
 
 	public <T> T acquireAndRunLock(String key, Supplier<T> block) {
-		if (key == null || key.isBlank()) {
-			log.error("[RedisLock] 키가 비어있습니다.");
-
-			return block.get();
-		}
-
 		boolean acquired = acquireLock(key);
 
 		if (acquired) {
@@ -51,7 +45,7 @@ public class RedisLockUtil {
 			boolean released = releaseLock(key);
 
 			if (!released) {
-				log.warn("[RedisLock] 락 해제에 실패했습니다. key: {}", key);
+				log.error("[RedisLock] 락 해제 실패. TTL 자동 해제 대기 중. key: {}", key);
 			}
 		}
 	}
