@@ -3,6 +3,8 @@ package com.dalcoomi.transaction.presentation;
 import static com.dalcoomi.common.error.model.ErrorMessage.LOCK_EXIST_ERROR;
 import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -22,10 +24,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -143,15 +147,16 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		setAuthentication(memberId);
 
 		int threadCount = 5;
-		CountDownLatch latch = new CountDownLatch(threadCount);
+		CountDownLatch startLatch = new CountDownLatch(1); // 시작 신호
+		CountDownLatch readyLatch = new CountDownLatch(threadCount); // 준비 완료 신호
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					latch.countDown();
-					latch.await();
+					readyLatch.countDown(); // 준비 완료 신호
+					startLatch.await(); // 모든 스레드가 동시에 시작하도록 대기
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -160,19 +165,28 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 					throw new RuntimeException(e);
 				}
 			});
-
 			futures.add(future);
 		}
 
+		await().atMost(Duration.ofSeconds(5)).until(() -> readyLatch.getCount() == 0);
+
+		// 모든 스레드 동시 시작
+		startLatch.countDown();
+
 		// then
-		List<Integer> statusCodes = futures.stream()
-			.map(future -> {
-				try {
-					return future.get().andReturn().getResponse().getStatus();
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}).toList();
+		List<Integer> statusCodes = await()
+			.atMost(Duration.ofSeconds(10))
+			.until(() -> futures.stream()
+				.map(future -> {
+					try {
+						return future.get(100, TimeUnit.MILLISECONDS)
+							.andReturn().getResponse().getStatus();
+					} catch (Exception e) {
+						return null;
+					}
+				})
+				.filter(Objects::nonNull)
+				.toList(), hasSize(threadCount));
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
