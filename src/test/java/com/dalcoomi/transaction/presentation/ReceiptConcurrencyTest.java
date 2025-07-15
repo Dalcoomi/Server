@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,18 +99,6 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 	@BeforeEach
 	void setUp() {
 		executorService = Executors.newFixedThreadPool(10);
-
-		// Redis 키 정리
-		try {
-			Set<String> keysToDelete = redisTemplate.keys("receipt:*");
-
-			if (!keysToDelete.isEmpty()) {
-				redisTemplate.delete(keysToDelete);
-			}
-
-		} catch (Exception e) {
-			// Redis 연결 실패 시 무시
-		}
 	}
 
 	@AfterEach
@@ -493,7 +480,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			.transactions(transactionRequests)
 			.build();
 
-		// when & then - 락이 이미 존재하므로 409 에러가 발생해야 함
+		// when & then
 		mockMvc.perform(post("/api/transactions/receipts/save")
 				.content(objectMapper.writeValueAsString(saveRequest))
 				.contentType(APPLICATION_JSON))
