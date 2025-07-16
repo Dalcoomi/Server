@@ -2,18 +2,21 @@ package com.dalcoomi.auth.presentation;
 
 import static org.springframework.http.HttpStatus.OK;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.auth.application.AuthService;
-import com.dalcoomi.auth.config.AuthMember;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.auth.dto.request.LoginRequest;
 import com.dalcoomi.auth.dto.response.LoginResponse;
 import com.dalcoomi.auth.dto.response.ReissueTokenResponse;
+import com.dalcoomi.auth.dto.response.TestTokenResponse;
 import com.dalcoomi.member.dto.SocialInfo;
 
 import jakarta.validation.Valid;
@@ -45,5 +48,13 @@ public class AuthController {
 		TokenInfo tokenInfo = authService.reissueToken(memberId);
 
 		return new ReissueTokenResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
+	}
+
+	@GetMapping("/test/token")
+	@ResponseStatus(OK)
+	public TestTokenResponse createTestToken(@RequestParam("memberId") Long memberId) {
+		TokenInfo tokenInfo = authService.createTestToken(memberId);
+
+		return new TestTokenResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
 	}
 }
