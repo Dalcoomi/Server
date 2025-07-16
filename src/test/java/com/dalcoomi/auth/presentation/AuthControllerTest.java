@@ -4,6 +4,8 @@ import static com.dalcoomi.common.constant.TokenConstants.REFRESH_TOKEN_REDIS_KE
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_NOT_FOUND;
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -21,6 +23,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.annotation.WithMockCustomUser;
 import com.dalcoomi.auth.dto.request.LoginRequest;
 import com.dalcoomi.fixture.MemberFixture;
@@ -35,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class AuthControllerTest {
+class AuthControllerTest extends AbstractContainerBaseTest {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -78,11 +81,9 @@ class AuthControllerTest {
 	void login_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
-
 		member = memberRepository.save(member);
 
 		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
-
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		LoginRequest request = new LoginRequest(socialConnection.getSocialId(), socialConnection.getSocialType());
@@ -91,7 +92,7 @@ class AuthControllerTest {
 		String json = objectMapper.writeValueAsString(request);
 
 		mockMvc.perform(post("/api/auth/login")
-				.contentType("application/json")
+				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.accessToken").exists())
@@ -116,7 +117,7 @@ class AuthControllerTest {
 
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
-				.contentType("application/json"))
+				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.accessToken").exists())
 			.andExpect(jsonPath("$.refreshToken").exists())
@@ -135,13 +136,30 @@ class AuthControllerTest {
 
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
-				.contentType("application/json"))
+				.contentType(APPLICATION_JSON))
 			.andExpect(status().isNotFound())
 			.andExpect(result -> {
 				String content = result.getResponse().getContentAsString();
 
 				assertThat(content).contains(TOKEN_NOT_FOUND.getMessage());
 			})
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 테스트 토큰 발급 성공")
+	void create_test_token_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// when & then
+		mockMvc.perform(get("/api/auth/test/token")
+				.queryParam("memberId", String.valueOf(member.getId()))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.accessToken").exists())
+			.andExpect(jsonPath("$.refreshToken").exists())
 			.andDo(print());
 	}
 }
