@@ -1,5 +1,7 @@
 package com.dalcoomi.auth.application;
 
+import static com.dalcoomi.common.constant.TokenConstants.ACCESS_TOKEN_TYPE;
+import static com.dalcoomi.common.constant.TokenConstants.MEMBER_ROLE;
 import static com.dalcoomi.common.error.model.ErrorMessage.MALFORMED_TOKEN;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_HAS_EXPIRED;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -23,7 +25,7 @@ import com.dalcoomi.common.error.exception.UnauthorizedException;
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class JwtServiceIntegrationTest {
+class JwtServiceTest {
 
 	@Autowired
 	private JwtService jwtService;
@@ -31,11 +33,17 @@ class JwtServiceIntegrationTest {
 	@Autowired
 	private StringRedisTemplate redisTemplate;
 
+	@Value("${jwt.issuer}")
+	private String issuer;
+
 	@Value("${jwt.secret-key}")
 	private String tokenSecret;
 
-	@Value("${jwt.issuer}")
-	private String issuer;
+	@Value("${jwt.access.duration}")
+	private long accessTokenDuration;
+
+	@Value("${jwt.refresh.duration}")
+	private long refreshTokenDuration;
 
 	@Test
 	@DisplayName("통합 테스트 - 실제 토큰 생성 및 인증 성공")
@@ -44,7 +52,7 @@ class JwtServiceIntegrationTest {
 		Long memberId = 123L;
 
 		// when
-		String token = jwtService.createAccessToken(memberId);
+		String token = jwtService.createToken(memberId, accessTokenDuration, ACCESS_TOKEN_TYPE, MEMBER_ROLE);
 		String authHeader = "Bearer " + token;
 		String extractedMemberId = jwtService.authenticate(authHeader);
 
@@ -73,7 +81,8 @@ class JwtServiceIntegrationTest {
 		ReflectionTestUtils.setField(expiredTokenService, "accessTokenDuration", -1000L); // 음수로 만료
 		ReflectionTestUtils.setField(expiredTokenService, "issuer", issuer);
 
-		String expiredToken = "Bearer " + expiredTokenService.createAccessToken(123L);
+		String expiredToken = "Bearer "
+			+ expiredTokenService.createToken(123L, -1000L, ACCESS_TOKEN_TYPE, MEMBER_ROLE);
 
 		// when & then
 		Assertions.assertThatThrownBy(() -> jwtService.authenticate(expiredToken))

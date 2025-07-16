@@ -4,6 +4,7 @@ import static com.dalcoomi.common.constant.TokenConstants.ACCESS_TOKEN_TYPE;
 import static com.dalcoomi.common.constant.TokenConstants.BEARER_PREFIX;
 import static com.dalcoomi.common.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
 import static com.dalcoomi.common.constant.TokenConstants.REFRESH_TOKEN_TYPE;
+import static com.dalcoomi.common.constant.TokenConstants.TEST_ROLE;
 import static com.dalcoomi.common.error.model.ErrorMessage.AUTHORIZATION_HEADER_ERROR;
 import static com.dalcoomi.common.error.model.ErrorMessage.MALFORMED_TOKEN;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_HAS_EXPIRED;
@@ -89,17 +90,16 @@ public class JwtService {
 		return Keys.hmacShaKeyFor(keyBytes);
 	}
 
-	public String createAccessToken(Long memberId) {
-		return createToken(memberId, accessTokenDuration, ACCESS_TOKEN_TYPE);
-	}
+	public TokenInfo createAndSaveToken(Long memberId, String role) {
+		String accessToken;
 
-	public String createRefreshToken(Long memberId) {
-		return createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE);
-	}
+		if (role.equals(TEST_ROLE)) {
+			accessToken = createToken(memberId, refreshTokenDuration, ACCESS_TOKEN_TYPE, role);
+		} else {
+			accessToken = createToken(memberId, accessTokenDuration, ACCESS_TOKEN_TYPE, role);
+		}
 
-	public TokenInfo createAndSaveToken(Long memberId) {
-		String accessToken = createAccessToken(memberId);
-		String refreshToken = createRefreshToken(memberId);
+		String refreshToken = createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE, role);
 
 		redisTemplate.opsForValue().set(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken);
 
@@ -120,7 +120,7 @@ public class JwtService {
 		}
 	}
 
-	private String createToken(Long memberId, long duration, String tokenType) {
+	public String createToken(Long memberId, long duration, String tokenType, String role) {
 		Date now = new Date();
 		Date expireDate = new Date(now.getTime() + duration);
 
@@ -130,6 +130,7 @@ public class JwtService {
 			.issuedAt(now)
 			.expiration(expireDate)
 			.claim("type", tokenType)
+			.claim("role", role)
 			.signWith(getSignKey())
 			.compact();
 	}
