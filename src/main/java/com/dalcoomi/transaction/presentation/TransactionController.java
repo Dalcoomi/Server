@@ -94,8 +94,11 @@ public class TransactionController {
 	@GetMapping
 	@ResponseStatus(OK)
 	public GetTransactionsResponse get(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
-		@RequestParam("year") Integer year, @RequestParam("month") Integer month) {
-		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(memberId, teamId, year, month);
+		@RequestParam("year") Integer year, @RequestParam("month") Integer month,
+		@RequestParam("categoryName") @Nullable String categoryName,
+		@RequestParam("creatorNickname") @Nullable String creatorNickname) {
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(memberId, teamId, year, month, categoryName,
+			creatorNickname);
 
 		TransactionsInfo transactionsInfo = transactionService.get(criteria);
 

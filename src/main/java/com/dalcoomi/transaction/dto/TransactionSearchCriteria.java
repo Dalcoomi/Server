@@ -10,16 +10,21 @@ public record TransactionSearchCriteria(
 	Long memberId,
 	Long teamId,
 	Integer year,
-	Integer month
+	Integer month,
+	String categoryName,
+	String creatorNickname
 ) {
 
-	public static TransactionSearchCriteria of(Long memberId, @Nullable Long teamId, Integer year, Integer month) {
+	public static TransactionSearchCriteria of(Long memberId, @Nullable Long teamId, Integer year, Integer month,
+		String categoryName, String creatorNickname) {
 		return TransactionSearchCriteria.builder()
 			.requesterId(memberId)
 			.memberId(teamId == null ? memberId : null)
 			.teamId(teamId)
 			.year(year)
 			.month(month)
+			.categoryName(categoryName)
+			.creatorNickname(creatorNickname)
 			.build();
 	}
 }

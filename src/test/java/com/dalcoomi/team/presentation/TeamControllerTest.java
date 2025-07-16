@@ -575,7 +575,8 @@ class TeamControllerTest {
 			.isInstanceOf(NotFoundException.class)
 			.hasMessageContaining(TEAM_NOT_FOUND.getMessage());
 
-		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(lastTeamMember.getId(), teamId, null, null);
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(lastTeamMember.getId(), teamId, null, null,
+			null, null);
 
 		List<Transaction> teamTransactions = transactionRepository.findTransactions(criteria);
 		assertThat(teamTransactions).isEmpty();
