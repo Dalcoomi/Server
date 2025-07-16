@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.dalcoomi.auth.config.AuthMember;
+import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.common.util.lock.ReceiptLockKeyGenerator;
 import com.dalcoomi.common.util.lock.RedisLockUtil;
