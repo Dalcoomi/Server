@@ -111,7 +111,7 @@ class TransactionControllerTest {
 			.andDo(print());
 
 		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(member.getId(), null,
-			transactionDate.getYear(), transactionDate.getMonthValue());
+			transactionDate.getYear(), transactionDate.getMonthValue(), null, null);
 
 		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
 
@@ -158,7 +158,7 @@ class TransactionControllerTest {
 			.andDo(print());
 
 		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(member.getId(), team.getId(),
-			transactionDate.getYear(), transactionDate.getMonthValue());
+			transactionDate.getYear(), transactionDate.getMonthValue(), null, null);
 
 		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
 
@@ -303,6 +303,116 @@ class TransactionControllerTest {
 			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
 			.andExpect(jsonPath("$.transactions[0].categoryName").value(category.getName()))
 			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member.getNickname()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 리스트 카테고리 필터링 조회 성공")
+	void get_team_transactions_category_name_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		Team team = TeamFixture.getTeam1(member);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember = TeamMember.of(team, member);
+		teamMemberRepository.save(teamMember);
+
+		Category category1 = CategoryFixture.getTeamCategory1(member, team.getId());
+		category1 = categoryRepository.save(category1);
+
+		Category category2 = CategoryFixture.getTeamCategory2(member, team.getId());
+		category2 = categoryRepository.save(category2);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member, team.getId(), category1);
+		Transaction transaction2 = TransactionFixture.getTeamTransactionWithExpense2(member, team.getId(), category1);
+		Transaction transaction3 = TransactionFixture.getTeamTransactionWithExpense3(member, team.getId(), category2);
+		Transaction transaction4 = TransactionFixture.getTeamTransactionWithExpense4(member, team.getId(), category2);
+		List<Transaction> transactions = Arrays.asList(transaction1, transaction2, transaction3, transaction4);
+		transactionRepository.saveAll(transactions);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		int year = 2025;
+		int month = 3;
+
+		// when & then
+		mockMvc.perform(get("/api/transactions")
+				.param("teamId", String.valueOf(team.getId()))
+				.param("year", String.valueOf(year))
+				.param("month", String.valueOf(month))
+				.param("categoryName", category2.getName())
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.income").value(0))
+			.andExpect(jsonPath("$.expense").value(transaction3.getAmount()))
+			.andExpect(jsonPath("$.total").value(-transaction3.getAmount()))
+			.andExpect(jsonPath("$.transactions").isArray())
+			.andExpect(jsonPath("$.transactions.length()").value(1))
+			.andExpect(jsonPath("$.transactions[0].content").value(transaction3.getContent()))
+			.andExpect(jsonPath("$.transactions[0].amount").value(transaction3.getAmount()))
+			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
+			.andExpect(jsonPath("$.transactions[0].categoryName").value(category2.getName()))
+			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member.getNickname()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 리스트 작성자 필터링 조회 성공")
+	void get_team_transactions_creator_name_filtering_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		Team team = TeamFixture.getTeam1(member1);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member1);
+		teamMemberRepository.save(teamMember1);
+
+		TeamMember teamMember2 = TeamMember.of(team, member2);
+		teamMemberRepository.save(teamMember2);
+
+		Category category = CategoryFixture.getTeamCategory1(member1, team.getId());
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member1, team.getId(), category);
+		Transaction transaction2 = TransactionFixture.getTeamTransactionWithExpense2(member2, team.getId(), category);
+		Transaction transaction3 = TransactionFixture.getTeamTransactionWithExpense3(member2, team.getId(), category);
+		Transaction transaction4 = TransactionFixture.getTeamTransactionWithExpense4(member2, team.getId(), category);
+		List<Transaction> transactions = Arrays.asList(transaction1, transaction2, transaction3, transaction4);
+		transactionRepository.saveAll(transactions);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		int year = 2025;
+		int month = 3;
+
+		// when & then
+		mockMvc.perform(get("/api/transactions")
+				.param("teamId", String.valueOf(team.getId()))
+				.param("year", String.valueOf(year))
+				.param("month", String.valueOf(month))
+				.param("creatorNickname", member2.getNickname())
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.income").value(0))
+			.andExpect(jsonPath("$.expense").value(transaction2.getAmount() + transaction3.getAmount()))
+			.andExpect(jsonPath("$.total").value(-(transaction2.getAmount() + transaction3.getAmount())))
+			.andExpect(jsonPath("$.transactions").isArray())
+			.andExpect(jsonPath("$.transactions.length()").value(2))
+			.andExpect(jsonPath("$.transactions[0].content").value(transaction3.getContent()))
+			.andExpect(jsonPath("$.transactions[1].content").value(transaction2.getContent()))
+			.andExpect(jsonPath("$.transactions[0].amount").value(transaction3.getAmount()))
+			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
+			.andExpect(jsonPath("$.transactions[0].categoryName").value(category.getName()))
+			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member2.getNickname()))
 			.andDo(print());
 	}
 
