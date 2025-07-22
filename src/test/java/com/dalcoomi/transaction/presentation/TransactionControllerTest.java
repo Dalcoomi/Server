@@ -48,7 +48,7 @@ import com.dalcoomi.team.domain.TeamMember;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
-import com.dalcoomi.transaction.dto.request.BulkTransactionRequest;
+import com.dalcoomi.transaction.dto.request.SaveReceiptRequest;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -92,14 +92,7 @@ class TransactionControllerTest {
 		category = categoryRepository.save(category);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		Long amount = 30000L;
 		String content = "앙";
@@ -118,7 +111,7 @@ class TransactionControllerTest {
 			.andDo(print());
 
 		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(member.getId(), null,
-			transactionDate.getYear(), transactionDate.getMonthValue());
+			transactionDate.getYear(), transactionDate.getMonthValue(), null, null);
 
 		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
 
@@ -146,14 +139,7 @@ class TransactionControllerTest {
 		category = categoryRepository.save(category);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		Long amount = 30000L;
 		String content = "앙";
@@ -172,7 +158,7 @@ class TransactionControllerTest {
 			.andDo(print());
 
 		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(member.getId(), team.getId(),
-			transactionDate.getYear(), transactionDate.getMonthValue());
+			transactionDate.getYear(), transactionDate.getMonthValue(), null, null);
 
 		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
 
@@ -212,14 +198,7 @@ class TransactionControllerTest {
 		transactionRepository.saveAll(transactions);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		int year = 2025;
 		int month = 3;
@@ -255,14 +234,7 @@ class TransactionControllerTest {
 		member = memberRepository.save(member);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		int year = 2024;
 		int month = 12;
@@ -305,14 +277,7 @@ class TransactionControllerTest {
 		transactionRepository.saveAll(transactions);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		int year = 2025;
 		int month = 3;
@@ -342,6 +307,116 @@ class TransactionControllerTest {
 	}
 
 	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 리스트 카테고리 필터링 조회 성공")
+	void get_team_transactions_category_name_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		Team team = TeamFixture.getTeam1(member);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember = TeamMember.of(team, member);
+		teamMemberRepository.save(teamMember);
+
+		Category category1 = CategoryFixture.getTeamCategory1(member, team.getId());
+		category1 = categoryRepository.save(category1);
+
+		Category category2 = CategoryFixture.getTeamCategory2(member, team.getId());
+		category2 = categoryRepository.save(category2);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member, team.getId(), category1);
+		Transaction transaction2 = TransactionFixture.getTeamTransactionWithExpense2(member, team.getId(), category1);
+		Transaction transaction3 = TransactionFixture.getTeamTransactionWithExpense3(member, team.getId(), category2);
+		Transaction transaction4 = TransactionFixture.getTeamTransactionWithExpense4(member, team.getId(), category2);
+		List<Transaction> transactions = Arrays.asList(transaction1, transaction2, transaction3, transaction4);
+		transactionRepository.saveAll(transactions);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		int year = 2025;
+		int month = 3;
+
+		// when & then
+		mockMvc.perform(get("/api/transactions")
+				.param("teamId", String.valueOf(team.getId()))
+				.param("year", String.valueOf(year))
+				.param("month", String.valueOf(month))
+				.param("categoryName", category2.getName())
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.income").value(0))
+			.andExpect(jsonPath("$.expense").value(transaction3.getAmount()))
+			.andExpect(jsonPath("$.total").value(-transaction3.getAmount()))
+			.andExpect(jsonPath("$.transactions").isArray())
+			.andExpect(jsonPath("$.transactions.length()").value(1))
+			.andExpect(jsonPath("$.transactions[0].content").value(transaction3.getContent()))
+			.andExpect(jsonPath("$.transactions[0].amount").value(transaction3.getAmount()))
+			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
+			.andExpect(jsonPath("$.transactions[0].categoryName").value(category2.getName()))
+			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member.getNickname()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 리스트 작성자 필터링 조회 성공")
+	void get_team_transactions_creator_name_filtering_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		Team team = TeamFixture.getTeam1(member1);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, member1);
+		teamMemberRepository.save(teamMember1);
+
+		TeamMember teamMember2 = TeamMember.of(team, member2);
+		teamMemberRepository.save(teamMember2);
+
+		Category category = CategoryFixture.getTeamCategory1(member1, team.getId());
+		category = categoryRepository.save(category);
+
+		Transaction transaction1 = TransactionFixture.getTeamTransactionWithExpense1(member1, team.getId(), category);
+		Transaction transaction2 = TransactionFixture.getTeamTransactionWithExpense2(member2, team.getId(), category);
+		Transaction transaction3 = TransactionFixture.getTeamTransactionWithExpense3(member2, team.getId(), category);
+		Transaction transaction4 = TransactionFixture.getTeamTransactionWithExpense4(member2, team.getId(), category);
+		List<Transaction> transactions = Arrays.asList(transaction1, transaction2, transaction3, transaction4);
+		transactionRepository.saveAll(transactions);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		int year = 2025;
+		int month = 3;
+
+		// when & then
+		mockMvc.perform(get("/api/transactions")
+				.param("teamId", String.valueOf(team.getId()))
+				.param("year", String.valueOf(year))
+				.param("month", String.valueOf(month))
+				.param("creatorNickname", member2.getNickname())
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.income").value(0))
+			.andExpect(jsonPath("$.expense").value(transaction2.getAmount() + transaction3.getAmount()))
+			.andExpect(jsonPath("$.total").value(-(transaction2.getAmount() + transaction3.getAmount())))
+			.andExpect(jsonPath("$.transactions").isArray())
+			.andExpect(jsonPath("$.transactions.length()").value(2))
+			.andExpect(jsonPath("$.transactions[0].content").value(transaction3.getContent()))
+			.andExpect(jsonPath("$.transactions[1].content").value(transaction2.getContent()))
+			.andExpect(jsonPath("$.transactions[0].amount").value(transaction3.getAmount()))
+			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
+			.andExpect(jsonPath("$.transactions[0].categoryName").value(category.getName()))
+			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member2.getNickname()))
+			.andDo(print());
+	}
+
+	@Test
 	@DisplayName("통합 테스트 - 데이터가 없는 달의 그룹 거래 내역 조회 시 빈 배열 조회 성공")
 	void get_team_transactions_empty_month_success() throws Exception {
 		// given
@@ -355,14 +430,7 @@ class TransactionControllerTest {
 		teamMemberRepository.save(teamMember);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		int year = 2024;
 		int month = 12;
@@ -396,14 +464,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
@@ -444,14 +505,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
-			member1.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member1.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
@@ -497,14 +551,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
-			member1.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member1.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/transactions/{transactionId}", transaction1.getId())
@@ -529,14 +576,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		Long amount = 20000L;
 		String content = "엉";
@@ -588,14 +628,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
-			member1.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member1.getId());
 
 		Long amount = 20000L;
 		String content = "엉";
@@ -628,14 +661,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(delete("/api/transactions/{transactionId}", transaction1.getId())
@@ -670,14 +696,7 @@ class TransactionControllerTest {
 		transaction1 = transactionRepository.save(transaction1);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
-			member1.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member1.getId());
 
 		// when & then
 		mockMvc.perform(delete("/api/transactions/{transactionId}", transaction1.getId())
@@ -704,23 +723,16 @@ class TransactionControllerTest {
 			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
 				category.getId()));
 
-		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+		SaveReceiptRequest bulkRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)
 			.transactions(transactionRequests)
 			.build();
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
-			member1.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member1.getId());
 
 		// when & then
-		mockMvc.perform(post("/api/transactions/bulk")
+		mockMvc.perform(post("/api/transactions/receipts/save")
 				.content(objectMapper.writeValueAsString(bulkRequest))
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -757,26 +769,29 @@ class TransactionControllerTest {
 			new TransactionRequest(team.getId(), 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
 				category.getId()));
 
-		BulkTransactionRequest bulkRequest = BulkTransactionRequest.builder()
+		SaveReceiptRequest bulkRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)
 			.transactions(transactionRequests)
 			.build();
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
-			member1.getId().toString(),
+		setAuthentication(member1.getId());
+
+		// when & then
+		mockMvc.perform(post("/api/transactions/receipts/save")
+				.content(objectMapper.writeValueAsString(bulkRequest))
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+	}
+
+	private void setAuthentication(Long memberId) {
+		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
 			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
 
 		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		// when & then
-		mockMvc.perform(post("/api/transactions/bulk")
-				.content(objectMapper.writeValueAsString(bulkRequest))
-				.contentType(APPLICATION_JSON))
-			.andExpect(status().isOk())
-			.andDo(print());
 	}
 }

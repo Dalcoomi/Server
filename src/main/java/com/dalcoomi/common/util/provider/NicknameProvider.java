@@ -1,4 +1,4 @@
-package com.dalcoomi.common.util;
+package com.dalcoomi.common.util.provider;
 
 import static java.lang.String.format;
 

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dalcoomi.auth.config.AuthMember;
+import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.category.dto.CategoryInfo;
 import com.dalcoomi.category.dto.response.GetCategoriesResponse;

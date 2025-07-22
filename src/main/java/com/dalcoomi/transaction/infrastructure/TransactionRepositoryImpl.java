@@ -57,6 +57,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 				generateEq(criteria.memberId(), transactionJpaEntity.creator.id::eq),
 				generateEq(criteria.year(), transactionJpaEntity.transactionDate.year()::eq),
 				generateEq(criteria.month(), transactionJpaEntity.transactionDate.month()::eq),
+				generateEq(criteria.categoryName(), transactionJpaEntity.category.name::eq),
+				generateEq(criteria.creatorNickname(), transactionJpaEntity.creator.nickname::eq),
 				transactionJpaEntity.deletedAt.isNull(),
 				memberJpaEntity.deletedAt.isNull(),
 				categoryJpaEntity.deletedAt.isNull()

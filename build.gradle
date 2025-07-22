@@ -55,7 +55,8 @@ sonar {
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
         property "sonar.exclusions", "**/*Application*.java, **/*Config*.java, **/*GlobalExceptionHandler.java, **/Q*.java, **/DynamicQuery.java, " +
-                "**/*Exception.java, **/*Adapter.java, **/*Filter.java, **/BaseTimeEntity.java, **/CustomOAuth2UserService.java, **/*RepositoryImpl.java"
+                "**/*Exception.java, **/*Adapter.java, **/*Filter.java, **/BaseTimeEntity.java, **/CustomOAuth2UserService.java, **/*RepositoryImpl.java, " +
+                "**/HealthController.java"
         property "sonar.java.coveragePlugin", "jacoco"
     }
 }
@@ -131,7 +132,8 @@ jacocoTestCoverageVerification {
                     '*.*RepositoryImpl',
                     '*.BaseTimeEntity',
                     '*.CustomOAuth2UserService',
-                    '*.*.CustomUserDetails'
+                    '*.*.CustomUserDetails',
+                    '*.HealthController'
             ]
         }
     }
@@ -188,4 +190,8 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Test Container
+    testImplementation "org.testcontainers:testcontainers:1.20.4"
+    testImplementation "org.testcontainers:junit-jupiter:1.20.4"
 }

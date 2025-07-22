@@ -1,5 +1,6 @@
 package com.dalcoomi.member.presentation;
 
+import static com.dalcoomi.common.constant.TokenConstants.MEMBER_ROLE;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -10,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.auth.application.JwtService;
-import com.dalcoomi.auth.config.AuthMember;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.domain.Member;
@@ -51,7 +52,7 @@ public class MemberController {
 
 		Long memberId = memberService.signUp(socialInfo);
 
-		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId);
+		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 
 		return new SignUpResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
 	}

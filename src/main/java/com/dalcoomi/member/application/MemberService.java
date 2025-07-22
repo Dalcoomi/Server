@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.common.error.exception.ConflictException;
-import com.dalcoomi.common.util.NicknameProvider;
+import com.dalcoomi.common.util.provider.NicknameProvider;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.domain.Member;

@@ -1,10 +1,10 @@
-name: Dalcoomi Server CD for Prod
+name: Dalcoomi Server CD for Dev
 
 on:
   workflow_run:
     workflows: [ "Dalcoomi Server CI" ]
     types: [ completed ]
-    branches: [ main ]
+    branches: [ develop ]
 
 jobs:
   move-files:
@@ -27,20 +27,20 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_PROD_SECRET_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Github Actions IP 보안그룹 추가
         run: |
-          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_DEV_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: AWS EC2 Create Directory
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_PROD_HOST }}
-          username: ${{ secrets.EC2_PROD_USERNAME }}
-          key: ${{ secrets.EC2_PROD_KEY }}
+          host: ${{ secrets.EC2_DEV_HOST }}
+          username: ${{ secrets.EC2_DEV_USERNAME }}
+          key: ${{ secrets.EC2_DEV_KEY }}
           port: ${{ secrets.EC2_SSH_PORT }}
           timeout: 60s
           script: |
@@ -49,14 +49,14 @@ jobs:
 
       - name: Docker env File
         run:
-          cp src/main/resources/config/prod.env ./infra/.env
+          cp src/main/resources/config/dev.env ./infra/.env
 
       - name: AWS EC2 Copy Files
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.EC2_PROD_HOST }}
-          username: ${{ secrets.EC2_PROD_USERNAME }}
-          key: ${{ secrets.EC2_PROD_KEY }}
+          host: ${{ secrets.EC2_DEV_HOST }}
+          username: ${{ secrets.EC2_DEV_USERNAME }}
+          key: ${{ secrets.EC2_DEV_KEY }}
           port: ${{ secrets.EC2_SSH_PORT }}
           timeout: 60s
           source: "infra"
@@ -65,7 +65,7 @@ jobs:
       - name: Github Actions IP 보안그룹 삭제
         if: always()
         run: |
-          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_DEV_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
   deploy:
     name: deploy
@@ -104,23 +104,24 @@ jobs:
       - name: Docker Buildx setting
         uses: docker/setup-buildx-action@v3.8.0
 
-      - name: Dockerhub Login
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3.3.0
         with:
-          username: ${{ secrets.DOCKER_HUB_PROD_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PROD_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_DEV_TOKEN }}
 
-      - name: Dockerhub build and push
+      - name: Build and push to GHCR
         uses: docker/build-push-action@v6.10.0
         with:
           context: .
-          file: ./infra/Dockerfile-prod
+          file: ./infra/Dockerfile-dev
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_PROD_USERNAME }}/${{ secrets.DOCKER_HUB_PROD_REPO }}:latest
-            ${{ secrets.DOCKER_HUB_PROD_USERNAME }}/${{ secrets.DOCKER_HUB_PROD_REPO }}:${{ github.sha }}
+            ghcr.io/${{ secrets.GHCR_DEV_REPO }}:dev-latest
+            ghcr.io/${{ secrets.GHCR_DEV_REPO }}:dev-${{ github.sha }}
           build-args: |
-            "SPRING_ACTIVE_PROFILE=prod"
+            "SPRING_ACTIVE_PROFILE=dev"
           platforms: |
             linux/amd64
             linux/arm64
@@ -132,60 +133,60 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_PROD_SECRET_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Github Actions IP 보안그룹 추가
         run: |
-          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_DEV_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: AWS EC2 Server Deploy
         uses: appleboy/ssh-action@master
         env:
-          COMPOSE: "dalcoomi/infra/docker-compose-prod.yml"
+          COMPOSE: "dalcoomi/infra/docker-compose-dev.yml"
         with:
           envs: COMPOSE
-          host: ${{ secrets.EC2_PROD_HOST }}
-          username: ${{ secrets.EC2_PROD_USERNAME }}
-          key: ${{ secrets.EC2_PROD_KEY }}
+          host: ${{ secrets.EC2_DEV_HOST }}
+          username: ${{ secrets.EC2_DEV_USERNAME }}
+          key: ${{ secrets.EC2_DEV_KEY }}
           port: ${{ secrets.EC2_SSH_PORT }}
           timeout: 300s
           script: |
-            echo "${{ secrets.DOCKER_HUB_PROD_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_PROD_USERNAME }}" --password-stdin
+            echo "${{ secrets.GHCR_DEV_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             # 헬스체크를 위한 기존 컨테이너 확인
-            if [ "$(docker ps -q -f name=dalcoomi-spring-prod)" ]; then
+            if [ "$(docker ps -q -f name=dalcoomi-spring-dev)" ]; then
               echo "기존 컨테이너 중지 중..."
-              docker-compose -f $COMPOSE down
+              docker compose -f $COMPOSE down
             fi
             
             # 최신 이미지 pull
-            docker pull ${{ secrets.DOCKER_HUB_PROD_USERNAME }}/${{ secrets.DOCKER_HUB_PROD_REPO }}:latest
+            docker pull ghcr.io/${{ secrets.GHCR_DEV_REPO }}:dev-latest
             
             # 새 컨테이너 시작
-            docker-compose -f $COMPOSE up -d
+            docker compose -f $COMPOSE up -d
             
             # 사용하지 않는 이미지만 정리 (볼륨은 보존)
             docker image prune -f
             
             # 컨테이너 상태 확인
             sleep 30
-            if [ "$(docker ps -q -f name=dalcoomi-spring-prod)" ]; then
+            if [ "$(docker ps -q -f name=dalcoomi-spring-dev)" ]; then
               echo "✅ 배포 성공: 컨테이너가 정상적으로 실행 중입니다."
               docker ps -f name=dalcoomi
             else
               echo "❌ 배포 실패: 컨테이너가 실행되지 않았습니다."
-              docker logs dalcoomi-spring-prod --tail 50
+              docker logs dalcoomi-spring-dev --tail 50
               exit 1
             fi
             
-            echo "##### Dalcoomi Server Prod 배포 완료 #####"
+            echo "##### Dalcoomi Server Dev 배포 완료 #####"
 
       - name: Github Actions IP 보안그룹 삭제
         if: always()
         run: |
-          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_DEV_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: Deployment Status Notification
         if: always()

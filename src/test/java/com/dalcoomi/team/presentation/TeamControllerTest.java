@@ -94,14 +94,7 @@ class TeamControllerTest {
 		member = memberRepository.save(member);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		String title = "엥엥";
 		Integer memberLimit = 2;
@@ -137,14 +130,7 @@ class TeamControllerTest {
 		member = memberRepository.save(member);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		String title = "엥엥";
 		Integer memberLimit = 12;
@@ -196,14 +182,7 @@ class TeamControllerTest {
 		teamMemberRepository.save(teamMember5);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		TeamRequest request = new TeamRequest("새 팀", 3, "새 목표");
 		String json = objectMapper.writeValueAsString(request);
@@ -231,14 +210,7 @@ class TeamControllerTest {
 		newMember = memberRepository.save(newMember);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(newMember.getId(),
-			newMember.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(newMember.getId());
 
 		String invitationCode = "12345678";
 
@@ -270,14 +242,7 @@ class TeamControllerTest {
 		teamMemberRepository.save(teamMember);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		String invitationCode = "12345678";
 
@@ -306,14 +271,7 @@ class TeamControllerTest {
 		newMember = memberRepository.save(newMember);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(newMember.getId(),
-			newMember.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(newMember.getId());
 
 		String invitationCode = "12345678";
 
@@ -333,14 +291,7 @@ class TeamControllerTest {
 		member = memberRepository.save(member);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		String invalidCode = "NOTEXIST";
 
@@ -381,14 +332,7 @@ class TeamControllerTest {
 		teamMemberRepository.save(additionalTeamMember);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member1.getId(),
-			member1.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member1.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/teams")
@@ -415,14 +359,7 @@ class TeamControllerTest {
 		member = memberRepository.save(member);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/teams")
@@ -459,14 +396,7 @@ class TeamControllerTest {
 		teamMemberRepository.save(teamMember3);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(leader.getId(),
-			leader.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(leader.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/teams/{teamId}", team.getId())
@@ -492,14 +422,7 @@ class TeamControllerTest {
 		Long nonExistentTeamId = 999L;
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(member.getId(),
-			member.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(get("/api/teams/{teamId}", nonExistentTeamId)
@@ -535,14 +458,7 @@ class TeamControllerTest {
 		teamMemberRepository.save(otherTeamMember);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(memberToLeave.getId(),
-			memberToLeave.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(memberToLeave.getId());
 
 		LeaveTeamRequest request = new LeaveTeamRequest(team.getId(), null);
 
@@ -590,14 +506,7 @@ class TeamControllerTest {
 		teamMemberRepository.save(otherTeamMember);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(leader.getId(),
-			leader.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(leader.getId());
 
 		LeaveTeamRequest request = new LeaveTeamRequest(team.getId(), nextLeader.getNickname());
 
@@ -645,14 +554,7 @@ class TeamControllerTest {
 		transactionRepository.saveAll(transactions);
 
 		// 인증 설정
-		CustomUserDetails memberUserDetails = new CustomUserDetails(lastMember.getId(),
-			lastMember.getId().toString(),
-			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
-
-		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
-			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
-
-		SecurityContextHolder.getContext().setAuthentication(authentication);
+		setAuthentication(lastMember.getId());
 
 		Long teamId = team.getId();
 		LeaveTeamRequest request = new LeaveTeamRequest(teamId, null);
@@ -673,9 +575,20 @@ class TeamControllerTest {
 			.isInstanceOf(NotFoundException.class)
 			.hasMessageContaining(TEAM_NOT_FOUND.getMessage());
 
-		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(lastTeamMember.getId(), teamId, null, null);
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.of(lastTeamMember.getId(), teamId, null, null,
+			null, null);
 
 		List<Transaction> teamTransactions = transactionRepository.findTransactions(criteria);
 		assertThat(teamTransactions).isEmpty();
+	}
+
+	private void setAuthentication(Long memberId) {
+		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
+			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
+		Authentication authentication = new UsernamePasswordAuthenticationToken(memberUserDetails, null,
+			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 }

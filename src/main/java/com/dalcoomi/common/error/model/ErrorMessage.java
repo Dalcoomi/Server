@@ -29,6 +29,8 @@ public enum ErrorMessage {
 	UNSUPPORTED_SOCIAL_TYPE("지원하지 않는 소셜 서비스입니다."),
 	KAKAO_SERVER_ERROR("Kakao 서버 에러가 발생했습니다."),
 
+	LOCK_EXIST_ERROR("동일한 요청이 처리 중입니다."),
+
 	MEMBER_NOT_FOUND("존재하지 않는 회원입니다."),
 	MEMBER_CONFLICT("이미 존재하는 회원입니다."),
 	MEMBER_INVALID_SOCIAL_ID("유효하지 않는 소셜 ID 입니다."),
