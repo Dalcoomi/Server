@@ -22,9 +22,9 @@ public class Transaction {
 	public static final int CONTENT_LENGTH = 100;
 
 	private final Long id;
-	private final Long teamId;
 	private Member creator;
 	private Category category;
+	private Long teamId;
 	private Long amount;
 	private String content;
 	private LocalDateTime transactionDate;
@@ -61,6 +61,10 @@ public class Transaction {
 
 	public void updateCategory(Category category) {
 		this.category = category;
+	}
+
+	public void updateTeamId(Long teamId) {
+		this.teamId = teamId;
 	}
 
 	public void updateAmount(Long amount) {

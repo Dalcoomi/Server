@@ -55,7 +55,7 @@ public class TransactionController {
 	public void create(@AuthMember Long memberId, @RequestBody TransactionRequest request) {
 		Transaction transaction = Transaction.from(request);
 
-		transactionService.create(memberId, request.categoryId(), transaction);
+		transactionService.create(memberId, request.categoryId(), transaction, request.synchronizeTransaction());
 	}
 
 	@PostMapping("/receipts/upload")
