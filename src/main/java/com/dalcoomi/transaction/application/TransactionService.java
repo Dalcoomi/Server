@@ -59,7 +59,7 @@ public class TransactionService {
 	private String aiServerUrl;
 
 	@Transactional
-	public void create(Long memberId, Long categoryId, Transaction transaction) {
+	public void create(Long memberId, Long categoryId, Transaction transaction, Boolean synchronizeTransaction) {
 		validateTeamMember(transaction.getTeamId(), memberId);
 
 		Member member = memberRepository.findById(memberId);
@@ -69,6 +69,12 @@ public class TransactionService {
 		transaction.updateCategory(category);
 
 		transactionRepository.save(transaction);
+
+		if (transaction.getTeamId() != null && synchronizeTransaction) {
+			transaction.updateTeamId(null);
+
+			transactionRepository.save(transaction);
+		}
 	}
 
 	@Transactional
