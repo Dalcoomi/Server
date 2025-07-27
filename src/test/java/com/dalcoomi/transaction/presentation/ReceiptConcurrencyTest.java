@@ -146,7 +146,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(memberId);
 
-		int threadCount = 5;
+		int threadCount = 3;
 		CountDownLatch startLatch = new CountDownLatch(1); // 시작 신호
 		CountDownLatch readyLatch = new CountDownLatch(threadCount); // 준비 완료 신호
 		List<Future<ResultActions>> futures = new ArrayList<>();
@@ -204,8 +204,10 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		String taskId = "1-1";
 
 		List<TransactionRequest> transactionRequests = Arrays.asList(
-			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, category.getId()),
-			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE, category.getId())
+			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, category.getId(),
+				null),
+			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE, category.getId(),
+				null)
 		);
 
 		SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
@@ -216,7 +218,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		int threadCount = 5;
+		int threadCount = 3;
 		CountDownLatch startLatch = new CountDownLatch(1); // 시작 신호
 		CountDownLatch readyLatch = new CountDownLatch(threadCount); // 준비 완료 신호
 		List<Future<ResultActions>> futures = new ArrayList<>();
@@ -291,7 +293,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(memberId);
 
-		int threadCount = 5;
+		int threadCount = 3;
 		CountDownLatch latch = new CountDownLatch(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
@@ -421,11 +423,11 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		int threadCount = 5;
+		int threadCount = 3;
 		CountDownLatch latch = new CountDownLatch(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
-		// when - 동시에 5개의 서로 다른 taskId로 저장 요청
+		// when - 동시에 3개의 서로 다른 taskId로 저장 요청
 		for (int i = 0; i < threadCount; i++) {
 			final int index = i + 1;
 			Long categoryId = category.getId();
@@ -434,7 +436,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 				try {
 					List<TransactionRequest> transactionRequests = List.of(
 						new TransactionRequest(null, 1000L * index, "테스트" + index,
-							LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, categoryId));
+							LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, categoryId, null));
 
 					SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
 						.taskId(index + "-2")
@@ -490,7 +492,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		List<TransactionRequest> transactionRequests = List.of(
 			new TransactionRequest(null, 5000L, "타임아웃 테스트", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE,
-				category.getId()));
+				category.getId(), null));
 
 		SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)

@@ -246,7 +246,7 @@ class TransactionControllerMockTest extends AbstractContainerBaseTest {
 		String taskId = "1-1";
 		List<TransactionRequest> transactionRequests = List.of(
 			new TransactionRequest(null, 3000L, "락 예외 테스트", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE,
-				categoryId));
+				categoryId, null));
 		SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)
 			.transactions(transactionRequests)
@@ -276,7 +276,7 @@ class TransactionControllerMockTest extends AbstractContainerBaseTest {
 
 		List<TransactionRequest> transactionRequests = List.of(
 			new TransactionRequest(null, 3000L, "락 예외 테스트", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE,
-				categoryId));
+				categoryId, null));
 		SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)
 			.transactions(transactionRequests)
