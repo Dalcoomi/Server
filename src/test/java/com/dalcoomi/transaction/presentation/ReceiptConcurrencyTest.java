@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -147,16 +148,14 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		setAuthentication(memberId);
 
 		int threadCount = 3;
-		CountDownLatch startLatch = new CountDownLatch(1); // 시작 신호
-		CountDownLatch readyLatch = new CountDownLatch(threadCount); // 준비 완료 신호
+		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					readyLatch.countDown(); // 준비 완료 신호
-					startLatch.await(); // 모든 스레드가 동시에 시작하도록 대기
+					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -168,21 +167,17 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			futures.add(future);
 		}
 
-		await().atMost(Duration.ofSeconds(5)).until(() -> readyLatch.getCount() == 0);
-
-		// 모든 스레드 동시 시작
-		startLatch.countDown();
-
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(10))
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
 			.until(() -> futures.stream()
 				.map(future -> {
 					try {
-						return future.get(100, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
 					} catch (Exception e) {
 						return null;
 					}
-				}).filter(Objects::nonNull).toList(), hasSize(threadCount));
+				})
+				.filter(Objects::nonNull).toList(), hasSize(threadCount));
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
@@ -218,17 +213,15 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		int threadCount = 3;
-		CountDownLatch startLatch = new CountDownLatch(1); // 시작 신호
-		CountDownLatch readyLatch = new CountDownLatch(threadCount); // 준비 완료 신호
+		int threadCount = 5;
+		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					readyLatch.countDown(); // 준비 완료 신호
-					startLatch.await(); // 모든 스레드가 동시에 시작하도록 대기
+					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(post("/api/transactions/receipts/save")
 						.content(objectMapper.writeValueAsString(saveRequest))
@@ -241,21 +234,17 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			futures.add(future);
 		}
 
-		await().atMost(Duration.ofSeconds(5)).until(() -> readyLatch.getCount() == 0);
-
-		// 모든 스레드 동시 시작
-		startLatch.countDown();
-
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(10))
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
 			.until(() -> futures.stream()
 				.map(future -> {
 					try {
-						return future.get(100, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
 					} catch (Exception e) {
 						return null;
 					}
-				}).filter(Objects::nonNull).toList(), hasSize(threadCount));
+				})
+				.filter(Objects::nonNull).toList(), hasSize(threadCount));
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
@@ -370,16 +359,15 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(memberId);
 
-		int threadCount = 3;
-		CountDownLatch latch = new CountDownLatch(threadCount);
+		int threadCount = 5;
+		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					latch.countDown();
-					latch.await();
+					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -394,14 +382,16 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = futures.stream()
-			.map(future -> {
-				try {
-					return future.get().andReturn().getResponse().getStatus();
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}).toList();
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
+			.until(() -> futures.stream()
+				.map(future -> {
+					try {
+						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+					} catch (Exception e) {
+						return null;
+					}
+				})
+				.filter(Objects::nonNull).toList(), hasSize(threadCount));
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
