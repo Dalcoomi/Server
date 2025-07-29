@@ -106,12 +106,8 @@ public class JwtService {
 		return new TokenInfo(accessToken, refreshToken);
 	}
 
-	public boolean hasRefreshToken(Long memberId) {
-		return requireNonNull(redisTemplate.hasKey(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX));
-	}
-
 	public void deleteRefreshToken(Long memberId) {
-		boolean existsRefreshToken = hasRefreshToken(memberId);
+		boolean existsRefreshToken = requireNonNull(redisTemplate.hasKey(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX));
 
 		if (existsRefreshToken) {
 			redisTemplate.delete(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX);

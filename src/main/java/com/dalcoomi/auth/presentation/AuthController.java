@@ -42,6 +42,12 @@ public class AuthController {
 		return new LoginResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
 	}
 
+	@PostMapping("/logout")
+	@ResponseStatus(OK)
+	public void logout(@AuthMember Long memberId) {
+		authService.logout(memberId);
+	}
+
 	@PostMapping("/reissue")
 	@ResponseStatus(OK)
 	public ReissueTokenResponse reissueToken(@AuthMember Long memberId) {
