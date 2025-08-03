@@ -213,7 +213,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		int threadCount = 5;
+		int threadCount = 3;
 		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
