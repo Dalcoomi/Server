@@ -35,12 +35,17 @@ public class AuthService {
 		return tokenInfo;
 	}
 
+	public void logout(Long memberId) {
+		jwtService.deleteRefreshToken(memberId);
+	}
+
 	public TokenInfo reissueToken(Long memberId) {
 		jwtService.deleteRefreshToken(memberId);
 
 		return jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 	}
 
+	@Transactional(readOnly = true)
 	public TokenInfo createTestToken(Long memberId) {
 		memberRepository.findById(memberId);
 
