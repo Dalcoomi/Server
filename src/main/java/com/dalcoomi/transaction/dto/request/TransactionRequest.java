@@ -6,6 +6,7 @@ import com.dalcoomi.transaction.domain.TransactionType;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 public record TransactionRequest(
 	Long teamId,
@@ -14,6 +15,7 @@ public record TransactionRequest(
 	@Positive(message = "자연수를 입력해주세요.")
 	Long amount,
 
+	@Size(max = 20, message = "거래 내역 내용은 최대 20자입니다.")
 	String content,
 
 	LocalDateTime transactionDate,

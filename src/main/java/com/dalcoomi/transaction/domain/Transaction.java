@@ -1,5 +1,6 @@
 package com.dalcoomi.transaction.domain;
 
+import static com.dalcoomi.common.constant.TransactionConstants.CONTENT_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_INVALID_AMOUNT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_INVALID_CONTENT;
 import static io.micrometer.common.util.StringUtils.isBlank;
@@ -18,8 +19,6 @@ import lombok.Getter;
 
 @Getter
 public class Transaction {
-
-	public static final int CONTENT_LENGTH = 100;
 
 	private final Long id;
 	private Member creator;

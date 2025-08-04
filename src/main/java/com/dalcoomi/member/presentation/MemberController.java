@@ -22,6 +22,7 @@ import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.response.GetMemberResponse;
 import com.dalcoomi.member.dto.response.SignUpResponse;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -34,7 +35,7 @@ public class MemberController {
 
 	@PostMapping("/sign-up")
 	@ResponseStatus(CREATED)
-	public SignUpResponse signUp(@RequestBody SignUpRequest request) {
+	public SignUpResponse signUp(@RequestBody @Valid SignUpRequest request) {
 		MemberInfo memberInfo = MemberInfo.builder()
 			.email(request.email())
 			.name(request.name())

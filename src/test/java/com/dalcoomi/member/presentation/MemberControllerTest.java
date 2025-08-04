@@ -10,15 +10,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -29,6 +26,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.fixture.MemberFixture;
 import com.dalcoomi.fixture.SocialConnectionFixture;
@@ -43,7 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class MemberControllerTest {
+class MemberControllerTest extends AbstractContainerBaseTest {
 
 	private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
@@ -58,20 +56,6 @@ class MemberControllerTest {
 
 	@Autowired
 	private SocialConnectionRepository socialConnectionRepository;
-
-	@Autowired
-	private StringRedisTemplate redisTemplate;
-
-	@AfterEach
-	void cleanUp() {
-		// Redis 정리
-		// 모든 키를 검색하고 삭제
-		Set<String> keys = redisTemplate.keys("*");
-
-		if (!keys.isEmpty()) {
-			redisTemplate.delete(keys);
-		}
-	}
 
 	@Test
 	@DisplayName("통합 테스트 - 회원가입 성공")
@@ -97,6 +81,31 @@ class MemberControllerTest {
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.accessToken").exists())
 			.andExpect(jsonPath("$.refreshToken").exists())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 이름 길이 초과 회원가입 실패")
+	void name_length_over_sign_up_failure() throws Exception {
+		// given
+		String socialId = "12345";
+		String email = "test@example.com";
+		String name = "프라이인드로스테쭈젠댄마리소피아수인레나테엘리자벳피아루이제제";
+		LocalDate birthday = LocalDate.of(1990, 1, 1);
+		String gender = "남성";
+		boolean serviceAgreement = true;
+		boolean collectionAgreement = true;
+
+		SignUpRequest request = new SignUpRequest(socialId, KAKAO, email, name, birthday, gender, serviceAgreement,
+			collectionAgreement);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/members/sign-up")
+				.contentType("application/json")
+				.content(json))
+			.andExpect(status().isBadRequest())
 			.andDo(print());
 	}
 

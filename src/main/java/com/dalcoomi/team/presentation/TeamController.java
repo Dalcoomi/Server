@@ -23,6 +23,7 @@ import com.dalcoomi.team.dto.request.TeamRequest;
 import com.dalcoomi.team.dto.response.GetMyTeamsResponse;
 import com.dalcoomi.team.dto.response.GetTeamResponse;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -34,7 +35,7 @@ public class TeamController {
 
 	@PostMapping
 	@ResponseStatus(CREATED)
-	public String create(@AuthMember Long memberId, @RequestBody TeamRequest request) {
+	public String create(@AuthMember Long memberId, @RequestBody @Valid TeamRequest request) {
 		Team team = Team.from(request);
 
 		return teamService.create(memberId, team);
