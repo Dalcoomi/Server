@@ -129,7 +129,47 @@ class MemberServiceTest {
 		String socialId = "12345";
 		SocialType socialType = KAKAO;
 		String email = "test@example.com";
-		String name = "";
+		LocalDate birthday = LocalDate.of(1990, 1, 1);
+		String gender = "남성";
+		boolean serviceAgreement = true;
+		boolean collectionAgreement = true;
+
+		MemberInfo memberInfo = MemberInfo.builder()
+			.email(email)
+			.name("")
+			.birthday(birthday)
+			.gender(gender)
+			.serviceAgreement(serviceAgreement)
+			.collectionAgreement(collectionAgreement)
+			.build();
+
+		SocialInfo socialInfo = SocialInfo.builder()
+			.socialId(socialId)
+			.socialType(socialType)
+			.memberInfo(memberInfo)
+			.build();
+
+		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
+
+		// when & then
+		assertThatThrownBy(() -> memberService.signUp(socialInfo))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
+
+		// verify
+		then(socialConnectionRepository).should().existsMemberBySocialIdAndSocialType(socialId, socialType);
+		then(memberRepository).should(never()).save(any(Member.class));
+		then(socialConnectionRepository).should(never()).save(any(SocialConnection.class));
+	}
+
+	@Test
+	@DisplayName("이름 길이 부족으로 인해 회원가입 실패")
+	void name_length_less_sign_up_over_fail() {
+		// given
+		String socialId = "12345";
+		SocialType socialType = KAKAO;
+		String email = "test@example.com";
+		String name = "프";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "남성";
 		boolean serviceAgreement = true;

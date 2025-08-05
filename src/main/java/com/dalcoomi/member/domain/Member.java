@@ -75,7 +75,7 @@ public class Member {
 	}
 
 	private String validateGender(String gender) {
-		if (!isBlank(gender) && gender.length() > GENDER_LENGTH) {
+		if (gender.length() > GENDER_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_GENDER.getMessage());
 		}
 

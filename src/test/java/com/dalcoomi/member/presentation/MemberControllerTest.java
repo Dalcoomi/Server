@@ -65,7 +65,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		String email = "test@example.com";
 		String name = "테스트";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
-		String gender = "남성";
+		String gender = "";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
