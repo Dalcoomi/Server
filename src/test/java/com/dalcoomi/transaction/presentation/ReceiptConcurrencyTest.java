@@ -103,7 +103,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@BeforeEach
 	void setUp() {
-		executorService = Executors.newFixedThreadPool(10);
+		executorService = Executors.newFixedThreadPool(20);
 	}
 
 	@AfterEach
