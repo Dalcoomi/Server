@@ -36,6 +36,7 @@ import com.dalcoomi.transaction.dto.response.GetTransactionResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
 import com.dalcoomi.transaction.dto.response.UploadReceiptResponse;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
@@ -52,7 +53,7 @@ public class TransactionController {
 
 	@PostMapping
 	@ResponseStatus(CREATED)
-	public void create(@AuthMember Long memberId, @RequestBody TransactionRequest request) {
+	public void create(@AuthMember Long memberId, @RequestBody @Valid TransactionRequest request) {
 		Transaction transaction = Transaction.from(request);
 
 		transactionService.create(memberId, request.categoryId(), transaction, request.synchronizeTransaction());

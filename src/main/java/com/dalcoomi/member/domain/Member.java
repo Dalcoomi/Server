@@ -1,5 +1,12 @@
 package com.dalcoomi.member.domain;
 
+import static com.dalcoomi.common.constant.MemberConstants.EMAIL_LENGTH;
+import static com.dalcoomi.common.constant.MemberConstants.GENDER_LENGTH;
+import static com.dalcoomi.common.constant.MemberConstants.NAME_MAX_LENGTH;
+import static com.dalcoomi.common.constant.MemberConstants.NAME_MIN_LENGTH;
+import static com.dalcoomi.common.constant.MemberConstants.NICKNAME_MAX_LENGTH;
+import static com.dalcoomi.common.constant.MemberConstants.NICKNAME_MIN_LENGTH;
+import static com.dalcoomi.common.constant.MemberConstants.PROFILE_IMAGE_URL_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_EMAIL;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_GENDER;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_NAME;
@@ -16,12 +23,6 @@ import lombok.Getter;
 
 @Getter
 public class Member {
-
-	private static final int EMAIL_LENGTH = 100;
-	private static final int NAME_LENGTH = 30;
-	private static final int NICKNAME_LENGTH = 10;
-	private static final int GENDER_LENGTH = 10;
-	private static final int PROFILE_IMAGE_URL_LENGTH = 255;
 
 	private final Long id;
 	private final String email;
@@ -58,7 +59,7 @@ public class Member {
 	}
 
 	private String validateName(String name) {
-		if (isBlank(name) || name.length() > NAME_LENGTH) {
+		if (isBlank(name) || name.length() < NAME_MIN_LENGTH || name.length() > NAME_MAX_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_NAME.getMessage());
 		}
 
@@ -66,7 +67,7 @@ public class Member {
 	}
 
 	private String validateNickname(String nickname) {
-		if (isBlank(nickname) || nickname.length() > NICKNAME_LENGTH) {
+		if (isBlank(nickname) || nickname.length() < NICKNAME_MIN_LENGTH || nickname.length() > NICKNAME_MAX_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_NICKNAME.getMessage());
 		}
 
@@ -74,7 +75,7 @@ public class Member {
 	}
 
 	private String validateGender(String gender) {
-		if (!isBlank(gender) && gender.length() > GENDER_LENGTH) {
+		if (gender.length() > GENDER_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_GENDER.getMessage());
 		}
 
