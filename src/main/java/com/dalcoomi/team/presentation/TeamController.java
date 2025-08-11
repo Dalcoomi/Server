@@ -65,7 +65,7 @@ public class TeamController {
 
 	@DeleteMapping("/leave")
 	@ResponseStatus(OK)
-	public void leave(@AuthMember Long memberId, @RequestBody LeaveTeamRequest request) {
+	public void leave(@AuthMember Long memberId, @RequestBody @Valid LeaveTeamRequest request) {
 		LeaveTeamInfo leaveTeamInfo = LeaveTeamInfo.of(request.teamId(), request.nextLeaderNickname());
 
 		teamService.leave(leaveTeamInfo, memberId);
