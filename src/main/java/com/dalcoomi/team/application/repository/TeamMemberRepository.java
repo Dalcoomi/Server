@@ -3,6 +3,8 @@ package com.dalcoomi.team.application.repository;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.lang.Nullable;
+
 import com.dalcoomi.team.domain.TeamMember;
 
 public interface TeamMemberRepository {
@@ -11,7 +13,7 @@ public interface TeamMemberRepository {
 
 	boolean existsByTeamIdAndMemberId(Long teamId, Long memberId);
 
-	List<TeamMember> find(Long teamId, Long memberId);
+	List<TeamMember> find(@Nullable Long teamId, @Nullable Long memberId);
 
 	int countByTeamId(Long teamId);
 
