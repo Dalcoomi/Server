@@ -32,4 +32,9 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 		return socialConnectionJpaRepository.findBySocialIdAndSocialType(socialId, socialType)
 			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).getMember().getId();
 	}
+
+	@Override
+	public void deleteByMemberId(Long memberId) {
+		socialConnectionJpaRepository.deleteByMemberId(memberId);
+	}
 }

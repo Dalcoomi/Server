@@ -4,7 +4,10 @@ import static com.dalcoomi.common.constant.TokenConstants.MEMBER_ROLE;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +21,11 @@ import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SocialInfo;
+import com.dalcoomi.member.dto.request.LeaveMemberRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.response.GetMemberResponse;
 import com.dalcoomi.member.dto.response.SignUpResponse;
+import com.dalcoomi.team.dto.LeaveTeamInfo;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -64,5 +69,15 @@ public class MemberController {
 		Member member = memberService.get(memberId);
 
 		return GetMemberResponse.from(member);
+	}
+
+	@PatchMapping
+	@ResponseStatus(OK)
+	public void leave(@AuthMember Long memberId, @RequestBody @Valid LeaveMemberRequest request) {
+		List<LeaveTeamInfo> leaveTeamInfos = request.leaderTransferInfos().stream()
+			.map(leaveTeam -> LeaveTeamInfo.of(leaveTeam.teamId(), leaveTeam.nextLeaderNickname()))
+			.toList();
+
+		memberService.leave(memberId, leaveTeamInfos);
 	}
 }

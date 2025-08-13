@@ -33,7 +33,7 @@ public class Member {
 	private final String profileImageUrl;
 	private final Boolean serviceAgreement;
 	private final Boolean collectionAgreement;
-	private final LocalDateTime deletedAt;
+	private LocalDateTime deletedAt;
 
 	@Builder
 	public Member(Long id, String email, String name, String nickname, LocalDate birthday, String gender,
@@ -48,6 +48,10 @@ public class Member {
 		this.serviceAgreement = requireNonNull(serviceAgreement);
 		this.collectionAgreement = requireNonNull(collectionAgreement);
 		this.deletedAt = deletedAt;
+	}
+
+	public void softDelete() {
+		this.deletedAt = LocalDateTime.now();
 	}
 
 	private String validateEmail(String email) {

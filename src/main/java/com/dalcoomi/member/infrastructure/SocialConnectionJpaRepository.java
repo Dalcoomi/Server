@@ -11,4 +11,6 @@ public interface SocialConnectionJpaRepository extends JpaRepository<SocialConne
 	boolean existsBySocialIdAndSocialType(String socialId, SocialType socialType);
 
 	Optional<SocialConnectionJpaEntity> findBySocialIdAndSocialType(String socialId, SocialType socialType);
+
+	void deleteByMemberId(Long memberId);
 }
