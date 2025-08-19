@@ -11,6 +11,8 @@ public interface TeamMemberRepository {
 
 	TeamMember save(TeamMember teamMember);
 
+	List<TeamMember> saveAll(List<TeamMember> teamMembers);
+
 	boolean existsByTeamIdAndMemberId(Long teamId, Long memberId);
 
 	List<TeamMember> find(@Nullable Long teamId, @Nullable Long memberId);
