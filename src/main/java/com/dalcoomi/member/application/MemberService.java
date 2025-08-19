@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,6 @@ import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
 import com.dalcoomi.team.domain.TeamMember;
-import com.dalcoomi.team.dto.LeaveTeamInfo;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
@@ -106,7 +104,7 @@ public class MemberService {
 
 	@Transactional
 	public void withdraw(Long memberId, WithdrawalType withdrawalType, String otherReason,
-		List<LeaveTeamInfo> leaveTeamInfos) {
+		Map<Long, String> teamToNextLeaderMap) {
 		Member member = memberRepository.findById(memberId);
 
 		// 개인 거래 내역 소프트 삭제
@@ -127,9 +125,6 @@ public class MemberService {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 
 		if (!teamMembers.isEmpty()) {
-			Map<Long, String> teamToNextLeaderMap = leaveTeamInfos.stream()
-				.collect(Collectors.toMap(LeaveTeamInfo::teamId, LeaveTeamInfo::nextLeaderNickname));
-
 			for (TeamMember teamMember : teamMembers) {
 				Team team = teamMember.getTeam();
 				Long teamId = team.getId();
