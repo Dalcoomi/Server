@@ -48,7 +48,7 @@ public class TeamService {
 
 		String uniqueCode = findUniqueInvitationCode();
 
-		team.updateMember(member);
+		team.updateLeader(member);
 		team.updateInvitationCode(uniqueCode);
 
 		Team savedTeam = teamRepository.save(team);
@@ -133,7 +133,7 @@ public class TeamService {
 		if (leaderId.equals(memberId) && nextLeaderNickname != null) {
 			Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
 
-			team.updateMember(nextLeader);
+			team.updateLeader(nextLeader);
 
 			teamRepository.save(team);
 		}
