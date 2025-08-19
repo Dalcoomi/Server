@@ -7,6 +7,7 @@ import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -19,8 +20,11 @@ import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.util.provider.NicknameProvider;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
+import com.dalcoomi.member.application.repository.WithdrawalRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
+import com.dalcoomi.member.domain.Withdrawal;
+import com.dalcoomi.member.domain.WithdrawalType;
 import com.dalcoomi.member.dto.SocialInfo;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
@@ -42,6 +46,7 @@ public class MemberService {
 	private final TeamMemberRepository teamMemberRepository;
 	private final TeamRepository teamRepository;
 	private final TransactionRepository transactionRepository;
+	private final WithdrawalRepository withdrawalRepository;
 
 	@Transactional
 	public Long signUp(SocialInfo socialInfo) {
@@ -100,9 +105,11 @@ public class MemberService {
 	}
 
 	@Transactional
-	public void leave(Long memberId, List<LeaveTeamInfo> leaveTeamInfos) {
+	public void withdraw(Long memberId, WithdrawalType withdrawalType, String otherReason,
+		List<LeaveTeamInfo> leaveTeamInfos) {
 		Member member = memberRepository.findById(memberId);
 
+		// 개인 거래 내역 소프트 삭제
 		TransactionSearchCriteria criteria = TransactionSearchCriteria.builder()
 			.memberId(memberId)
 			.teamId(null)
@@ -116,6 +123,7 @@ public class MemberService {
 
 		transactionRepository.saveAll(transactions);
 
+		// 속한 그룹 떠나기 or 삭제
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 
 		if (!teamMembers.isEmpty()) {
@@ -128,12 +136,12 @@ public class MemberService {
 				Long leaderId = team.getLeader().getId();
 
 				if (leaderId.equals(memberId)) {
-					String nextLeaderNickname = teamToNextLeaderMap.get(leaderId);
+					String nextLeaderNickname = teamToNextLeaderMap.get(teamId);
 
 					if (nextLeaderNickname != null) {
 						Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
 
-						team.updateMember(nextLeader);
+						team.updateLeader(nextLeader);
 
 						teamRepository.save(team);
 					}
@@ -148,8 +156,22 @@ public class MemberService {
 			}
 		}
 
+		// 소셜 연결 삭제
 		socialConnectionRepository.deleteByMemberId(memberId);
 
+		// 회원 정보 소프트 삭제
 		member.softDelete();
+
+		memberRepository.save(member);
+
+		// 탈퇴 사유 저장
+		Withdrawal withdrawal = Withdrawal.builder()
+			.member(member)
+			.withdrawalType(withdrawalType)
+			.otherReason(otherReason)
+			.withdrawalDate(LocalDateTime.now())
+			.build();
+
+		withdrawalRepository.save(withdrawal);
 	}
 }

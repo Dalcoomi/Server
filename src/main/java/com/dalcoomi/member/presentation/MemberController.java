@@ -21,8 +21,8 @@ import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SocialInfo;
-import com.dalcoomi.member.dto.request.LeaveMemberRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
+import com.dalcoomi.member.dto.request.WithdrawRequest;
 import com.dalcoomi.member.dto.response.GetMemberResponse;
 import com.dalcoomi.member.dto.response.SignUpResponse;
 import com.dalcoomi.team.dto.LeaveTeamInfo;
@@ -73,11 +73,11 @@ public class MemberController {
 
 	@PatchMapping
 	@ResponseStatus(OK)
-	public void leave(@AuthMember Long memberId, @RequestBody @Valid LeaveMemberRequest request) {
+	public void withdraw(@AuthMember Long memberId, @RequestBody @Valid WithdrawRequest request) {
 		List<LeaveTeamInfo> leaveTeamInfos = request.leaderTransferInfos().stream()
 			.map(leaveTeam -> LeaveTeamInfo.of(leaveTeam.teamId(), leaveTeam.nextLeaderNickname()))
 			.toList();
 
-		memberService.leave(memberId, leaveTeamInfos);
+		memberService.withdraw(memberId, request.withdrawalType(), request.otherReason(), leaveTeamInfos);
 	}
 }
