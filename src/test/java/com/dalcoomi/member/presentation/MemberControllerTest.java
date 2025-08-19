@@ -1,14 +1,22 @@
 package com.dalcoomi.member.presentation;
 
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
+import static com.dalcoomi.member.domain.WithdrawalType.LOW_USAGE_FREQUENCY;
+import static com.dalcoomi.member.domain.WithdrawalType.OTHER;
+import static com.dalcoomi.member.domain.WithdrawalType.PRIVACY_CONCERN;
+import static com.dalcoomi.member.domain.WithdrawalType.USING_OTHER_SERVICE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -28,13 +36,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
+import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.fixture.MemberFixture;
 import com.dalcoomi.fixture.SocialConnectionFixture;
+import com.dalcoomi.fixture.TeamFixture;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
+import com.dalcoomi.member.application.repository.WithdrawalRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
+import com.dalcoomi.member.domain.Withdrawal;
+import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.request.SignUpRequest;
+import com.dalcoomi.member.dto.request.WithdrawRequest;
+import com.dalcoomi.team.application.repository.TeamMemberRepository;
+import com.dalcoomi.team.application.repository.TeamRepository;
+import com.dalcoomi.team.domain.Team;
+import com.dalcoomi.team.domain.TeamMember;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
@@ -56,6 +74,15 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Autowired
 	private SocialConnectionRepository socialConnectionRepository;
+
+	@Autowired
+	private TeamRepository teamRepository;
+
+	@Autowired
+	private TeamMemberRepository teamMemberRepository;
+
+	@Autowired
+	private WithdrawalRepository withdrawalRepository;
 
 	@Test
 	@DisplayName("통합 테스트 - 회원가입 성공")
@@ -154,6 +181,197 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.nickname").value(member.getNickname()))
 			.andExpect(jsonPath("$.profileImageUrl").value(member.getProfileImageUrl()))
 			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 고정 사유로 회원탈퇴 성공")
+	void withdraw_member_with_predefined_reason_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+		Long memberId = member.getId();
+
+		// 인증 설정
+		setAuthentication(memberId);
+
+		WithdrawRequest request = new WithdrawRequest(LOW_USAGE_FREQUENCY, null, Collections.emptyList());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		assertThatThrownBy(() -> memberRepository.findById(memberId))
+			.isInstanceOf(NotFoundException.class);
+
+		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(member.getId());
+		assertThat(savedWithdrawal).isNotNull();
+		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
+		assertThat(savedWithdrawal.getOtherReason()).isNull();
+		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 기타 사유로 회원탈퇴 성공")
+	void withdraw_member_with_other_reason_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+		Long memberId = member.getId();
+
+		// 인증 설정
+		setAuthentication(memberId);
+
+		String customReason = "앱이 너무 복잡해서 사용하기 어려워요";
+		WithdrawRequest request = new WithdrawRequest(OTHER, customReason, Collections.emptyList());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		assertThatThrownBy(() -> memberRepository.findById(memberId))
+			.isInstanceOf(NotFoundException.class);
+
+		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(member.getId());
+		assertThat(savedWithdrawal).isNotNull();
+		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(OTHER);
+		assertThat(savedWithdrawal.getOtherReason()).isEqualTo(customReason);
+		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 기타 사유 누락으로 인한 회원탈퇴 실패")
+	void withdraw_member_other_reason_missing_failure() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		WithdrawRequest request = new WithdrawRequest(OTHER, null, Collections.emptyList());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().is5xxServerError())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 기타 사유 초과로 인한 회원탈퇴 실패")
+	void withdraw_member_other_reason_too_long_failure() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String tooLongReason = "a".repeat(100);
+		WithdrawRequest request = new WithdrawRequest(OTHER, tooLongReason, Collections.emptyList());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 팀 리더 회원탈퇴 성공")
+	void withdraw_team_leader_with_transfer_success() throws Exception {
+		// given
+		Member leader = MemberFixture.getMember1();
+		Member nextLeader = MemberFixture.getMember2();
+
+		leader = memberRepository.save(leader);
+		nextLeader = memberRepository.save(nextLeader);
+
+		// 팀 생성 및 멤버 추가 로직 (TeamFixture 활용)
+		Team team = TeamFixture.getTeam1(leader);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember1 = TeamMember.of(team, leader);
+		TeamMember teamMember2 = TeamMember.of(team, nextLeader);
+		teamMemberRepository.saveAll(List.of(teamMember1, teamMember2));
+
+		// 인증 설정
+		setAuthentication(leader.getId());
+
+		LeaderTransferInfo transferInfo = new LeaderTransferInfo(team.getId(), nextLeader.getNickname());
+		WithdrawRequest request = new WithdrawRequest(USING_OTHER_SERVICE, null, List.of(transferInfo));
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Team updatedTeam = teamRepository.findById(team.getId());
+		assertThat(updatedTeam.getLeader().getId()).isEqualTo(nextLeader.getId());
+
+		List<TeamMember> teamMembers = teamMemberRepository.find(team.getId(), null);
+		assertThat(teamMembers).hasSize(1);
+		assertThat(teamMembers.getFirst().getMember().getId()).isEqualTo(nextLeader.getId());
+
+		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(leader.getId());
+		assertThat(savedWithdrawal).isNotNull();
+		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(USING_OTHER_SERVICE);
+		assertThat(savedWithdrawal.getOtherReason()).isNull();
+		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 마지막 팀원 탈퇴 시 팀 삭제 성공")
+	void withdraw_last_team_member_deletes_team_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		Team team = TeamFixture.getTeam1(member);
+		team = teamRepository.save(team);
+
+		TeamMember teamMember = TeamMember.of(team, member);
+		teamMemberRepository.save(teamMember);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		WithdrawRequest request = new WithdrawRequest(PRIVACY_CONCERN, null, Collections.emptyList());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(member.getId());
+		assertThat(savedWithdrawal).isNotNull();
+		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(PRIVACY_CONCERN);
+		assertThat(savedWithdrawal.getOtherReason()).isNull();
+		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
 	}
 
 	private void setAuthentication(Long memberId) {

@@ -48,7 +48,7 @@ public class TeamService {
 
 		String uniqueCode = findUniqueInvitationCode();
 
-		team.updateMember(member);
+		team.updateLeader(member);
 		team.updateInvitationCode(uniqueCode);
 
 		Team savedTeam = teamRepository.save(team);
@@ -118,28 +118,31 @@ public class TeamService {
 
 	@Transactional
 	public void leave(LeaveTeamInfo leaveTeamInfo, Long memberId) {
-		List<TeamMember> teamMember = teamMemberRepository.find(leaveTeamInfo.teamId(), memberId);
+		Long teamId = leaveTeamInfo.teamId();
+		String nextLeaderNickname = leaveTeamInfo.nextLeaderNickname();
+		List<TeamMember> teamMember = teamMemberRepository.find(teamId, memberId);
 
 		if (teamMember.isEmpty()) {
 			throw new NotFoundException(TEAM_NOT_FOUND);
 		}
 
 		Team team = teamMember.getFirst().getTeam();
+		Long leaderId = team.getLeader().getId();
 
 		// 요청한 사람이 그룹 리더일 경우 새 리더 지정
-		if (team.getLeader().getId().equals(memberId) && leaveTeamInfo.nextLeaderNickname() != null) {
-			Member nextLeader = memberRepository.findByNickname(leaveTeamInfo.nextLeaderNickname());
+		if (leaderId.equals(memberId) && nextLeaderNickname != null) {
+			Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
 
-			team.updateMember(nextLeader);
+			team.updateLeader(nextLeader);
 
 			teamRepository.save(team);
 		}
 
-		teamMemberRepository.deleteByTeamIdAndMemberId(leaveTeamInfo.teamId(), memberId);
+		teamMemberRepository.deleteByTeamIdAndMemberId(teamId, memberId);
 
-		if (teamMemberRepository.countByTeamId(leaveTeamInfo.teamId()) == 0) {
-			teamRepository.deleteById(leaveTeamInfo.teamId());
-			transactionRepository.deleteByTeamId(leaveTeamInfo.teamId());
+		if (teamMemberRepository.countByTeamId(teamId) == 0) {
+			teamRepository.deleteById(teamId);
+			transactionRepository.deleteByTeamId(teamId);
 		}
 	}
 

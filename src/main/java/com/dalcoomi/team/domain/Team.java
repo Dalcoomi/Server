@@ -56,7 +56,7 @@ public class Team {
 		return sb.toString();
 	}
 
-	public void updateMember(Member member) {
+	public void updateLeader(Member member) {
 		this.leader = member;
 	}
 

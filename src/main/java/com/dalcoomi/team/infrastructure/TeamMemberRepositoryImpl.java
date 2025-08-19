@@ -33,6 +33,14 @@ public class TeamMemberRepositoryImpl implements TeamMemberRepository {
 	}
 
 	@Override
+	public List<TeamMember> saveAll(List<TeamMember> teamMembers) {
+		List<TeamMemberJpaEntity> teamMemberJpaEntities = teamMemberJpaRepository.saveAll(
+			teamMembers.stream().map(TeamMemberJpaEntity::from).toList());
+
+		return teamMemberJpaEntities.stream().map(TeamMemberJpaEntity::toModel).toList();
+	}
+
+	@Override
 	public boolean existsByTeamIdAndMemberId(Long teamId, Long memberId) {
 		return teamMemberJpaRepository.existsByTeamIdAndMemberId(teamId, memberId);
 	}

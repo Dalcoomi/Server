@@ -42,6 +42,10 @@ public enum ErrorMessage {
 	MEMBER_INVALID_SERVICE_AGREEMENT("서비스 이용 약관 동의 여부는 true 여야 합니다."),
 	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다."),
 
+	WITHDRAWAL_NOT_FOUND("해당 회원의 탈퇴 데이터가 존재하지 않습니다."),
+	WITHDRAWAL_INVALID_OTHER_REASON("유효하지 않는 기타 사유입니다."),
+
+	UNSUPPORTED_WITHDRAWAL_TYPE("지원하지 않는 탈퇴 타입입니다."),
 	UNSUPPORTED_TRANSACTION_TYPE("지원하지 않는 거래 타입입니다."),
 	UNSUPPORTED_OWNER_TYPE("지원하지 않는 집합 속성입니다."),
 
