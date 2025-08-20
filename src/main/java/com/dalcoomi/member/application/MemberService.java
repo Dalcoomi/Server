@@ -24,7 +24,7 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.domain.WithdrawalType;
-import com.dalcoomi.member.dto.SocialInfo;
+import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
@@ -47,35 +47,35 @@ public class MemberService {
 	private final WithdrawalRepository withdrawalRepository;
 
 	@Transactional
-	public Long signUp(SocialInfo socialInfo) {
+	public Long signUp(MemberInfo memberInfo) {
 		boolean existsMember = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
-			socialInfo.socialId(), socialInfo.socialType());
+			memberInfo.socialId(), memberInfo.socialType());
 
 		if (existsMember) {
 			throw new ConflictException(MEMBER_CONFLICT);
 		}
 
-		String name = socialInfo.memberInfo().name();
+		String name = memberInfo.name();
 		String nickname = new NicknameProvider().generateUniqueNickname(name, 4);
 		String randomProfileUrl = getRandomDefaultProfileImage();
 
 		Member member = Member.builder()
-			.email(socialInfo.memberInfo().email())
+			.email(memberInfo.email())
 			.name(name)
 			.nickname(nickname)
-			.birthday(socialInfo.memberInfo().birthday())
-			.gender(socialInfo.memberInfo().gender())
+			.birthday(memberInfo.birthday())
+			.gender(memberInfo.gender())
 			.profileImageUrl(randomProfileUrl)
-			.serviceAgreement(socialInfo.memberInfo().serviceAgreement())
-			.collectionAgreement(socialInfo.memberInfo().collectionAgreement())
+			.serviceAgreement(memberInfo.serviceAgreement())
+			.collectionAgreement(memberInfo.collectionAgreement())
 			.build();
 
 		member = memberRepository.save(member);
 
 		SocialConnection socialConnection = SocialConnection.builder()
 			.member(member)
-			.socialId(socialInfo.socialId())
-			.socialType(socialInfo.socialType())
+			.socialId(memberInfo.socialId())
+			.socialType(memberInfo.socialType())
 			.build();
 
 		socialConnectionRepository.save(socialConnection);
@@ -84,8 +84,19 @@ public class MemberService {
 	}
 
 	@Transactional(readOnly = true)
-	public Member get(Long memberId) {
-		return memberRepository.findById(memberId);
+	public MemberInfo get(Long memberId) {
+		Member member = memberRepository.findById(memberId);
+		SocialConnection socialConnection = socialConnectionRepository.findByMemberId(memberId);
+
+		return MemberInfo.builder()
+			.socialType(socialConnection.getSocialType())
+			.email(member.getEmail())
+			.name(member.getName())
+			.nickname(member.getNickname())
+			.birthday(member.getBirthday())
+			.gender(member.getGender())
+			.profileImageUrl(member.getProfileImageUrl())
+			.build();
 	}
 
 	private String getRandomDefaultProfileImage() {

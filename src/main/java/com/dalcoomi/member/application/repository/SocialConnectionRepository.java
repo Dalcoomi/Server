@@ -9,6 +9,8 @@ public interface SocialConnectionRepository {
 
 	Boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType);
 
+	SocialConnection findByMemberId(Long memberId);
+
 	Long findMemberIdBySocialIdAndSocialType(String socialId, SocialType socialType);
 
 	void deleteByMemberId(Long memberId);
