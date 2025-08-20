@@ -25,7 +25,6 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
 import com.dalcoomi.member.dto.MemberInfo;
-import com.dalcoomi.member.dto.SocialInfo;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -53,6 +52,8 @@ class MemberServiceTest {
 		boolean collectionAgreement = true;
 
 		MemberInfo memberInfo = MemberInfo.builder()
+			.socialId(socialId)
+			.socialType(socialType)
 			.email(email)
 			.name(name)
 			.birthday(birthday)
@@ -61,16 +62,10 @@ class MemberServiceTest {
 			.collectionAgreement(collectionAgreement)
 			.build();
 
-		SocialInfo socialInfo = SocialInfo.builder()
-			.socialId(socialId)
-			.socialType(socialType)
-			.memberInfo(memberInfo)
-			.build();
-
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(socialInfo))
+		assertThatThrownBy(() -> memberService.signUp(memberInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_EMAIL.getMessage());
 
@@ -95,6 +90,8 @@ class MemberServiceTest {
 		boolean collectionAgreement = true;
 
 		MemberInfo memberInfo = MemberInfo.builder()
+			.socialId(socialId)
+			.socialType(socialType)
 			.email(email)
 			.name(name)
 			.birthday(birthday)
@@ -103,16 +100,10 @@ class MemberServiceTest {
 			.collectionAgreement(collectionAgreement)
 			.build();
 
-		SocialInfo socialInfo = SocialInfo.builder()
-			.socialId(socialId)
-			.socialType(socialType)
-			.memberInfo(memberInfo)
-			.build();
-
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(socialInfo))
+		assertThatThrownBy(() -> memberService.signUp(memberInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_EMAIL.getMessage());
 
@@ -135,6 +126,8 @@ class MemberServiceTest {
 		boolean collectionAgreement = true;
 
 		MemberInfo memberInfo = MemberInfo.builder()
+			.socialId(socialId)
+			.socialType(socialType)
 			.email(email)
 			.name("")
 			.birthday(birthday)
@@ -143,16 +136,10 @@ class MemberServiceTest {
 			.collectionAgreement(collectionAgreement)
 			.build();
 
-		SocialInfo socialInfo = SocialInfo.builder()
-			.socialId(socialId)
-			.socialType(socialType)
-			.memberInfo(memberInfo)
-			.build();
-
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(socialInfo))
+		assertThatThrownBy(() -> memberService.signUp(memberInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -176,6 +163,8 @@ class MemberServiceTest {
 		boolean collectionAgreement = true;
 
 		MemberInfo memberInfo = MemberInfo.builder()
+			.socialId(socialId)
+			.socialType(socialType)
 			.email(email)
 			.name(name)
 			.birthday(birthday)
@@ -184,16 +173,10 @@ class MemberServiceTest {
 			.collectionAgreement(collectionAgreement)
 			.build();
 
-		SocialInfo socialInfo = SocialInfo.builder()
-			.socialId(socialId)
-			.socialType(socialType)
-			.memberInfo(memberInfo)
-			.build();
-
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(socialInfo))
+		assertThatThrownBy(() -> memberService.signUp(memberInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -217,6 +200,8 @@ class MemberServiceTest {
 		boolean collectionAgreement = true;
 
 		MemberInfo memberInfo = MemberInfo.builder()
+			.socialId(socialId)
+			.socialType(socialType)
 			.email(email)
 			.name(name)
 			.birthday(birthday)
@@ -225,16 +210,10 @@ class MemberServiceTest {
 			.collectionAgreement(collectionAgreement)
 			.build();
 
-		SocialInfo socialInfo = SocialInfo.builder()
-			.socialId(socialId)
-			.socialType(socialType)
-			.memberInfo(memberInfo)
-			.build();
-
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(socialInfo))
+		assertThatThrownBy(() -> memberService.signUp(memberInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -258,6 +237,8 @@ class MemberServiceTest {
 		boolean collectionAgreement = true;
 
 		MemberInfo memberInfo = MemberInfo.builder()
+			.socialId(socialId)
+			.socialType(socialType)
 			.email(email)
 			.name(name)
 			.birthday(birthday)
@@ -266,16 +247,10 @@ class MemberServiceTest {
 			.collectionAgreement(collectionAgreement)
 			.build();
 
-		SocialInfo socialInfo = SocialInfo.builder()
-			.socialId(socialId)
-			.socialType(socialType)
-			.memberInfo(memberInfo)
-			.build();
-
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(socialInfo))
+		assertThatThrownBy(() -> memberService.signUp(memberInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_GENDER.getMessage());
 

@@ -28,6 +28,13 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	}
 
 	@Override
+	public SocialConnection findByMemberId(Long memberId) {
+		return socialConnectionJpaRepository.findByMemberId(memberId)
+			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND))
+			.toModel();
+	}
+
+	@Override
 	public Long findMemberIdBySocialIdAndSocialType(String socialId, SocialType socialType) {
 		return socialConnectionJpaRepository.findBySocialIdAndSocialType(socialId, socialType)
 			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).getMember().getId();

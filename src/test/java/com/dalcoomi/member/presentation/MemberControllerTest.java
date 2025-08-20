@@ -166,8 +166,10 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	void get_member_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
-
 		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		// 인증 설정
 		setAuthentication(member.getId());
@@ -176,9 +178,12 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		mockMvc.perform(get("/api/members")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.socialType").value(socialConnection.getSocialType().toString()))
 			.andExpect(jsonPath("$.email").value(member.getEmail()))
 			.andExpect(jsonPath("$.name").value(member.getName()))
 			.andExpect(jsonPath("$.nickname").value(member.getNickname()))
+			.andExpect(jsonPath("$.birthday").value(member.getBirthday().toString()))
+			.andExpect(jsonPath("$.gender").value(member.getGender()))
 			.andExpect(jsonPath("$.profileImageUrl").value(member.getProfileImageUrl()))
 			.andDo(print());
 	}

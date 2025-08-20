@@ -19,10 +19,8 @@ import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.member.application.MemberService;
-import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
-import com.dalcoomi.member.dto.SocialInfo;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
 import com.dalcoomi.member.dto.response.GetMemberResponse;
@@ -43,6 +41,8 @@ public class MemberController {
 	@ResponseStatus(CREATED)
 	public SignUpResponse signUp(@RequestBody @Valid SignUpRequest request) {
 		MemberInfo memberInfo = MemberInfo.builder()
+			.socialId(request.socialId())
+			.socialType(request.socialType())
 			.email(request.email())
 			.name(request.name())
 			.birthday(request.birthday())
@@ -51,13 +51,7 @@ public class MemberController {
 			.collectionAgreement(request.collectionAgreement())
 			.build();
 
-		SocialInfo socialInfo = SocialInfo.builder()
-			.socialId(request.socialId())
-			.socialType(request.socialType())
-			.memberInfo(memberInfo)
-			.build();
-
-		Long memberId = memberService.signUp(socialInfo);
+		Long memberId = memberService.signUp(memberInfo);
 
 		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 
@@ -67,9 +61,9 @@ public class MemberController {
 	@GetMapping
 	@ResponseStatus(OK)
 	public GetMemberResponse get(@AuthMember Long memberId) {
-		Member member = memberService.get(memberId);
+		MemberInfo memberInfo = memberService.get(memberId);
 
-		return GetMemberResponse.from(member);
+		return GetMemberResponse.from(memberInfo);
 	}
 
 	@PatchMapping

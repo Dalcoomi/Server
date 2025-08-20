@@ -7,8 +7,7 @@ import lombok.Builder;
 @Builder
 public record SocialInfo(
 	String socialId,
-	SocialType socialType,
-	MemberInfo memberInfo
+	SocialType socialType
 ) {
 
 }
