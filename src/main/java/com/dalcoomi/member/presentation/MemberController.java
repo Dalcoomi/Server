@@ -22,6 +22,7 @@ import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.request.SignUpRequest;
+import com.dalcoomi.member.dto.request.UpdateProfileRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
 import com.dalcoomi.member.dto.response.GetMemberResponse;
 import com.dalcoomi.member.dto.response.SignUpResponse;
@@ -64,6 +65,18 @@ public class MemberController {
 		MemberInfo memberInfo = memberService.get(memberId);
 
 		return GetMemberResponse.from(memberInfo);
+	}
+
+	@PatchMapping("/profile")
+	@ResponseStatus(OK)
+	public void updateProfile(@AuthMember Long memberId, @RequestBody @Valid UpdateProfileRequest request) {
+		MemberInfo memberInfo = MemberInfo.builder()
+			.name(request.name())
+			.birthday(request.birthday())
+			.gender(request.gender())
+			.build();
+
+		memberService.updateProfile(memberId, memberInfo);
 	}
 
 	@PatchMapping

@@ -33,6 +33,7 @@ public enum ErrorMessage {
 
 	MEMBER_NOT_FOUND("존재하지 않는 회원입니다."),
 	MEMBER_CONFLICT("이미 존재하는 회원입니다."),
+	MEMBER_NICKNAME_CONFLICT("이미 존재하는 닉네임입니다."),
 	MEMBER_INVALID_SOCIAL_ID("유효하지 않는 소셜 ID 입니다."),
 	MEMBER_INVALID_EMAIL("유효하지 않는 EMAIL 입니다."),
 	MEMBER_INVALID_NAME("유효하지 않는 이름입니다."),

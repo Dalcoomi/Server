@@ -5,6 +5,7 @@ import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_
 import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_3;
 import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_NICKNAME_CONFLICT;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -99,18 +100,18 @@ public class MemberService {
 			.build();
 	}
 
-	private String getRandomDefaultProfileImage() {
-		String[] defaultImages = {
-			DEFAULT_PROFILE_IMAGE_1,
-			DEFAULT_PROFILE_IMAGE_2,
-			DEFAULT_PROFILE_IMAGE_3,
-			DEFAULT_PROFILE_IMAGE_4
-		};
+	@Transactional
+	public void updateProfile(Long memberId, MemberInfo memberInfo) {
+		Member member = memberRepository.findById(memberId);
 
-		Random random = new SecureRandom();
-		int randomIndex = random.nextInt(defaultImages.length);
+		if (!member.getNickname().equals(memberInfo.nickname()) && memberRepository.existsByNickname(
+			memberInfo.nickname())) {
+			throw new ConflictException(MEMBER_NICKNAME_CONFLICT);
+		}
 
-		return defaultImages[randomIndex];
+		member.updateProfile(memberInfo.name(), memberInfo.nickname(), memberInfo.birthday(), memberInfo.gender());
+
+		memberRepository.save(member);
 	}
 
 	@Transactional
@@ -179,5 +180,19 @@ public class MemberService {
 			.build();
 
 		withdrawalRepository.save(withdrawal);
+	}
+
+	private String getRandomDefaultProfileImage() {
+		String[] defaultImages = {
+			DEFAULT_PROFILE_IMAGE_1,
+			DEFAULT_PROFILE_IMAGE_2,
+			DEFAULT_PROFILE_IMAGE_3,
+			DEFAULT_PROFILE_IMAGE_4
+		};
+
+		Random random = new SecureRandom();
+		int randomIndex = random.nextInt(defaultImages.length);
+
+		return defaultImages[randomIndex];
 	}
 }
