@@ -48,6 +48,7 @@ import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.request.SignUpRequest;
+import com.dalcoomi.member.dto.request.UpdateProfileRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
@@ -185,6 +186,41 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.birthday").value(member.getBirthday().toString()))
 			.andExpect(jsonPath("$.gender").value(member.getGender()))
 			.andExpect(jsonPath("$.profileImageUrl").value(member.getProfileImageUrl()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 회원 정보 수정 성공")
+	void update_member_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String name = "아야어여";
+		String nickname = "무요";
+		LocalDate birthday = LocalDate.of(1990, 1, 1);
+		String gender = "여성";
+
+		UpdateProfileRequest request = new UpdateProfileRequest(name, nickname, birthday, gender);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		// when & then
+		mockMvc.perform(patch("/api/members/profile")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.name").value(name))
+			.andExpect(jsonPath("$.nickname").value(nickname))
+			.andExpect(jsonPath("$.birthday").value(birthday.toString()))
+			.andExpect(jsonPath("$.gender").value(gender))
 			.andDo(print());
 	}
 
