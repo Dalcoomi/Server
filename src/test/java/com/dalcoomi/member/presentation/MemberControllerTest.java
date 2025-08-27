@@ -114,7 +114,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 이름 길이 초과 회원가입 실패")
-	void name_length_over_sign_up_failure() throws Exception {
+	void name_length_over_sign_up_fail() throws Exception {
 		// given
 		String socialId = "12345";
 		String email = "test@example.com";
@@ -139,7 +139,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 이미 존재하는 회원은 회원가입 실패")
-	void already_exists_sign_up_failure() throws Exception {
+	void already_exists_sign_up_fail() throws Exception {
 		// given
 		Member testMember = MemberFixture.getMember1();
 
@@ -225,6 +225,37 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	}
 
 	@Test
+	@DisplayName("통합 테스트 - 닉네임 중복 시 회원 정보 수정 실패")
+	void update_member_nickname_conflict_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String name = "아야어여";
+		String nickname = "가나다아";
+		LocalDate birthday = LocalDate.of(1990, 1, 1);
+		String gender = "여성";
+
+		UpdateProfileRequest request = new UpdateProfileRequest(name, nickname, birthday, gender);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		// when & then
+		mockMvc.perform(patch("/api/members/profile")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isConflict())
+			.andDo(print());
+	}
+
+	@Test
 	@DisplayName("통합 테스트 - 고정 사유로 회원탈퇴 성공")
 	void withdraw_member_with_predefined_reason_success() throws Exception {
 		// given
@@ -291,7 +322,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 기타 사유 누락으로 인한 회원탈퇴 실패")
-	void withdraw_member_other_reason_missing_failure() throws Exception {
+	void withdraw_member_other_reason_missing_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -313,7 +344,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 기타 사유 초과로 인한 회원탈퇴 실패")
-	void withdraw_member_other_reason_too_long_failure() throws Exception {
+	void withdraw_member_other_reason_too_long_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);

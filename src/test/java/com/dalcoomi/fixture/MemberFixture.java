@@ -9,7 +9,7 @@ public final class MemberFixture {
 	public static Member getMember1() {
 		String email = "abc1@gmail.com";
 		String name = "가나다";
-		String nickname = "가나다#1234";
+		String nickname = "가나다아";
 		LocalDate birthday = LocalDate.of(2000, 1, 1);
 		String gender = "남성";
 		String profileImageUrl = "https://profile.com/1";
