@@ -18,14 +18,18 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.dto.TokenInfo;
+import com.dalcoomi.image.application.S3Service;
 import com.dalcoomi.member.application.MemberService;
+import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.request.SignUpRequest;
+import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
 import com.dalcoomi.member.dto.response.GetMemberResponse;
 import com.dalcoomi.member.dto.response.SignUpResponse;
+import com.dalcoomi.member.dto.response.UpdateProfileResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +41,7 @@ public class MemberController {
 
 	private final MemberService memberService;
 	private final JwtService jwtService;
+	private final S3Service s3Service;
 
 	@PostMapping("/sign-up")
 	@ResponseStatus(CREATED)
@@ -67,16 +72,30 @@ public class MemberController {
 		return GetMemberResponse.from(memberInfo);
 	}
 
+	@PatchMapping("/avatar")
+	@ResponseStatus(OK)
+	public String updateAvatar(@AuthMember Long memberId, @Valid UpdateAvatarRequest request) {
+		AvatarInfo avatarInfo = memberService.getAvatarInfo(memberId);
+
+		String newAvatarUrl = s3Service.handleAvatar(request.removeAvatar(), avatarInfo, request.profileImage());
+
+		return memberService.updateAvatar(avatarInfo.member(), newAvatarUrl);
+	}
+
 	@PatchMapping("/profile")
 	@ResponseStatus(OK)
-	public void updateProfile(@AuthMember Long memberId, @RequestBody @Valid UpdateProfileRequest request) {
+	public UpdateProfileResponse updateProfile(@AuthMember Long memberId,
+		@RequestBody @Valid UpdateProfileRequest request) {
 		MemberInfo memberInfo = MemberInfo.builder()
 			.name(request.name())
+			.nickname(request.nickname())
 			.birthday(request.birthday())
 			.gender(request.gender())
 			.build();
 
-		memberService.updateProfile(memberId, memberInfo);
+		memberInfo = memberService.updateProfile(memberId, memberInfo);
+
+		return UpdateProfileResponse.from(memberInfo);
 	}
 
 	@PatchMapping
