@@ -26,6 +26,11 @@ public class MemberRepositoryImpl implements MemberRepository {
 	}
 
 	@Override
+	public boolean existsByNickname(String nickname) {
+		return memberJpaRepository.existsByNickname(nickname);
+	}
+
+	@Override
 	public Member findById(Long memberId) {
 		return memberJpaRepository.findByIdAndDeletedAtIsNull(memberId)
 			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).toModel();

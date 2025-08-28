@@ -7,8 +7,10 @@ import static com.dalcoomi.member.domain.WithdrawalType.PRIVACY_CONCERN;
 import static com.dalcoomi.member.domain.WithdrawalType.USING_OTHER_SERVICE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.springframework.http.HttpMethod.PATCH;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -24,6 +26,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,6 +40,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
@@ -48,12 +57,15 @@ import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.request.SignUpRequest;
+import com.dalcoomi.member.dto.request.UpdateProfileRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
 import com.dalcoomi.team.domain.TeamMember;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import reactor.core.publisher.Mono;
 
 @Transactional
 @SpringBootTest
@@ -113,7 +125,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 이름 길이 초과 회원가입 실패")
-	void name_length_over_sign_up_failure() throws Exception {
+	void name_length_over_sign_up_fail() throws Exception {
 		// given
 		String socialId = "12345";
 		String email = "test@example.com";
@@ -138,7 +150,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 이미 존재하는 회원은 회원가입 실패")
-	void already_exists_sign_up_failure() throws Exception {
+	void already_exists_sign_up_fail() throws Exception {
 		// given
 		Member testMember = MemberFixture.getMember1();
 
@@ -185,6 +197,121 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.birthday").value(member.getBirthday().toString()))
 			.andExpect(jsonPath("$.gender").value(member.getGender()))
 			.andExpect(jsonPath("$.profileImageUrl").value(member.getProfileImageUrl()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 회원 프로필 사진 업로드 성공")
+	void upload_member_profile_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// 테스트용 이미지 파일 생성
+		MockMultipartFile profileImage = new MockMultipartFile(
+			"profileImage",
+			"test-image.jpg",
+			"image/jpeg",
+			"test image content".getBytes()
+		);
+
+		// when & then
+		mockMvc.perform(multipart(PATCH, "/api/members/avatar")
+				.file(profileImage)
+				.param("removeAvatar", "false"))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Member updatedMember = memberRepository.findById(member.getId());
+		assertThat(updatedMember).isNotNull();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 회원 프로필 사진 삭제 성공")
+	void delete_member_profile_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(multipart(PATCH, "/api/members/avatar")
+				.param("removeAvatar", "true"))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Member updateMember = memberRepository.findById(member.getId());
+		assertThat(updateMember).isNotNull();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 회원 정보 수정 성공")
+	void update_member_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String name = "아야어여";
+		String nickname = "무요";
+		LocalDate birthday = LocalDate.of(1990, 1, 1);
+		String gender = "여성";
+
+		UpdateProfileRequest request = new UpdateProfileRequest(name, nickname, birthday, gender);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		// when & then
+		mockMvc.perform(patch("/api/members/profile")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.name").value(name))
+			.andExpect(jsonPath("$.nickname").value(nickname))
+			.andExpect(jsonPath("$.birthday").value(birthday.toString()))
+			.andExpect(jsonPath("$.gender").value(gender))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 닉네임 중복 시 회원 정보 수정 실패")
+	void update_member_nickname_conflict_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String name = "아야어여";
+		String nickname = "가나다아";
+		LocalDate birthday = LocalDate.of(1990, 1, 1);
+		String gender = "여성";
+
+		UpdateProfileRequest request = new UpdateProfileRequest(name, nickname, birthday, gender);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		// when & then
+		mockMvc.perform(patch("/api/members/profile")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isConflict())
 			.andDo(print());
 	}
 
@@ -255,7 +382,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 기타 사유 누락으로 인한 회원탈퇴 실패")
-	void withdraw_member_other_reason_missing_failure() throws Exception {
+	void withdraw_member_other_reason_missing_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -277,7 +404,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 기타 사유 초과로 인한 회원탈퇴 실패")
-	void withdraw_member_other_reason_too_long_failure() throws Exception {
+	void withdraw_member_other_reason_too_long_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -387,5 +514,25 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
+	}
+
+	@TestConfiguration
+	static class TestConfig {
+
+		@Bean
+		@Primary
+		public WebClient mockWebClient() {
+			return WebClient.builder()
+				.exchangeFunction(clientRequest -> {
+					if (clientRequest.url().toString().contains("unlink")) {
+						return Mono.just(ClientResponse.create(HttpStatus.OK)
+							.header("content-type", "application/json")
+							.body("{\"id\":123456789}")
+							.build());
+					}
+					return Mono.just(ClientResponse.create(HttpStatus.OK).build());
+				})
+				.build();
+		}
 	}
 }

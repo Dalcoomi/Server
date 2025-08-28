@@ -72,7 +72,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 로그인 실패")
-	void login_failure() throws Exception {
+	void login_fail() throws Exception {
 		// given
 		LoginRequest request = new LoginRequest("123", KAKAO);
 
@@ -150,7 +150,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 이미 로그아웃된 상태이므로 로그아웃 실패")
-	void already_logged_out_logout_failure() throws Exception {
+	void already_logged_out_logout_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -188,7 +188,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 	@Test
 	@DisplayName("통합 테스트 - 토큰 재발급 실패")
 	@WithMockCustomUser()
-	void reissue_token_failure() throws Exception {
+	void reissue_token_fail() throws Exception {
 		// given
 		Long memberId = 1L;
 		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;

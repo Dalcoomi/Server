@@ -194,4 +194,14 @@ dependencies {
     // Test Container
     testImplementation "org.testcontainers:testcontainers:1.20.4"
     testImplementation "org.testcontainers:junit-jupiter:1.20.4"
+
+    // AWS S3 SDK
+    implementation 'software.amazon.awssdk:s3:2.32.29'
+
+    // Thumbnailator - 이미지 리사이징과 포맷 변환
+    implementation 'net.coobird:thumbnailator:0.4.20'
+
+    // 이미지 메타데이터 관련 라이브러리
+    implementation 'com.drewnoakes:metadata-extractor:2.19.0'
+    implementation 'org.apache.commons:commons-imaging:1.0.0-alpha6'
 }

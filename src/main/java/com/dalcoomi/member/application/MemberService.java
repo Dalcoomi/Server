@@ -1,10 +1,11 @@
 package com.dalcoomi.member.application;
 
-import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_1;
-import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_2;
-import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_3;
-import static com.dalcoomi.common.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_NICKNAME_CONFLICT;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_1;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_2;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_3;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.domain.WithdrawalType;
+import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
@@ -99,18 +102,48 @@ public class MemberService {
 			.build();
 	}
 
-	private String getRandomDefaultProfileImage() {
-		String[] defaultImages = {
-			DEFAULT_PROFILE_IMAGE_1,
-			DEFAULT_PROFILE_IMAGE_2,
-			DEFAULT_PROFILE_IMAGE_3,
-			DEFAULT_PROFILE_IMAGE_4
-		};
+	@Transactional(readOnly = true)
+	public AvatarInfo getAvatarInfo(Long memberId) {
+		Member member = memberRepository.findById(memberId);
+		boolean defaultImage = validateDefaultProfileImage(member.getProfileImageUrl());
 
-		Random random = new SecureRandom();
-		int randomIndex = random.nextInt(defaultImages.length);
+		return AvatarInfo.builder()
+			.member(member)
+			.defaultImage(defaultImage)
+			.build();
+	}
 
-		return defaultImages[randomIndex];
+	@Transactional
+	public String updateAvatar(Member member, @Nullable String newAvatarUrl) {
+		if (newAvatarUrl == null) {
+			newAvatarUrl = getRandomDefaultProfileImage();
+		}
+
+		member.updateProfileImageUrl(newAvatarUrl);
+
+		memberRepository.save(member);
+
+		return newAvatarUrl;
+	}
+
+	@Transactional
+	public MemberInfo updateProfile(Long memberId, MemberInfo memberInfo) {
+		Member member = memberRepository.findById(memberId);
+
+		if (memberRepository.existsByNickname(memberInfo.nickname())) {
+			throw new ConflictException(MEMBER_NICKNAME_CONFLICT);
+		}
+
+		member.updateProfile(memberInfo.name(), memberInfo.nickname(), memberInfo.birthday(), memberInfo.gender());
+
+		member = memberRepository.save(member);
+
+		return MemberInfo.builder()
+			.name(member.getName())
+			.nickname(member.getNickname())
+			.birthday(member.getBirthday())
+			.gender(member.getGender())
+			.build();
 	}
 
 	@Transactional
@@ -179,5 +212,36 @@ public class MemberService {
 			.build();
 
 		withdrawalRepository.save(withdrawal);
+	}
+
+	private String getRandomDefaultProfileImage() {
+		String[] defaultImages = {
+			DEFAULT_PROFILE_IMAGE_1,
+			DEFAULT_PROFILE_IMAGE_2,
+			DEFAULT_PROFILE_IMAGE_3,
+			DEFAULT_PROFILE_IMAGE_4
+		};
+
+		Random random = new SecureRandom();
+		int randomIndex = random.nextInt(defaultImages.length);
+
+		return defaultImages[randomIndex];
+	}
+
+	private boolean validateDefaultProfileImage(String avatarUrl) {
+		String[] defaultImages = {
+			DEFAULT_PROFILE_IMAGE_1,
+			DEFAULT_PROFILE_IMAGE_2,
+			DEFAULT_PROFILE_IMAGE_3,
+			DEFAULT_PROFILE_IMAGE_4
+		};
+
+		for (String defaultImage : defaultImages) {
+			if (avatarUrl.equals(defaultImage)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
