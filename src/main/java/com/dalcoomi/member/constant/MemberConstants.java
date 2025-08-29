@@ -1,4 +1,4 @@
-package com.dalcoomi.common.constant;
+package com.dalcoomi.member.constant;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

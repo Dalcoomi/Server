@@ -1,7 +1,7 @@
 package com.dalcoomi.auth.application;
 
-import static com.dalcoomi.common.constant.TokenConstants.MEMBER_ROLE;
-import static com.dalcoomi.common.constant.TokenConstants.TEST_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.MEMBER_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.TEST_ROLE;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,10 +1,10 @@
 package com.dalcoomi.team.domain;
 
-import static com.dalcoomi.common.constant.TeamConstants.INVITATION_CODE_LENGTH;
-import static com.dalcoomi.common.constant.TeamConstants.MAX_MEMBER_LIMIT;
-import static com.dalcoomi.common.constant.TeamConstants.PURPOSE_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_MEMBER_LIMIT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_PURPOSE;
+import static com.dalcoomi.team.constant.TeamConstants.INVITATION_CODE_LENGTH;
+import static com.dalcoomi.team.constant.TeamConstants.MAX_MEMBER_LIMIT;
+import static com.dalcoomi.team.constant.TeamConstants.PURPOSE_LENGTH;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.lang.String.format;
 

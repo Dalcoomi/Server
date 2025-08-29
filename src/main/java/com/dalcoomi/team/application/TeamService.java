@@ -1,11 +1,11 @@
 package com.dalcoomi.team.application;
 
-import static com.dalcoomi.common.constant.TeamConstants.MAX_TEAM_LIMIT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
+import static com.dalcoomi.team.constant.TeamConstants.MAX_TEAM_LIMIT;
 import static com.dalcoomi.team.domain.Team.generateInvitationCode;
 import static java.util.stream.Collectors.toSet;
 

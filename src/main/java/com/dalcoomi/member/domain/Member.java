@@ -1,17 +1,17 @@
 package com.dalcoomi.member.domain;
 
-import static com.dalcoomi.common.constant.MemberConstants.EMAIL_LENGTH;
-import static com.dalcoomi.common.constant.MemberConstants.GENDER_LENGTH;
-import static com.dalcoomi.common.constant.MemberConstants.NAME_MAX_LENGTH;
-import static com.dalcoomi.common.constant.MemberConstants.NAME_MIN_LENGTH;
-import static com.dalcoomi.common.constant.MemberConstants.NICKNAME_MAX_LENGTH;
-import static com.dalcoomi.common.constant.MemberConstants.NICKNAME_MIN_LENGTH;
-import static com.dalcoomi.common.constant.MemberConstants.PROFILE_IMAGE_URL_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_EMAIL;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_GENDER;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_NAME;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_NICKNAME;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_PROFILE_IMAGE_URL;
+import static com.dalcoomi.member.constant.MemberConstants.EMAIL_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.GENDER_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NAME_MAX_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NAME_MIN_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NICKNAME_MAX_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NICKNAME_MIN_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.PROFILE_IMAGE_URL_LENGTH;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.util.Objects.requireNonNull;
 
