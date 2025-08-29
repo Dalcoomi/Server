@@ -26,6 +26,7 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.domain.WithdrawalType;
+import com.dalcoomi.member.domain.validator.NicknameValidator;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
@@ -48,6 +49,8 @@ public class MemberService {
 	private final TeamRepository teamRepository;
 	private final TransactionRepository transactionRepository;
 	private final WithdrawalRepository withdrawalRepository;
+
+	private final NicknameValidator nicknameValidator;
 
 	@Transactional
 	public Long signUp(MemberInfo memberInfo) {
@@ -103,6 +106,19 @@ public class MemberService {
 	}
 
 	@Transactional(readOnly = true)
+	public boolean checkNicknameAvailability(Long memberId, String nickname) {
+		Member member = memberRepository.findById(memberId);
+
+		if (!member.getNickname().equals(nickname)) {
+			nicknameValidator.validate(nickname);
+		}
+
+		boolean existence = memberRepository.existsByNickname(nickname);
+
+		return member.getNickname().equals(nickname) || !existence;
+	}
+
+	@Transactional(readOnly = true)
 	public AvatarInfo getAvatarInfo(Long memberId) {
 		Member member = memberRepository.findById(memberId);
 		boolean defaultImage = validateDefaultProfileImage(member.getProfileImageUrl());
@@ -130,8 +146,12 @@ public class MemberService {
 	public MemberInfo updateProfile(Long memberId, MemberInfo memberInfo) {
 		Member member = memberRepository.findById(memberId);
 
-		if (memberRepository.existsByNickname(memberInfo.nickname())) {
-			throw new ConflictException(MEMBER_NICKNAME_CONFLICT);
+		if (!member.getNickname().equals(memberInfo.nickname())) {
+			nicknameValidator.validate(memberInfo.nickname());
+
+			if (memberRepository.existsByNickname(memberInfo.nickname())) {
+				throw new ConflictException(MEMBER_NICKNAME_CONFLICT);
+			}
 		}
 
 		member.updateProfile(memberInfo.name(), memberInfo.nickname(), memberInfo.birthday(), memberInfo.gender());

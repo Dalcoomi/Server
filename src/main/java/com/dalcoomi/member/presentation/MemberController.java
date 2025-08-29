@@ -1,6 +1,6 @@
 package com.dalcoomi.member.presentation;
 
-import static com.dalcoomi.common.constant.TokenConstants.MEMBER_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.MEMBER_ROLE;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -8,10 +8,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -72,9 +74,15 @@ public class MemberController {
 		return GetMemberResponse.from(memberInfo);
 	}
 
+	@GetMapping("/nickname/availability")
+	@ResponseStatus(OK)
+	public Boolean checkNicknameAvailability(@AuthMember Long memberId, @RequestParam String nickname) {
+		return memberService.checkNicknameAvailability(memberId, nickname);
+	}
+
 	@PatchMapping("/avatar")
 	@ResponseStatus(OK)
-	public String updateAvatar(@AuthMember Long memberId, @Valid UpdateAvatarRequest request) {
+	public String updateAvatar(@AuthMember Long memberId, @ModelAttribute @Valid UpdateAvatarRequest request) {
 		AvatarInfo avatarInfo = memberService.getAvatarInfo(memberId);
 
 		String newAvatarUrl = s3Service.handleAvatar(request.removeAvatar(), avatarInfo, request.profileImage());
