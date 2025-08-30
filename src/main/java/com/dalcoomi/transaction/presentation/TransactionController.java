@@ -75,7 +75,7 @@ public class TransactionController {
 
 	@PostMapping("/receipts/save")
 	@ResponseStatus(OK)
-	public void saveReceipt(@AuthMember Long memberId, @RequestBody SaveReceiptRequest request) {
+	public void saveReceipt(@AuthMember Long memberId, @RequestBody @Valid SaveReceiptRequest request) {
 		String lockKey = lockKeyGenerator.generateSaveLockKey(memberId, request.taskId());
 
 		redisLockUtil.acquireAndRunLock(lockKey, () -> {
@@ -118,7 +118,7 @@ public class TransactionController {
 	@PutMapping("/{transactionId}")
 	@ResponseStatus(OK)
 	public void update(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId,
-		@RequestBody TransactionRequest request) {
+		@RequestBody @Valid TransactionRequest request) {
 		Transaction transaction = Transaction.from(request);
 
 		transactionService.update(memberId, transactionId, request.categoryId(), transaction);
