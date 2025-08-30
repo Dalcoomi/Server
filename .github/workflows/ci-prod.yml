@@ -1,10 +1,10 @@
-name: Dalcoomi Server CI
+name: Dalcoomi Server CI Prod
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   build:

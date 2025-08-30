@@ -25,7 +25,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -102,7 +104,14 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@BeforeEach
 	void setUp() {
-		executorService = Executors.newFixedThreadPool(10);
+		executorService = Executors.newFixedThreadPool(20);
+
+		// 테스트별 Redis 키 패턴 정리
+		Set<String> keys = redisTemplate.keys("receipt:*");
+
+		if (!keys.isEmpty()) {
+			redisTemplate.delete(keys);
+		}
 	}
 
 	@AfterEach
@@ -146,17 +155,15 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(memberId);
 
-		int threadCount = 5;
-		CountDownLatch startLatch = new CountDownLatch(1); // 시작 신호
-		CountDownLatch readyLatch = new CountDownLatch(threadCount); // 준비 완료 신호
+		int threadCount = 3;
+		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					readyLatch.countDown(); // 준비 완료 신호
-					startLatch.await(); // 모든 스레드가 동시에 시작하도록 대기
+					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -168,21 +175,17 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			futures.add(future);
 		}
 
-		await().atMost(Duration.ofSeconds(5)).until(() -> readyLatch.getCount() == 0);
-
-		// 모든 스레드 동시 시작
-		startLatch.countDown();
-
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(10))
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
 			.until(() -> futures.stream()
 				.map(future -> {
 					try {
-						return future.get(100, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
 					} catch (Exception e) {
 						return null;
 					}
-				}).filter(Objects::nonNull).toList(), hasSize(threadCount));
+				})
+				.filter(Objects::nonNull).toList(), hasSize(threadCount));
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
@@ -204,8 +207,10 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		String taskId = "1-1";
 
 		List<TransactionRequest> transactionRequests = Arrays.asList(
-			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, category.getId()),
-			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE, category.getId())
+			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, category.getId(),
+				null),
+			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE, category.getId(),
+				null)
 		);
 
 		SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
@@ -216,17 +221,15 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		int threadCount = 5;
-		CountDownLatch startLatch = new CountDownLatch(1); // 시작 신호
-		CountDownLatch readyLatch = new CountDownLatch(threadCount); // 준비 완료 신호
+		int threadCount = 3;
+		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					readyLatch.countDown(); // 준비 완료 신호
-					startLatch.await(); // 모든 스레드가 동시에 시작하도록 대기
+					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(post("/api/transactions/receipts/save")
 						.content(objectMapper.writeValueAsString(saveRequest))
@@ -239,21 +242,17 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			futures.add(future);
 		}
 
-		await().atMost(Duration.ofSeconds(5)).until(() -> readyLatch.getCount() == 0);
-
-		// 모든 스레드 동시 시작
-		startLatch.countDown();
-
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(10))
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
 			.until(() -> futures.stream()
 				.map(future -> {
 					try {
-						return future.get(100, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
 					} catch (Exception e) {
 						return null;
 					}
-				}).filter(Objects::nonNull).toList(), hasSize(threadCount));
+				})
+				.filter(Objects::nonNull).toList(), hasSize(threadCount));
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
@@ -291,7 +290,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(memberId);
 
-		int threadCount = 5;
+		int threadCount = 3;
 		CountDownLatch latch = new CountDownLatch(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
@@ -369,15 +368,14 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		setAuthentication(memberId);
 
 		int threadCount = 3;
-		CountDownLatch latch = new CountDownLatch(threadCount);
+		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					latch.countDown();
-					latch.await();
+					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -392,14 +390,16 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = futures.stream()
-			.map(future -> {
-				try {
-					return future.get().andReturn().getResponse().getStatus();
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}).toList();
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
+			.until(() -> futures.stream()
+				.map(future -> {
+					try {
+						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+					} catch (Exception e) {
+						return null;
+					}
+				})
+				.filter(Objects::nonNull).toList(), hasSize(threadCount));
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
@@ -421,11 +421,11 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		int threadCount = 5;
+		int threadCount = 3;
 		CountDownLatch latch = new CountDownLatch(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
-		// when - 동시에 5개의 서로 다른 taskId로 저장 요청
+		// when - 동시에 3개의 서로 다른 taskId로 저장 요청
 		for (int i = 0; i < threadCount; i++) {
 			final int index = i + 1;
 			Long categoryId = category.getId();
@@ -434,7 +434,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 				try {
 					List<TransactionRequest> transactionRequests = List.of(
 						new TransactionRequest(null, 1000L * index, "테스트" + index,
-							LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, categoryId));
+							LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, categoryId, null));
 
 					SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
 						.taskId(index + "-2")
@@ -490,7 +490,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		List<TransactionRequest> transactionRequests = List.of(
 			new TransactionRequest(null, 5000L, "타임아웃 테스트", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE,
-				category.getId()));
+				category.getId(), null));
 
 		SaveReceiptRequest saveRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)

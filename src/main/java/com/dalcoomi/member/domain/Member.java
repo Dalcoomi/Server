@@ -5,6 +5,13 @@ import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_GENDER
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_NAME;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_NICKNAME;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_PROFILE_IMAGE_URL;
+import static com.dalcoomi.member.constant.MemberConstants.EMAIL_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.GENDER_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NAME_MAX_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NAME_MIN_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NICKNAME_MAX_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.NICKNAME_MIN_LENGTH;
+import static com.dalcoomi.member.constant.MemberConstants.PROFILE_IMAGE_URL_LENGTH;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.util.Objects.requireNonNull;
 
@@ -17,22 +24,16 @@ import lombok.Getter;
 @Getter
 public class Member {
 
-	private static final int EMAIL_LENGTH = 100;
-	private static final int NAME_LENGTH = 30;
-	private static final int NICKNAME_LENGTH = 10;
-	private static final int GENDER_LENGTH = 10;
-	private static final int PROFILE_IMAGE_URL_LENGTH = 255;
-
 	private final Long id;
 	private final String email;
-	private final String name;
-	private final String nickname;
-	private final LocalDate birthday;
-	private final String gender;
-	private final String profileImageUrl;
 	private final Boolean serviceAgreement;
 	private final Boolean collectionAgreement;
-	private final LocalDateTime deletedAt;
+	private String name;
+	private String nickname;
+	private LocalDate birthday;
+	private String gender;
+	private String profileImageUrl;
+	private LocalDateTime deletedAt;
 
 	@Builder
 	public Member(Long id, String email, String name, String nickname, LocalDate birthday, String gender,
@@ -49,6 +50,25 @@ public class Member {
 		this.deletedAt = deletedAt;
 	}
 
+	public void skipValidationNickname(String nickname) {
+		this.nickname = nickname;
+	}
+
+	public void updateProfile(String name, String nickname, LocalDate birthday, String gender) {
+		this.name = validateName(name);
+		this.nickname = validateNickname(nickname);
+		this.birthday = birthday;
+		this.gender = validateGender(gender);
+	}
+
+	public void updateProfileImageUrl(String profileImageUrl) {
+		this.profileImageUrl = validateProfileImageUrl(profileImageUrl);
+	}
+
+	public void softDelete() {
+		this.deletedAt = LocalDateTime.now();
+	}
+
 	private String validateEmail(String email) {
 		if (isBlank(email) || email.length() > EMAIL_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_EMAIL.getMessage());
@@ -58,7 +78,7 @@ public class Member {
 	}
 
 	private String validateName(String name) {
-		if (isBlank(name) || name.length() > NAME_LENGTH) {
+		if (isBlank(name) || name.length() < NAME_MIN_LENGTH || name.length() > NAME_MAX_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_NAME.getMessage());
 		}
 
@@ -66,7 +86,7 @@ public class Member {
 	}
 
 	private String validateNickname(String nickname) {
-		if (isBlank(nickname) || nickname.length() > NICKNAME_LENGTH) {
+		if (isBlank(nickname) || nickname.length() < NICKNAME_MIN_LENGTH || nickname.length() > NICKNAME_MAX_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_NICKNAME.getMessage());
 		}
 
@@ -74,7 +94,7 @@ public class Member {
 	}
 
 	private String validateGender(String gender) {
-		if (!isBlank(gender) && gender.length() > GENDER_LENGTH) {
+		if (gender != null && gender.length() > GENDER_LENGTH) {
 			throw new IllegalArgumentException(MEMBER_INVALID_GENDER.getMessage());
 		}
 

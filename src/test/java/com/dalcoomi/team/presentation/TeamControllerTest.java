@@ -1,12 +1,9 @@
 package com.dalcoomi.team.presentation;
 
-import static com.dalcoomi.common.constant.TeamConstants.MAX_MEMBER_LIMIT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
-import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_MEMBER_LIMIT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
-import static java.lang.String.format;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -144,8 +141,7 @@ class TeamControllerTest {
 		mockMvc.perform(post("/api/teams")
 				.content(json)
 				.contentType(APPLICATION_JSON))
-			.andExpect(status().is5xxServerError())
-			.andExpect(jsonPath("$.message").value(format(TEAM_INVALID_MEMBER_LIMIT.getMessage(), MAX_MEMBER_LIMIT)))
+			.andExpect(status().isBadRequest())
 			.andDo(print());
 	}
 

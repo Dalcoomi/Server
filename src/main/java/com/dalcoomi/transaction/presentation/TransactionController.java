@@ -36,6 +36,7 @@ import com.dalcoomi.transaction.dto.response.GetTransactionResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
 import com.dalcoomi.transaction.dto.response.UploadReceiptResponse;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
@@ -52,10 +53,10 @@ public class TransactionController {
 
 	@PostMapping
 	@ResponseStatus(CREATED)
-	public void create(@AuthMember Long memberId, @RequestBody TransactionRequest request) {
+	public void create(@AuthMember Long memberId, @RequestBody @Valid TransactionRequest request) {
 		Transaction transaction = Transaction.from(request);
 
-		transactionService.create(memberId, request.categoryId(), transaction);
+		transactionService.create(memberId, request.categoryId(), transaction, request.synchronizeTransaction());
 	}
 
 	@PostMapping("/receipts/upload")
@@ -74,7 +75,7 @@ public class TransactionController {
 
 	@PostMapping("/receipts/save")
 	@ResponseStatus(OK)
-	public void saveReceipt(@AuthMember Long memberId, @RequestBody SaveReceiptRequest request) {
+	public void saveReceipt(@AuthMember Long memberId, @RequestBody @Valid SaveReceiptRequest request) {
 		String lockKey = lockKeyGenerator.generateSaveLockKey(memberId, request.taskId());
 
 		redisLockUtil.acquireAndRunLock(lockKey, () -> {
@@ -117,7 +118,7 @@ public class TransactionController {
 	@PutMapping("/{transactionId}")
 	@ResponseStatus(OK)
 	public void update(@AuthMember Long memberId, @PathVariable("transactionId") Long transactionId,
-		@RequestBody TransactionRequest request) {
+		@RequestBody @Valid TransactionRequest request) {
 		Transaction transaction = Transaction.from(request);
 
 		transactionService.update(memberId, transactionId, request.categoryId(), transaction);

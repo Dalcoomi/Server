@@ -2,7 +2,7 @@ name: Dalcoomi Server CD for Dev
 
 on:
   workflow_run:
-    workflows: [ "Dalcoomi Server CI" ]
+    workflows: [ "Dalcoomi Server CI Dev" ]
     types: [ completed ]
     branches: [ develop ]
 

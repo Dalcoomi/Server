@@ -1,7 +1,7 @@
 package com.dalcoomi.auth.application;
 
-import static com.dalcoomi.common.constant.TokenConstants.MEMBER_ROLE;
-import static com.dalcoomi.common.constant.TokenConstants.TEST_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.MEMBER_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.TEST_ROLE;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,12 +35,17 @@ public class AuthService {
 		return tokenInfo;
 	}
 
+	public void logout(Long memberId) {
+		jwtService.deleteRefreshToken(memberId);
+	}
+
 	public TokenInfo reissueToken(Long memberId) {
 		jwtService.deleteRefreshToken(memberId);
 
 		return jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 	}
 
+	@Transactional(readOnly = true)
 	public TokenInfo createTestToken(Long memberId) {
 		memberRepository.findById(memberId);
 
