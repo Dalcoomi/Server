@@ -8,6 +8,8 @@ public interface MemberRepository {
 
 	Member save(Member member);
 
+	boolean existsByNickname(String nickname);
+
 	Member findById(Long memberId);
 
 	List<Member> findByIds(List<Long> memberIds);

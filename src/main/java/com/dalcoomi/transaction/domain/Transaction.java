@@ -2,6 +2,7 @@ package com.dalcoomi.transaction.domain;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_INVALID_AMOUNT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_INVALID_CONTENT;
+import static com.dalcoomi.transaction.constant.TransactionConstants.CONTENT_LENGTH;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.time.LocalDateTime.now;
 import static java.util.Objects.isNull;
@@ -19,12 +20,10 @@ import lombok.Getter;
 @Getter
 public class Transaction {
 
-	public static final int CONTENT_LENGTH = 100;
-
 	private final Long id;
-	private final Long teamId;
 	private Member creator;
 	private Category category;
+	private Long teamId;
 	private Long amount;
 	private String content;
 	private LocalDateTime transactionDate;
@@ -61,6 +60,10 @@ public class Transaction {
 
 	public void updateCategory(Category category) {
 		this.category = category;
+	}
+
+	public void updateTeamId(Long teamId) {
+		this.teamId = teamId;
 	}
 
 	public void updateAmount(Long amount) {

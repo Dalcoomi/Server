@@ -1,7 +1,7 @@
 package com.dalcoomi.auth.application;
 
-import static com.dalcoomi.common.constant.TokenConstants.ACCESS_TOKEN_TYPE;
-import static com.dalcoomi.common.constant.TokenConstants.MEMBER_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.ACCESS_TOKEN_TYPE;
+import static com.dalcoomi.auth.constant.TokenConstants.MEMBER_ROLE;
 import static com.dalcoomi.common.error.model.ErrorMessage.MALFORMED_TOKEN;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_HAS_EXPIRED;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

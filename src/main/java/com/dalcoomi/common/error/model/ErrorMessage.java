@@ -33,15 +33,23 @@ public enum ErrorMessage {
 
 	MEMBER_NOT_FOUND("존재하지 않는 회원입니다."),
 	MEMBER_CONFLICT("이미 존재하는 회원입니다."),
+	MEMBER_NICKNAME_CONFLICT("이미 존재하는 닉네임입니다."),
 	MEMBER_INVALID_SOCIAL_ID("유효하지 않는 소셜 ID 입니다."),
 	MEMBER_INVALID_EMAIL("유효하지 않는 EMAIL 입니다."),
 	MEMBER_INVALID_NAME("유효하지 않는 이름입니다."),
 	MEMBER_INVALID_NICKNAME("유효하지 않는 닉네임입니다."),
+	MEMBER_NICKNAME_IS_NULL("닉네임은 필수입니다."),
+	MEMBER_NICKNAME_RANGE_ERROR("닉네임은 2~6자입니다."),
+	MEMBER_NICKNAME_INVALID_PATTERN("닉네임은 한글, 영문, 숫자, 언더스코어만 사용 가능합니다."),
 	MEMBER_INVALID_GENDER("유효하지 않는 성별입니다."),
 	MEMBER_INVALID_PROFILE_IMAGE_URL("유효하지 않는 프로필입니다."),
 	MEMBER_INVALID_SERVICE_AGREEMENT("서비스 이용 약관 동의 여부는 true 여야 합니다."),
 	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다."),
 
+	WITHDRAWAL_NOT_FOUND("해당 회원의 탈퇴 데이터가 존재하지 않습니다."),
+	WITHDRAWAL_INVALID_OTHER_REASON("유효하지 않는 기타 사유입니다."),
+
+	UNSUPPORTED_WITHDRAWAL_TYPE("지원하지 않는 탈퇴 타입입니다."),
 	UNSUPPORTED_TRANSACTION_TYPE("지원하지 않는 거래 타입입니다."),
 	UNSUPPORTED_OWNER_TYPE("지원하지 않는 집합 속성입니다."),
 

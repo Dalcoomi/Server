@@ -3,7 +3,7 @@ package com.dalcoomi.transaction.presentation;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_CREATOR_INCONSISTENCY;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_TEAM_INCONSISTENCY;
 import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -99,7 +99,7 @@ class TransactionControllerTest {
 		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 1, 12, 0);
 
 		TransactionRequest request = new TransactionRequest(null, amount, content, transactionDate, EXPENSE,
-			category.getId());
+			category.getId(), false);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -146,7 +146,7 @@ class TransactionControllerTest {
 		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 1, 12, 0);
 
 		TransactionRequest request = new TransactionRequest(team.getId(), amount, content, transactionDate, EXPENSE,
-			category.getId());
+			category.getId(), false);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -167,6 +167,63 @@ class TransactionControllerTest {
 		assertThat(transactions.getFirst().getContent()).isEqualTo(content);
 		assertThat(transactions.getFirst().getTransactionDate()).isEqualTo(transactionDate);
 		assertThat(transactions.getFirst().getTransactionType()).isEqualTo(EXPENSE);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 저장 시 개인 거래 내역과 동기화 성공")
+	void save_team_transaction_and_my_transaction_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		Team team = TeamFixture.getTeam1(member);
+		team = teamRepository.save(team);
+
+		TeamMember leaderTeamMember = TeamMember.of(team, member);
+		teamMemberRepository.save(leaderTeamMember);
+
+		Category category = CategoryFixture.getCategory1(member);
+		category = categoryRepository.save(category);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		Long amount = 30000L;
+		String content = "앙";
+		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 1, 12, 0);
+
+		TransactionRequest request = new TransactionRequest(team.getId(), amount, content, transactionDate, EXPENSE,
+			category.getId(), true);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/transactions")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isCreated())
+			.andDo(print());
+
+		TransactionSearchCriteria criteria1 = TransactionSearchCriteria.of(member.getId(), null,
+			transactionDate.getYear(), transactionDate.getMonthValue(), null, null);
+		TransactionSearchCriteria criteria2 = TransactionSearchCriteria.of(member.getId(), team.getId(),
+			transactionDate.getYear(), transactionDate.getMonthValue(), null, null);
+
+		List<Transaction> transactions1 = transactionRepository.findTransactions(criteria1);
+		List<Transaction> transactions2 = transactionRepository.findTransactions(criteria2);
+
+		assertThat(transactions1.getFirst().getCreator().getId()).isEqualTo(member.getId());
+		assertThat(transactions1.getFirst().getTeamId()).isNull();
+		assertThat(transactions1.getFirst().getAmount()).isEqualTo(amount);
+		assertThat(transactions1.getFirst().getContent()).isEqualTo(content);
+		assertThat(transactions1.getFirst().getTransactionDate()).isEqualTo(transactionDate);
+		assertThat(transactions1.getFirst().getTransactionType()).isEqualTo(EXPENSE);
+		assertThat(transactions2.getFirst().getCreator().getId()).isEqualTo(member.getId());
+		assertThat(transactions2.getFirst().getTeamId()).isEqualTo(team.getId());
+		assertThat(transactions2.getFirst().getAmount()).isEqualTo(amount);
+		assertThat(transactions2.getFirst().getContent()).isEqualTo(content);
+		assertThat(transactions2.getFirst().getTransactionDate()).isEqualTo(transactionDate);
+		assertThat(transactions2.getFirst().getTransactionType()).isEqualTo(EXPENSE);
 	}
 
 	@Test
@@ -582,7 +639,7 @@ class TransactionControllerTest {
 		String content = "엉";
 		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 2, 12, 0);
 		TransactionRequest request = new TransactionRequest(null, amount, content, transactionDate, EXPENSE,
-			category.getId());
+			category.getId(), null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -634,7 +691,7 @@ class TransactionControllerTest {
 		String content = "엉";
 		LocalDateTime transactionDate = LocalDateTime.of(2025, 3, 2, 12, 0);
 		TransactionRequest request = new TransactionRequest(team.getId(), amount, content, transactionDate, EXPENSE,
-			category.getId());
+			category.getId(), null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -719,9 +776,10 @@ class TransactionControllerTest {
 		String taskId = "1-1";
 
 		List<TransactionRequest> transactionRequests = Arrays.asList(
-			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, category.getId()),
+			new TransactionRequest(null, 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, category.getId(),
+				null),
 			new TransactionRequest(null, 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
-				category.getId()));
+				category.getId(), null));
 
 		SaveReceiptRequest bulkRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)
@@ -765,9 +823,9 @@ class TransactionControllerTest {
 
 		List<TransactionRequest> transactionRequests = Arrays.asList(
 			new TransactionRequest(team.getId(), 4800L, "커피", LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE,
-				category.getId()),
+				category.getId(), null),
 			new TransactionRequest(team.getId(), 12000L, "칼국수", LocalDateTime.of(2025, 1, 23, 12, 0), EXPENSE,
-				category.getId()));
+				category.getId(), null));
 
 		SaveReceiptRequest bulkRequest = SaveReceiptRequest.builder()
 			.taskId(taskId)

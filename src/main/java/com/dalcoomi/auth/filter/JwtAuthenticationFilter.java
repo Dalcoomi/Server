@@ -45,9 +45,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String requestUri = request.getRequestURI();
 		String queryString = request.getQueryString();
 		String method = request.getMethod();
+		String contentType = request.getContentType();
 
-		log.info("들어온 요청 - URI: {}, Query: {}, Method: {}", requestUri, queryString != null ? queryString : "쿼리 스트링 없음",
-			method);
+		log.info("들어온 요청 - URI: {}, Query: {}, Method: {}, ContentType: {}", requestUri,
+			queryString != null ? queryString : "쿼리 스트링 없음",
+			method, contentType);
 
 		if (isAllowedUri(requestUri)) {
 			filterChain.doFilter(request, response);

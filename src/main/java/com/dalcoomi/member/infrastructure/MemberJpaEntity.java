@@ -85,11 +85,11 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	}
 
 	public Member toModel() {
-		return Member.builder()
+		Member member = Member.builder()
 			.id(this.id)
 			.email(this.email)
 			.name(this.name)
-			.nickname(this.nickname)
+			.nickname("dummy")
 			.birthday(this.birthday)
 			.gender(this.gender)
 			.profileImageUrl(this.profileImageUrl)
@@ -97,5 +97,9 @@ public class MemberJpaEntity extends BaseTimeEntity {
 			.collectionAgreement(this.collectionAgreement)
 			.deletedAt(this.deletedAt)
 			.build();
+
+		member.skipValidationNickname(this.nickname);
+
+		return member;
 	}
 }
