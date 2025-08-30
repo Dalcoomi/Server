@@ -1,6 +1,6 @@
 package com.dalcoomi.auth.presentation;
 
-import static com.dalcoomi.common.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+import static com.dalcoomi.auth.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_NOT_FOUND;
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

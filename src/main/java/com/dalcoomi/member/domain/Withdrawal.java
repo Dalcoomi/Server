@@ -1,7 +1,7 @@
 package com.dalcoomi.member.domain;
 
-import static com.dalcoomi.common.constant.MemberConstants.OTHER_REASON_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.WITHDRAWAL_INVALID_OTHER_REASON;
+import static com.dalcoomi.member.constant.MemberConstants.OTHER_REASON_LENGTH;
 import static com.dalcoomi.member.domain.WithdrawalType.OTHER;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.util.Objects.requireNonNull;

@@ -1,8 +1,8 @@
 package com.dalcoomi.transaction.domain;
 
-import static com.dalcoomi.common.constant.TransactionConstants.CONTENT_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_INVALID_AMOUNT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_INVALID_CONTENT;
+import static com.dalcoomi.transaction.constant.TransactionConstants.CONTENT_LENGTH;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.time.LocalDateTime.now;
 import static java.util.Objects.isNull;

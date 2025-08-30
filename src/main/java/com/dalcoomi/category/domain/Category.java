@@ -1,7 +1,7 @@
 package com.dalcoomi.category.domain;
 
-import static com.dalcoomi.common.constant.CategoryConstants.ICON_URL_LENGTH;
-import static com.dalcoomi.common.constant.CategoryConstants.NAME_LENGTH;
+import static com.dalcoomi.category.constant.CategoryConstants.ICON_URL_LENGTH;
+import static com.dalcoomi.category.constant.CategoryConstants.NAME_LENGTH;
 import static com.dalcoomi.common.error.model.ErrorMessage.CATEGORY_INVALID_ICON_URL;
 import static com.dalcoomi.common.error.model.ErrorMessage.CATEGORY_INVALID_NAME;
 import static com.dalcoomi.common.error.model.ErrorMessage.CATEGORY_INVALID_TEAM_ID;

@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -250,6 +251,152 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	}
 
 	@Test
+	@DisplayName("통합 테스트 - 닉네임 사용 가능 확인 성공")
+	void check_nickname_availability_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String availableNickname = "사용가능한닉";
+
+		// when & then
+		mockMvc.perform(get("/api/members/nickname/availability")
+				.param("nickname", availableNickname)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(content().string("true"))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 닉네임 중복으로 사용 불가능 확인 성공")
+	void check_nickname_unavailable_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		Member member2 = MemberFixture.getMember2();
+
+		member1 = memberRepository.save(member1);
+		member2 = memberRepository.save(member2);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		String duplicatedNickname = member2.getNickname();
+
+		// when & then
+		mockMvc.perform(get("/api/members/nickname/availability")
+				.param("nickname", duplicatedNickname)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(content().string("false"))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 현재 사용 중인 닉네임 확인 성공")
+	void check_current_nickname_available_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String currentNickname = member.getNickname();
+
+		// when & then
+		mockMvc.perform(get("/api/members/nickname/availability")
+				.param("nickname", currentNickname)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(content().string("true"))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 닉네임 길이 초과로 확인 실패")
+	void check_nickname_too_long_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String tooLongNickname = "a".repeat(10);
+
+		// when & then
+		mockMvc.perform(get("/api/members/nickname/availability")
+				.param("nickname", tooLongNickname)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 닉네임 길이 부족으로 확인 실패")
+	void check_nickname_too_short_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String tooShortNickname = "a";
+
+		// when & then
+		mockMvc.perform(get("/api/members/nickname/availability")
+				.param("nickname", tooShortNickname)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 닉네임 정규표현식 위반으로 확인 실패")
+	void check_nickname_invalid_pattern_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String invalidNickname = "닉네임@#$";
+
+		// when & then
+		mockMvc.perform(get("/api/members/nickname/availability")
+				.param("nickname", invalidNickname)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 빈 닉네임으로 확인 실패")
+	void check_nickname_empty_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		String emptyNickname = "";
+
+		// when & then
+		mockMvc.perform(get("/api/members/nickname/availability")
+				.param("nickname", emptyNickname)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
 	@DisplayName("통합 테스트 - 회원 정보 수정 성공")
 	void update_member_success() throws Exception {
 		// given
@@ -289,7 +436,9 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	void update_member_nickname_conflict_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
+		Member member2 = MemberFixture.getMember2();
 		member = memberRepository.save(member);
+		member2 = memberRepository.save(member2);
 
 		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
 		socialConnectionRepository.save(socialConnection);
@@ -298,7 +447,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		String name = "아야어여";
-		String nickname = "가나다아";
+		String nickname = member2.getNickname();
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "여성";
 

@@ -1,10 +1,10 @@
 package com.dalcoomi.auth.application;
 
-import static com.dalcoomi.common.constant.TokenConstants.ACCESS_TOKEN_TYPE;
-import static com.dalcoomi.common.constant.TokenConstants.BEARER_PREFIX;
-import static com.dalcoomi.common.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-import static com.dalcoomi.common.constant.TokenConstants.REFRESH_TOKEN_TYPE;
-import static com.dalcoomi.common.constant.TokenConstants.TEST_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.ACCESS_TOKEN_TYPE;
+import static com.dalcoomi.auth.constant.TokenConstants.BEARER_PREFIX;
+import static com.dalcoomi.auth.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+import static com.dalcoomi.auth.constant.TokenConstants.REFRESH_TOKEN_TYPE;
+import static com.dalcoomi.auth.constant.TokenConstants.TEST_ROLE;
 import static com.dalcoomi.common.error.model.ErrorMessage.AUTHORIZATION_HEADER_ERROR;
 import static com.dalcoomi.common.error.model.ErrorMessage.MALFORMED_TOKEN;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_HAS_EXPIRED;
