@@ -68,13 +68,15 @@ public class MemberService {
 		Member member = Member.builder()
 			.email(memberInfo.email())
 			.name(name)
-			.nickname(nickname)
+			.nickname("dummy")
 			.birthday(memberInfo.birthday())
 			.gender(memberInfo.gender())
 			.profileImageUrl(randomProfileUrl)
 			.serviceAgreement(memberInfo.serviceAgreement())
 			.collectionAgreement(memberInfo.collectionAgreement())
 			.build();
+
+		member.skipValidationNickname(nickname);
 
 		member = memberRepository.save(member);
 

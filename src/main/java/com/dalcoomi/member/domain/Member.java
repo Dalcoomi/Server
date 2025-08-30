@@ -50,6 +50,10 @@ public class Member {
 		this.deletedAt = deletedAt;
 	}
 
+	public void skipValidationNickname(String nickname) {
+		this.nickname = nickname;
+	}
+
 	public void updateProfile(String name, String nickname, LocalDate birthday, String gender) {
 		this.name = validateName(name);
 		this.nickname = validateNickname(nickname);
