@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -104,6 +105,13 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 	@BeforeEach
 	void setUp() {
 		executorService = Executors.newFixedThreadPool(20);
+
+		// 테스트별 Redis 키 패턴 정리
+		Set<String> keys = redisTemplate.keys("receipt:*");
+
+		if (!keys.isEmpty()) {
+			redisTemplate.delete(keys);
+		}
 	}
 
 	@AfterEach
