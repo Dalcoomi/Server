@@ -6,5 +6,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TransactionConstants {
 
-	public static final int CONTENT_LENGTH = 20;
+	public static final int CONTENT_LENGTH = 50;
 }
