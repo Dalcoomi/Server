@@ -15,7 +15,7 @@ public record TransactionRequest(
 	@Positive(message = "자연수를 입력해주세요.")
 	Long amount,
 
-	@Size(max = 20, message = "거래 내역 내용은 최대 20자입니다.")
+	@Size(max = 50, message = "거래 내역 내용은 최대 50자입니다.")
 	String content,
 
 	LocalDateTime transactionDate,
