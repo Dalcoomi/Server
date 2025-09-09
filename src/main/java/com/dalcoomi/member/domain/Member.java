@@ -56,9 +56,10 @@ public class Member {
 
 	public void updateProfile(String name, String nickname, LocalDate birthday, String gender) {
 		this.name = validateName(name);
-		this.nickname = validateNickname(nickname);
 		this.birthday = birthday;
 		this.gender = validateGender(gender);
+		
+		skipValidationNickname(nickname);
 	}
 
 	public void updateProfileImageUrl(String profileImageUrl) {

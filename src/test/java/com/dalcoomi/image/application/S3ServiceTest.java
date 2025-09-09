@@ -115,7 +115,7 @@ class S3ServiceTest {
 		doNothing().when(s3Adapter).deleteFile(anyString());
 
 		// when
-		String result = s3Service.handleAvatar(false, avatarInfo, newImage);
+		String result = s3Service.updateAvatar(false, avatarInfo, newImage);
 
 		// then
 		assertThat(result).isEqualTo(expectedNewUrl);
@@ -139,7 +139,7 @@ class S3ServiceTest {
 		doNothing().when(s3Adapter).deleteFile(anyString());
 
 		// when
-		String result = s3Service.handleAvatar(true, avatarInfo, null);
+		String result = s3Service.updateAvatar(true, avatarInfo, null);
 
 		// then
 		assertThat(result).isNull();
@@ -160,7 +160,7 @@ class S3ServiceTest {
 		String currentUrl = member.getProfileImageUrl();
 
 		// when
-		String result = s3Service.handleAvatar(true, avatarInfo, null);
+		String result = s3Service.updateAvatar(true, avatarInfo, null);
 
 		// then
 		assertThat(result).isEqualTo(currentUrl);
@@ -176,7 +176,7 @@ class S3ServiceTest {
 		MockMultipartFile image = new MockMultipartFile("image", "test.gif", "image/gif", createDummyImageData(1));
 
 		// when & then
-		assertThrows(ImageException.class, () -> s3Service.handleAvatar(false, avatarInfo, image));
+		assertThrows(ImageException.class, () -> s3Service.updateAvatar(false, avatarInfo, image));
 	}
 
 	@Test

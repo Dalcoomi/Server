@@ -169,9 +169,11 @@ public class MemberService {
 	}
 
 	@Transactional
-	public void withdraw(Long memberId, WithdrawalType withdrawalType, String otherReason,
+	public String withdraw(Long memberId, WithdrawalType withdrawalType, String otherReason,
 		Map<Long, String> teamToNextLeaderMap) {
 		Member member = memberRepository.findById(memberId);
+		String profileImageUrl = member.getProfileImageUrl();
+		String newAvatarUrl = getRandomDefaultProfileImage();
 
 		// 개인 거래 내역 소프트 삭제
 		TransactionSearchCriteria criteria = TransactionSearchCriteria.builder()
@@ -221,6 +223,7 @@ public class MemberService {
 		socialConnectionRepository.deleteByMemberId(memberId);
 
 		// 회원 정보 소프트 삭제
+		member.updateProfileImageUrl(newAvatarUrl);
 		member.softDelete();
 
 		memberRepository.save(member);
@@ -234,6 +237,8 @@ public class MemberService {
 			.build();
 
 		withdrawalRepository.save(withdrawal);
+
+		return profileImageUrl;
 	}
 
 	private String getRandomDefaultProfileImage() {
