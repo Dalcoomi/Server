@@ -58,7 +58,7 @@ public class Member {
 		this.name = validateName(name);
 		this.birthday = birthday;
 		this.gender = validateGender(gender);
-		
+
 		skipValidationNickname(nickname);
 	}
 
