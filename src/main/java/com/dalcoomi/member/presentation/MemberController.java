@@ -85,7 +85,7 @@ public class MemberController {
 	public String updateAvatar(@AuthMember Long memberId, @ModelAttribute @Valid UpdateAvatarRequest request) {
 		AvatarInfo avatarInfo = memberService.getAvatarInfo(memberId);
 
-		String newAvatarUrl = s3Service.handleAvatar(request.removeAvatar(), avatarInfo, request.profileImage());
+		String newAvatarUrl = s3Service.updateAvatar(request.removeAvatar(), avatarInfo, request.profileImage());
 
 		return memberService.updateAvatar(avatarInfo.member(), newAvatarUrl);
 	}
@@ -115,6 +115,9 @@ public class MemberController {
 				LeaderTransferInfo::nextLeaderNickname
 			));
 
-		memberService.withdraw(memberId, request.withdrawalType(), request.otherReason(), teamToNextLeaderMap);
+		String profileUrl = memberService.withdraw(memberId, request.withdrawalType(), request.otherReason(),
+			teamToNextLeaderMap);
+
+		s3Service.deleteImage(profileUrl);
 	}
 }

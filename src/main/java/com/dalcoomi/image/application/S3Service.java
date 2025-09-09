@@ -80,7 +80,7 @@ public class S3Service {
 		}
 	}
 
-	public String handleAvatar(boolean removeAvatar, AvatarInfo avatarInfo, @Nullable MultipartFile multipartFile) {
+	public String updateAvatar(boolean removeAvatar, AvatarInfo avatarInfo, @Nullable MultipartFile multipartFile) {
 		String currentAvatarUrl = avatarInfo.member().getProfileImageUrl();
 
 		// 프사 등록 or 수정
