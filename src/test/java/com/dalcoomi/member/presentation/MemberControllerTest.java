@@ -489,7 +489,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThatThrownBy(() -> memberRepository.findById(memberId))
 			.isInstanceOf(NotFoundException.class);
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(member.getId());
+		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
 		assertThat(savedWithdrawal).isNotNull();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
 		assertThat(savedWithdrawal.getOtherReason()).isNull();
@@ -522,7 +522,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThatThrownBy(() -> memberRepository.findById(memberId))
 			.isInstanceOf(NotFoundException.class);
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(member.getId());
+		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
 		assertThat(savedWithdrawal).isNotNull();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(OTHER);
 		assertThat(savedWithdrawal.getOtherReason()).isEqualTo(customReason);
@@ -614,7 +614,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(teamMembers).hasSize(1);
 		assertThat(teamMembers.getFirst().getMember().getId()).isEqualTo(nextLeader.getId());
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(leader.getId());
+		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
 		assertThat(savedWithdrawal).isNotNull();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(USING_OTHER_SERVICE);
 		assertThat(savedWithdrawal.getOtherReason()).isNull();
@@ -648,7 +648,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			.andExpect(status().isOk())
 			.andDo(print());
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findByMemberId(member.getId());
+		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
 		assertThat(savedWithdrawal).isNotNull();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(PRIVACY_CONCERN);
 		assertThat(savedWithdrawal.getOtherReason()).isNull();

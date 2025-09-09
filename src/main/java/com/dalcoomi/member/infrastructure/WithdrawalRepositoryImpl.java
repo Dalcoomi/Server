@@ -22,8 +22,8 @@ public class WithdrawalRepositoryImpl implements WithdrawalRepository {
 	}
 
 	@Override
-	public Withdrawal findByMemberId(Long memberId) {
-		return withdrawalJpaRepository.findByMemberId(memberId)
+	public Withdrawal findById(Long withdrawalId) {
+		return withdrawalJpaRepository.findById(withdrawalId)
 			.orElseThrow(() -> new NotFoundException(WITHDRAWAL_NOT_FOUND))
 			.toModel();
 	}

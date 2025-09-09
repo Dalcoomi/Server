@@ -230,7 +230,6 @@ public class MemberService {
 
 		// 탈퇴 사유 저장
 		Withdrawal withdrawal = Withdrawal.builder()
-			.member(member)
 			.withdrawalType(withdrawalType)
 			.otherReason(otherReason)
 			.withdrawalDate(LocalDateTime.now())

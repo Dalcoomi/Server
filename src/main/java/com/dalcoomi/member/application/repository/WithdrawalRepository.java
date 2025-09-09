@@ -6,5 +6,5 @@ public interface WithdrawalRepository {
 
 	Withdrawal save(Withdrawal withdrawal);
 
-	Withdrawal findByMemberId(Long memberId);
+	Withdrawal findById(Long withdrawalId);
 }
