@@ -33,11 +33,13 @@ public class Member {
 	private LocalDate birthday;
 	private String gender;
 	private String profileImageUrl;
+	private LocalDateTime lastLoginAt;
 	private LocalDateTime deletedAt;
 
 	@Builder
 	public Member(Long id, String email, String name, String nickname, LocalDate birthday, String gender,
-		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, LocalDateTime deletedAt) {
+		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, LocalDateTime lastLoginAt,
+		LocalDateTime deletedAt) {
 		this.id = id;
 		this.email = validateEmail(email);
 		this.name = validateName(name);
@@ -47,6 +49,7 @@ public class Member {
 		this.profileImageUrl = validateProfileImageUrl(profileImageUrl);
 		this.serviceAgreement = requireNonNull(serviceAgreement);
 		this.collectionAgreement = requireNonNull(collectionAgreement);
+		this.lastLoginAt = lastLoginAt;
 		this.deletedAt = deletedAt;
 	}
 
@@ -64,6 +67,10 @@ public class Member {
 
 	public void updateProfileImageUrl(String profileImageUrl) {
 		this.profileImageUrl = validateProfileImageUrl(profileImageUrl);
+	}
+
+	public void updateLoginTime(LocalDateTime loginTime) {
+		this.lastLoginAt = loginTime;
 	}
 
 	public void softDelete() {
