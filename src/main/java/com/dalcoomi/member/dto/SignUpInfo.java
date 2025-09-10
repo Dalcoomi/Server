@@ -1,16 +1,15 @@
 package com.dalcoomi.member.dto;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import com.dalcoomi.member.domain.SocialType;
 
 import lombok.Builder;
 
 @Builder
-public record MemberInfo(
+public record SignUpInfo(
 	String socialId,
-	List<SocialType> socialType,
+	SocialType socialType,
 	String email,
 	String name,
 	String nickname,

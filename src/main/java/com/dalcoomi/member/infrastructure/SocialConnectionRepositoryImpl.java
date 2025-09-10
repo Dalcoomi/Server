@@ -1,13 +1,17 @@
 package com.dalcoomi.member.infrastructure;
 
-import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_NOT_FOUND;
+import static com.dalcoomi.common.jpa.DynamicQuery.generateEq;
+import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
+import static com.dalcoomi.member.infrastructure.QSocialConnectionJpaEntity.socialConnectionJpaEntity;
+
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class SocialConnectionRepositoryImpl implements SocialConnectionRepository {
 
 	private final SocialConnectionJpaRepository socialConnectionJpaRepository;
+	private final JPAQueryFactory jpaQueryFactory;
 
 	@Override
 	public SocialConnection save(SocialConnection socialConnection) {
@@ -28,16 +33,24 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	}
 
 	@Override
-	public SocialConnection findByMemberId(Long memberId) {
-		return socialConnectionJpaRepository.findByMemberId(memberId)
-			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND))
-			.toModel();
+	public List<SocialConnection> findBySocialEmail(String socialEmail) {
+		return jpaQueryFactory
+			.selectFrom(socialConnectionJpaEntity)
+			.join(socialConnectionJpaEntity.member, memberJpaEntity)
+			.where(
+				generateEq(socialEmail, socialConnectionJpaEntity.socialEmail::eq),
+				socialConnectionJpaEntity.deletedAt.isNull()
+			)
+			.fetch()
+			.stream().map(SocialConnectionJpaEntity::toModel).toList();
 	}
 
 	@Override
-	public Long findMemberIdBySocialIdAndSocialType(String socialId, SocialType socialType) {
-		return socialConnectionJpaRepository.findBySocialIdAndSocialType(socialId, socialType)
-			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).getMember().getId();
+	public List<SocialConnection> findByMemberId(Long memberId) {
+		return socialConnectionJpaRepository.findByMemberId(memberId)
+			.stream()
+			.map(SocialConnectionJpaEntity::toModel)
+			.toList();
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import static com.dalcoomi.common.error.model.ErrorMessage.SERVER_ERROR;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.LOCKED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
@@ -29,6 +30,7 @@ import com.dalcoomi.common.error.exception.ConcurrentRequestException;
 import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.error.exception.DalcoomiException;
 import com.dalcoomi.common.error.exception.ImageException;
+import com.dalcoomi.common.error.exception.LockedException;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.common.error.exception.OAuthException;
 import com.dalcoomi.common.error.exception.UnauthorizedException;
@@ -162,6 +164,14 @@ public class GlobalExceptionHandler {
 		log.error(exception.getMessage(), exception);
 
 		return new ErrorResponse(MAX_UPLOAD_SIZE_EXCEEDED.getMessage());
+	}
+
+	@ResponseStatus(LOCKED)
+	@ExceptionHandler(LockedException.class)
+	protected ErrorResponse handleLockedException(LockedException exception) {
+		log.error(exception.getMessage(), exception);
+
+		return new ErrorResponse(exception.getMessage());
 	}
 
 	@ResponseStatus(INTERNAL_SERVER_ERROR)

@@ -25,6 +25,7 @@ import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
+import com.dalcoomi.member.dto.SignUpInfo;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
@@ -48,7 +49,7 @@ public class MemberController {
 	@PostMapping("/sign-up")
 	@ResponseStatus(CREATED)
 	public SignUpResponse signUp(@RequestBody @Valid SignUpRequest request) {
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo memberInfo = SignUpInfo.builder()
 			.socialId(request.socialId())
 			.socialType(request.socialType())
 			.email(request.email())
@@ -63,7 +64,7 @@ public class MemberController {
 
 		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 
-		return new SignUpResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
+		return SignUpResponse.from(tokenInfo);
 	}
 
 	@GetMapping

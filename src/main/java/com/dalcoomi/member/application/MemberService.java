@@ -29,6 +29,7 @@ import com.dalcoomi.member.domain.WithdrawalType;
 import com.dalcoomi.member.domain.validator.NicknameValidator;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.MemberInfo;
+import com.dalcoomi.member.dto.SignUpInfo;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
@@ -53,27 +54,27 @@ public class MemberService {
 	private final NicknameValidator nicknameValidator;
 
 	@Transactional
-	public Long signUp(MemberInfo memberInfo) {
+	public Long signUp(SignUpInfo signUpInfo) {
 		boolean existsMember = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
-			memberInfo.socialId(), memberInfo.socialType());
+			signUpInfo.socialId(), signUpInfo.socialType());
 
 		if (existsMember) {
 			throw new ConflictException(MEMBER_CONFLICT);
 		}
 
-		String name = memberInfo.name();
+		String name = signUpInfo.name();
 		String nickname = new NicknameProvider().generateUniqueNickname(name, 4);
 		String randomProfileUrl = getRandomDefaultProfileImage();
 
 		Member member = Member.builder()
-			.email(memberInfo.email())
+			.email(signUpInfo.email())
 			.name(name)
 			.nickname("dummy")
-			.birthday(memberInfo.birthday())
-			.gender(memberInfo.gender())
+			.birthday(signUpInfo.birthday())
+			.gender(signUpInfo.gender())
 			.profileImageUrl(randomProfileUrl)
-			.serviceAgreement(memberInfo.serviceAgreement())
-			.collectionAgreement(memberInfo.collectionAgreement())
+			.serviceAgreement(signUpInfo.serviceAgreement())
+			.collectionAgreement(signUpInfo.collectionAgreement())
 			.build();
 
 		member.skipValidationNickname(nickname);
@@ -82,8 +83,8 @@ public class MemberService {
 
 		SocialConnection socialConnection = SocialConnection.builder()
 			.member(member)
-			.socialId(memberInfo.socialId())
-			.socialType(memberInfo.socialType())
+			.socialId(signUpInfo.socialId())
+			.socialType(signUpInfo.socialType())
 			.build();
 
 		socialConnectionRepository.save(socialConnection);
@@ -94,10 +95,10 @@ public class MemberService {
 	@Transactional(readOnly = true)
 	public MemberInfo get(Long memberId) {
 		Member member = memberRepository.findById(memberId);
-		SocialConnection socialConnection = socialConnectionRepository.findByMemberId(memberId);
+		List<SocialConnection> socialConnection = socialConnectionRepository.findByMemberId(memberId);
 
 		return MemberInfo.builder()
-			.socialType(socialConnection.getSocialType())
+			.socialType(socialConnection.stream().map(SocialConnection::getSocialType).toList())
 			.email(member.getEmail())
 			.name(member.getName())
 			.nickname(member.getNickname())

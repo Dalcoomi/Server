@@ -1,5 +1,6 @@
 package com.dalcoomi.member.infrastructure;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +11,7 @@ public interface SocialConnectionJpaRepository extends JpaRepository<SocialConne
 
 	boolean existsBySocialIdAndSocialType(String socialId, SocialType socialType);
 
-	Optional<SocialConnectionJpaEntity> findByMemberId(Long memberId);
+	List<SocialConnectionJpaEntity> findByMemberId(Long memberId);
 
 	Optional<SocialConnectionJpaEntity> findBySocialIdAndSocialType(String socialId, SocialType socialType);
 

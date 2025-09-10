@@ -1,6 +1,7 @@
 package com.dalcoomi.member.dto.response;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.dalcoomi.member.domain.SocialType;
 import com.dalcoomi.member.dto.MemberInfo;
@@ -9,7 +10,7 @@ import lombok.Builder;
 
 @Builder
 public record GetMemberResponse(
-	SocialType socialType,
+	List<SocialType> socialType,
 	String email,
 	String name,
 	String nickname,
