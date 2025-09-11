@@ -8,6 +8,7 @@ import lombok.Builder;
 
 @Builder
 public record SignUpInfo(
+	String socialEmail,
 	String socialId,
 	SocialType socialType,
 	String email,

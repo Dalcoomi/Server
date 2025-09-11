@@ -26,6 +26,8 @@ import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SignUpInfo;
+import com.dalcoomi.member.dto.SocialInfo;
+import com.dalcoomi.member.dto.request.IntegrateRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
@@ -50,6 +52,7 @@ public class MemberController {
 	@ResponseStatus(CREATED)
 	public SignUpResponse signUp(@RequestBody @Valid SignUpRequest request) {
 		SignUpInfo memberInfo = SignUpInfo.builder()
+			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
 			.socialType(request.socialType())
 			.email(request.email())
@@ -65,6 +68,18 @@ public class MemberController {
 		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 
 		return SignUpResponse.from(tokenInfo);
+	}
+
+	@PostMapping("/integrate")
+	@ResponseStatus(OK)
+	public void integrate(@AuthMember Long memberId, @RequestBody @Valid IntegrateRequest request) {
+		SocialInfo socialInfo = SocialInfo.builder()
+			.socialEmail(request.socialEmail())
+			.socialId(request.socialId())
+			.socialType(request.socialType())
+			.build();
+
+		memberService.integrate(memberId, socialInfo);
 	}
 
 	@GetMapping

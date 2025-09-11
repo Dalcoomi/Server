@@ -30,6 +30,7 @@ import com.dalcoomi.member.domain.validator.NicknameValidator;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SignUpInfo;
+import com.dalcoomi.member.dto.SocialInfo;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
@@ -55,10 +56,10 @@ public class MemberService {
 
 	@Transactional
 	public Long signUp(SignUpInfo signUpInfo) {
-		boolean existsMember = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
+		boolean existsSocialConnection = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
 			signUpInfo.socialId(), signUpInfo.socialType());
 
-		if (existsMember) {
+		if (existsSocialConnection) {
 			throw new ConflictException(MEMBER_CONFLICT);
 		}
 
@@ -67,7 +68,7 @@ public class MemberService {
 		String randomProfileUrl = getRandomDefaultProfileImage();
 
 		Member member = Member.builder()
-			.email(signUpInfo.email())
+			.email(signUpInfo.socialEmail()) // 나중에 이메일로 수정하기
 			.name(name)
 			.nickname("dummy")
 			.birthday(signUpInfo.birthday())
@@ -83,6 +84,7 @@ public class MemberService {
 
 		SocialConnection socialConnection = SocialConnection.builder()
 			.member(member)
+			.socialEmail(signUpInfo.socialEmail())
 			.socialId(signUpInfo.socialId())
 			.socialType(signUpInfo.socialType())
 			.build();
@@ -90,6 +92,27 @@ public class MemberService {
 		socialConnectionRepository.save(socialConnection);
 
 		return member.getId();
+	}
+
+	@Transactional
+	public void integrate(Long memberId, SocialInfo socialInfo) {
+		boolean existsSocialConnection = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
+			socialInfo.socialId(), socialInfo.socialType());
+
+		if (existsSocialConnection) {
+			throw new ConflictException(MEMBER_CONFLICT);
+		}
+
+		Member member = memberRepository.findById(memberId);
+
+		SocialConnection socialConnection = SocialConnection.builder()
+			.member(member)
+			.socialEmail(socialInfo.socialEmail())
+			.socialId(socialInfo.socialId())
+			.socialType(socialInfo.socialType())
+			.build();
+
+		socialConnectionRepository.save(socialConnection);
 	}
 
 	@Transactional(readOnly = true)
@@ -170,27 +193,13 @@ public class MemberService {
 	}
 
 	@Transactional
-	public String withdraw(Long memberId, WithdrawalType withdrawalType, String otherReason,
+	public String withdraw(Long memberId, WithdrawalType withdrawalType, @Nullable String otherReason,
 		Map<Long, String> teamToNextLeaderMap) {
 		Member member = memberRepository.findById(memberId);
 		String profileImageUrl = member.getProfileImageUrl();
 		String newAvatarUrl = getRandomDefaultProfileImage();
 
-		// 개인 거래 내역 소프트 삭제
-		TransactionSearchCriteria criteria = TransactionSearchCriteria.builder()
-			.memberId(memberId)
-			.teamId(null)
-			.build();
-
-		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
-
-		for (Transaction transaction : transactions) {
-			transaction.softDelete();
-		}
-
-		transactionRepository.saveAll(transactions);
-
-		// 속한 그룹 떠나기 or 삭제
+		// 참여 중인 그룹 떠나기 or 삭제
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 
 		if (!teamMembers.isEmpty()) {
@@ -219,6 +228,20 @@ public class MemberService {
 				}
 			}
 		}
+
+		// 개인 거래 내역 소프트 삭제
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.builder()
+			.memberId(memberId)
+			.teamId(null)
+			.build();
+
+		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
+
+		for (Transaction transaction : transactions) {
+			transaction.softDelete();
+		}
+
+		transactionRepository.saveAll(transactions);
 
 		// 소셜 연결 삭제
 		socialConnectionRepository.deleteByMemberId(memberId);

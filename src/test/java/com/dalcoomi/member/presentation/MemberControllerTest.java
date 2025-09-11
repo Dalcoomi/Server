@@ -1,6 +1,8 @@
 package com.dalcoomi.member.presentation;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
+import static com.dalcoomi.member.domain.SocialType.NAVER;
 import static com.dalcoomi.member.domain.WithdrawalType.LOW_USAGE_FREQUENCY;
 import static com.dalcoomi.member.domain.WithdrawalType.OTHER;
 import static com.dalcoomi.member.domain.WithdrawalType.PRIVACY_CONCERN;
@@ -57,6 +59,7 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
+import com.dalcoomi.member.dto.request.IntegrateRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
@@ -101,15 +104,16 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	@DisplayName("통합 테스트 - 회원가입 성공")
 	void sign_up_success() throws Exception {
 		// given
+		String socialEmail = "test@example.com";
 		String socialId = "12345";
-		String email = "test@example.com";
 		String name = "테스트";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		SignUpRequest request = new SignUpRequest(socialId, KAKAO, email, name, birthday, gender, serviceAgreement,
+		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
+			serviceAgreement,
 			collectionAgreement);
 
 		// when & then
@@ -128,15 +132,16 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	@DisplayName("통합 테스트 - 이름 길이 초과 회원가입 실패")
 	void name_length_over_sign_up_fail() throws Exception {
 		// given
+		String socialEmail = "test@example.com";
 		String socialId = "12345";
-		String email = "test@example.com";
 		String name = "프라이인드로스테쭈젠댄마리소피아수인레나테엘리자벳피아루이제제";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "남성";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		SignUpRequest request = new SignUpRequest(socialId, KAKAO, email, name, birthday, gender, serviceAgreement,
+		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
+			serviceAgreement,
 			collectionAgreement);
 
 		// when & then
@@ -154,15 +159,13 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	void already_exists_sign_up_fail() throws Exception {
 		// given
 		Member testMember = MemberFixture.getMember1();
-
 		testMember = memberRepository.save(testMember);
 
 		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(testMember);
-
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
-		SignUpRequest request = new SignUpRequest(socialConnection.getSocialId(), KAKAO, "another@example.com", "다른이름",
-			LocalDate.of(1995, 5, 5), "여성", true, true);
+		SignUpRequest request = new SignUpRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
+			KAKAO, socialConnection.getSocialEmail(), "다른이름", LocalDate.of(1995, 5, 5), "여성", true, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -172,6 +175,79 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 				.content(json))
 			.andExpect(status().isConflict())
 			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 소셜 계정 통합 성공")
+	void integrate_social_account_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection existingConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(existingConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		IntegrateRequest request = new IntegrateRequest(
+			"user@example.com",
+			"naver-social-id-123",
+			NAVER
+		);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/members/integrate")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		List<SocialConnection> socialConnections = socialConnectionRepository.findByMemberId(member.getId());
+		assertThat(socialConnections).hasSize(2);
+
+		boolean hasNaverConnection = socialConnections.stream()
+			.anyMatch(sc -> sc.getSocialType() == NAVER && sc.getSocialId().equals("naver-social-id-123"));
+		assertThat(hasNaverConnection).isTrue();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 이미 존재하는 소셜 계정으로 통합 시도 시 실패")
+	void integrate_already_existing_social_account_fail() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		SocialConnection existingNaverConnection = SocialConnectionFixture.getSocialConnection2(member2);
+		socialConnectionRepository.save(existingNaverConnection);
+
+		setAuthentication(member1.getId());
+
+		// member1이 이미 존재하는 네이버 계정으로 통합 시도
+		IntegrateRequest request = new IntegrateRequest(
+			existingNaverConnection.getSocialEmail(),
+			existingNaverConnection.getSocialId(),
+			existingNaverConnection.getSocialType()
+		);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/members/integrate")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.message").value(MEMBER_CONFLICT.getMessage()))
+			.andDo(print());
+
+		List<SocialConnection> member1Connections = socialConnectionRepository.findByMemberId(member1.getId());
+		boolean hasNaverConnection = member1Connections.stream().anyMatch(sc -> sc.getSocialType() == NAVER);
+		assertThat(hasNaverConnection).isFalse();
 	}
 
 	@Test
@@ -489,8 +565,10 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThatThrownBy(() -> memberRepository.findById(memberId))
 			.isInstanceOf(NotFoundException.class);
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
-		assertThat(savedWithdrawal).isNotNull();
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
+
+		Withdrawal savedWithdrawal = withdrawals.getFirst();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
 		assertThat(savedWithdrawal.getOtherReason()).isNull();
 		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
@@ -522,8 +600,10 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThatThrownBy(() -> memberRepository.findById(memberId))
 			.isInstanceOf(NotFoundException.class);
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
-		assertThat(savedWithdrawal).isNotNull();
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
+
+		Withdrawal savedWithdrawal = withdrawals.getFirst();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(OTHER);
 		assertThat(savedWithdrawal.getOtherReason()).isEqualTo(customReason);
 		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
@@ -614,8 +694,10 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(teamMembers).hasSize(1);
 		assertThat(teamMembers.getFirst().getMember().getId()).isEqualTo(nextLeader.getId());
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
-		assertThat(savedWithdrawal).isNotNull();
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
+
+		Withdrawal savedWithdrawal = withdrawals.getFirst();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(USING_OTHER_SERVICE);
 		assertThat(savedWithdrawal.getOtherReason()).isNull();
 		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
@@ -648,8 +730,10 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			.andExpect(status().isOk())
 			.andDo(print());
 
-		Withdrawal savedWithdrawal = withdrawalRepository.findById(1L);
-		assertThat(savedWithdrawal).isNotNull();
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
+
+		Withdrawal savedWithdrawal = withdrawals.getFirst();
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(PRIVACY_CONCERN);
 		assertThat(savedWithdrawal.getOtherReason()).isNull();
 		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
