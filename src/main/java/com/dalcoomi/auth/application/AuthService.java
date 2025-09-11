@@ -35,15 +35,14 @@ public class AuthService {
 
 	@Transactional
 	public LoginInfo login(SocialInfo socialInfo) {
-		List<SocialConnection> socialConnections = socialConnectionRepository.findBySocialEmail(
-			socialInfo.socialEmail());
+		List<SocialConnection> socialConnections = socialConnectionRepository.findBySocialEmailOrSocialId(
+			socialInfo.socialEmail(), socialInfo.socialId());
 
 		// 신규 회원 = 영구 탈퇴 회원
 		if (socialConnections.isEmpty()) {
 			throw new NotFoundException(MEMBER_NOT_FOUND);
 		}
 
-		// 기존 회원
 		Member member = socialConnections.getFirst().getMember();
 
 		// 휴면 회원
@@ -52,8 +51,15 @@ public class AuthService {
 		}
 
 		for (SocialConnection socialConnection : socialConnections) {
-			if (socialConnection.getSocialType() == socialInfo.socialType()) {
+			if (socialConnection.getSocialId().equals(socialInfo.socialId())
+				&& socialConnection.getSocialType() == socialInfo.socialType()) {
 				TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE);
+
+				if (!socialConnection.getSocialEmail().equals(socialInfo.socialEmail())) {
+					socialConnection.updateSocialEmail(socialInfo.socialEmail());
+
+					socialConnectionRepository.save(socialConnection);
+				}
 
 				member.updateLoginTime(LocalDateTime.now());
 

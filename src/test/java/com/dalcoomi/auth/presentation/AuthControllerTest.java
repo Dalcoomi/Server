@@ -1,9 +1,12 @@
 package com.dalcoomi.auth.presentation;
 
 import static com.dalcoomi.auth.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_DORMANT_ACCOUNT;
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_NOT_FOUND;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_NOT_FOUND;
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static com.dalcoomi.member.domain.SocialType.NAVER;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -71,24 +74,49 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 로그인 실패")
-	void login_fail() throws Exception {
+	@DisplayName("통합 테스트 - 신규 회원 로그인 실패")
+	void member_not_found_login_fail() throws Exception {
 		// given
 		LoginRequest request = new LoginRequest("test@naver.com", "123", KAKAO);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/auth/login")
+		mockMvc.perform(post("/api/auth/login")
 				.contentType("application/json")
 				.content(json))
 			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.message").value(MEMBER_NOT_FOUND.getMessage()))
 			.andDo(print());
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 로그인 성공")
-	void login_success() throws Exception {
+	@DisplayName("통합 테스트 - 휴면 계정 로그인 실패")
+	void dormant_account_login_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1WithDeletedAt();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnection = socialConnectionRepository.save(socialConnection);
+
+		LoginRequest request = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
+			socialConnection.getSocialType());
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/auth/login")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isLocked())
+			.andExpect(jsonPath("$.message").value(MEMBER_DORMANT_ACCOUNT.getMessage()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 동일 소셜 로그인 성공")
+	void same_social_login_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -106,13 +134,86 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.sameSocial").value(true))
 			.andExpect(jsonPath("$.accessToken").exists())
 			.andExpect(jsonPath("$.refreshToken").exists())
 			.andDo(print());
 
 		String savedRefreshToken = redisTemplate.opsForValue().get(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
-
 		assertThat(savedRefreshToken).isNotNull();
+
+		Member updatedMember = memberRepository.findById(member.getId());
+		assertThat(updatedMember.getLastLoginAt()).isNotNull();
+		assertThat(updatedMember.getLastLoginAt()).isAfter(member.getCreatedAt());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 다른 소셜 로그인 성공")
+	void different_social_login_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection kakaoConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(kakaoConnection);
+
+		LoginRequest request = new LoginRequest(
+			kakaoConnection.getSocialEmail(),
+			"different-social-id",
+			NAVER
+		);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/auth/login")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.sameSocial").value(false))
+			.andExpect(jsonPath("$.accessToken").doesNotExist())
+			.andExpect(jsonPath("$.refreshToken").doesNotExist())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 소셜 ID로만 매칭되는 경우 로그인 성공")
+	void match_by_social_id_only_login_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnection = socialConnectionRepository.save(socialConnection);
+
+		LoginRequest request = new LoginRequest(
+			"different@email.com",
+			socialConnection.getSocialId(),
+			socialConnection.getSocialType()
+		);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/auth/login")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.sameSocial").value(true))
+			.andExpect(jsonPath("$.accessToken").exists())
+			.andExpect(jsonPath("$.refreshToken").exists())
+			.andDo(print());
+
+		// 로그인 성공 확인
+		String savedRefreshToken = redisTemplate.opsForValue().get(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
+		assertThat(savedRefreshToken).isNotNull();
+
+		List<SocialConnection> saveSocialConnections = socialConnectionRepository.findBySocialEmailOrSocialId(
+			socialConnection.getSocialEmail(), socialConnection.getSocialId());
+		assertThat(saveSocialConnections).hasSize(1);
+
+		SocialConnection saveSocialConnection = saveSocialConnections.getFirst();
+		assertThat(saveSocialConnection.getSocialEmail()).isEqualTo("different@email.com");
 	}
 
 	@Test

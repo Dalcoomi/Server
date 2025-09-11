@@ -24,7 +24,7 @@ public final class SocialConnectionFixture {
 
 		return SocialConnection.builder()
 			.member(member)
-			.socialEmail("test2@naver.com")
+			.socialEmail("abc1@gmail.com")
 			.socialId(socialId)
 			.socialType(NAVER)
 			.build();

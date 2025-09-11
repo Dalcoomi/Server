@@ -15,9 +15,9 @@ public class SocialConnection {
 
 	private final Long id;
 	private final Member member;
-	private final String socialEmail;
 	private final String socialId;
 	private final SocialType socialType;
+	private String socialEmail;
 	private LocalDateTime deletedAt;
 
 	@Builder
@@ -29,6 +29,10 @@ public class SocialConnection {
 		this.socialId = validateSocialId(socialId);
 		this.socialType = socialType;
 		this.deletedAt = deletedAt;
+	}
+
+	public void updateSocialEmail(String socialEmail) {
+		this.socialEmail = socialEmail;
 	}
 
 	public void softDelete() {

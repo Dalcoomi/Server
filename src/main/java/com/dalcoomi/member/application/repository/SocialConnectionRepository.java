@@ -11,7 +11,7 @@ public interface SocialConnectionRepository {
 
 	Boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType);
 
-	List<SocialConnection> findBySocialEmail(String socialEmail);
+	List<SocialConnection> findBySocialEmailOrSocialId(String socialEmail, String socialId);
 
 	List<SocialConnection> findByMemberId(Long memberId);
 

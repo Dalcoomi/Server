@@ -1,6 +1,5 @@
 package com.dalcoomi.member.infrastructure;
 
-import static com.dalcoomi.common.jpa.DynamicQuery.generateEq;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.member.infrastructure.QSocialConnectionJpaEntity.socialConnectionJpaEntity;
 
@@ -33,13 +32,14 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	}
 
 	@Override
-	public List<SocialConnection> findBySocialEmail(String socialEmail) {
+	public List<SocialConnection> findBySocialEmailOrSocialId(String socialEmail, String socialId) {
 		return jpaQueryFactory
-			.selectFrom(socialConnectionJpaEntity)
+			.selectDistinct(socialConnectionJpaEntity)
+			.from(socialConnectionJpaEntity)
 			.join(socialConnectionJpaEntity.member, memberJpaEntity)
 			.where(
-				generateEq(socialEmail, socialConnectionJpaEntity.socialEmail::eq),
-				socialConnectionJpaEntity.deletedAt.isNull()
+				socialConnectionJpaEntity.socialEmail.eq(socialEmail)
+					.or(socialConnectionJpaEntity.socialId.eq(socialId))
 			)
 			.fetch()
 			.stream().map(SocialConnectionJpaEntity::toModel).toList();
