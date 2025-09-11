@@ -13,6 +13,7 @@ public final class SocialConnectionFixture {
 
 		return SocialConnection.builder()
 			.member(member)
+			.socialEmail("test1@naver.com")
 			.socialId(socialId)
 			.socialType(KAKAO)
 			.build();
@@ -23,6 +24,7 @@ public final class SocialConnectionFixture {
 
 		return SocialConnection.builder()
 			.member(member)
+			.socialEmail("test2@naver.com")
 			.socialId(socialId)
 			.socialType(NAVER)
 			.build();

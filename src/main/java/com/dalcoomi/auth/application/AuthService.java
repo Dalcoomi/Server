@@ -51,28 +51,25 @@ public class AuthService {
 			throw new LockedException(MEMBER_DORMANT_ACCOUNT);
 		}
 
-		boolean sameSocial = false;
-
 		for (SocialConnection socialConnection : socialConnections) {
 			if (socialConnection.getSocialType() == socialInfo.socialType()) {
-				sameSocial = true;
-				break;
+				TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE);
+
+				member.updateLoginTime(LocalDateTime.now());
+
+				memberRepository.save(member);
+
+				log.info("로그인 성공 - memberId: {}", member.getId());
+
+				return LoginInfo.builder()
+					.sameSocial(true)
+					.accessToken(tokenInfo.accessToken())
+					.refreshToken(tokenInfo.refreshToken())
+					.build();
 			}
 		}
 
-		TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE);
-
-		member.updateLoginTime(LocalDateTime.now());
-
-		memberRepository.save(member);
-
-		log.info("로그인 성공 - memberId: {}", member.getId());
-
-		return LoginInfo.builder()
-			.sameSocial(sameSocial)
-			.accessToken(tokenInfo.accessToken())
-			.refreshToken(tokenInfo.refreshToken())
-			.build();
+		return LoginInfo.builder().sameSocial(false).build();
 	}
 
 	public void logout(Long memberId) {

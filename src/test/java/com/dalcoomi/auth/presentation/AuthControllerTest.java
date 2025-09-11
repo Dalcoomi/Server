@@ -74,7 +74,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 	@DisplayName("통합 테스트 - 로그인 실패")
 	void login_fail() throws Exception {
 		// given
-		LoginRequest request = new LoginRequest("123", KAKAO);
+		LoginRequest request = new LoginRequest("test@naver.com", "123", KAKAO);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -96,7 +96,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
-		LoginRequest request = new LoginRequest(socialConnection.getSocialId(), socialConnection.getSocialType());
+		LoginRequest request = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
+			socialConnection.getSocialType());
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -125,7 +126,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		// 로그인하여 refresh token을 Redis에 저장
-		LoginRequest loginRequest = new LoginRequest(socialConnection.getSocialId(), socialConnection.getSocialType());
+		LoginRequest loginRequest = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
+			socialConnection.getSocialType());
 		String loginJson = objectMapper.writeValueAsString(loginRequest);
 
 		mockMvc.perform(post("/api/auth/login")

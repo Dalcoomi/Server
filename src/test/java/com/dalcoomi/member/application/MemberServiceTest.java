@@ -24,7 +24,7 @@ import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
-import com.dalcoomi.member.dto.MemberInfo;
+import com.dalcoomi.member.dto.SignUpInfo;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -51,7 +51,7 @@ class MemberServiceTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
 			.socialId(socialId)
 			.socialType(socialType)
 			.email(email)
@@ -65,7 +65,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_EMAIL.getMessage());
 
@@ -89,7 +89,7 @@ class MemberServiceTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
 			.socialId(socialId)
 			.socialType(socialType)
 			.email(email)
@@ -103,7 +103,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_EMAIL.getMessage());
 
@@ -125,7 +125,7 @@ class MemberServiceTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
 			.socialId(socialId)
 			.socialType(socialType)
 			.email(email)
@@ -139,7 +139,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -162,7 +162,7 @@ class MemberServiceTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
 			.socialId(socialId)
 			.socialType(socialType)
 			.email(email)
@@ -176,7 +176,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -199,7 +199,7 @@ class MemberServiceTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
 			.socialId(socialId)
 			.socialType(socialType)
 			.email(email)
@@ -213,7 +213,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -236,7 +236,7 @@ class MemberServiceTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
 			.socialId(socialId)
 			.socialType(socialType)
 			.email(email)
@@ -250,7 +250,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_GENDER.getMessage());
 
