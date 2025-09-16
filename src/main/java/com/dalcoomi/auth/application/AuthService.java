@@ -43,7 +43,8 @@ public class AuthService {
 			throw new NotFoundException(MEMBER_NOT_FOUND);
 		}
 
-		Member member = socialConnections.getFirst().getMember();
+		SocialConnection existingSocialConnection = socialConnections.getFirst();
+		Member member = existingSocialConnection.getMember();
 
 		// 휴면 회원
 		if (member.getDeletedAt() != null) {
@@ -69,13 +70,18 @@ public class AuthService {
 
 				return LoginInfo.builder()
 					.sameSocial(true)
+					.existingSocialType(socialConnection.getSocialType())
 					.accessToken(tokenInfo.accessToken())
 					.refreshToken(tokenInfo.refreshToken())
 					.build();
 			}
 		}
 
-		return LoginInfo.builder().sameSocial(false).build();
+		// 다른 소셜 계정으로 로그인 시도한 경우, 기존 소셜 타입 반환
+		return LoginInfo.builder()
+			.sameSocial(false)
+			.existingSocialType(existingSocialConnection.getSocialType())
+			.build();
 	}
 
 	public void logout(Long memberId) {
