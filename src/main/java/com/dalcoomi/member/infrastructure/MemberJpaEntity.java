@@ -102,6 +102,8 @@ public class MemberJpaEntity extends BaseTimeEntity {
 			.serviceAgreement(this.serviceAgreement)
 			.collectionAgreement(this.collectionAgreement)
 			.lastLoginAt(this.lastLoginAt)
+			.createdAt(getCreatedAt())
+			.updatedAt(getUpdatedAt())
 			.deletedAt(this.deletedAt)
 			.build();
 

@@ -133,4 +133,60 @@ public final class TransactionFixture {
 			.transactionType(EXPENSE)
 			.build();
 	}
+
+	public static Transaction getAnonymizedPersonalTransaction1(Category category, int daysAgo) {
+		return Transaction.builder()
+			.creator(null)
+			.category(category)
+			.teamId(null)
+			.amount(10000L)
+			.content("익명화된 거래")
+			.transactionDate(LocalDateTime.now().minusDays(daysAgo + 1))
+			.transactionType(EXPENSE)
+			.deletedAt(LocalDateTime.now().minusDays(daysAgo))
+			.dataRetentionConsent(true)
+			.build();
+	}
+
+	public static Transaction getNonAnonymizedPersonalTransaction1(Member member, Category category, int daysAgo) {
+		return Transaction.builder()
+			.creator(member)
+			.category(category)
+			.teamId(null)
+			.amount(10000L)
+			.content("비익명화 거래")
+			.transactionDate(LocalDateTime.now().minusDays(daysAgo + 1))
+			.transactionType(EXPENSE)
+			.deletedAt(LocalDateTime.now().minusDays(daysAgo))
+			.dataRetentionConsent(true)
+			.build();
+	}
+
+	public static Transaction getAnonymizedTeamTransaction1(Category category, int daysAgo) {
+		return Transaction.builder()
+			.creator(null)
+			.category(category)
+			.teamId(1L)
+			.amount(20000L)
+			.content("익명화된 그룹 거래")
+			.transactionDate(LocalDateTime.now().minusDays(daysAgo + 1))
+			.transactionType(EXPENSE)
+			.dataRetentionConsent(true)
+			.build();
+	}
+
+	public static Transaction getSoftDeletedPersonalTransaction1(Member member, Category category, int daysAgo,
+		boolean dataRetentionConsent) {
+		return Transaction.builder()
+			.creator(member)
+			.category(category)
+			.teamId(null)
+			.amount(10000L)
+			.content("테스트 거래")
+			.transactionDate(LocalDateTime.now().minusDays(daysAgo + 1))
+			.transactionType(EXPENSE)
+			.deletedAt(LocalDateTime.now().minusDays(daysAgo))
+			.dataRetentionConsent(dataRetentionConsent)
+			.build();
+	}
 }

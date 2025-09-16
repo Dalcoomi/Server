@@ -2,6 +2,8 @@ package com.dalcoomi.member.infrastructure;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.WITHDRAWAL_NOT_FOUND;
 
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
 import com.dalcoomi.common.error.exception.NotFoundException;
@@ -26,5 +28,10 @@ public class WithdrawalRepositoryImpl implements WithdrawalRepository {
 		return withdrawalJpaRepository.findById(withdrawalId)
 			.orElseThrow(() -> new NotFoundException(WITHDRAWAL_NOT_FOUND))
 			.toModel();
+	}
+
+	@Override
+	public List<Withdrawal> findAll() {
+		return withdrawalJpaRepository.findAll().stream().map(WithdrawalJpaEntity::toModel).toList();
 	}
 }

@@ -29,10 +29,12 @@ public class Transaction {
 	private LocalDateTime transactionDate;
 	private TransactionType transactionType;
 	private LocalDateTime deletedAt;
+	private Boolean dataRetentionConsent;
 
 	@Builder
 	public Transaction(Long id, Member creator, Category category, Long teamId, LocalDateTime transactionDate,
-		String content, Long amount, TransactionType transactionType, LocalDateTime deletedAt) {
+		String content, Long amount, TransactionType transactionType, LocalDateTime deletedAt,
+		Boolean dataRetentionConsent) {
 		this.id = id;
 		this.creator = creator;
 		this.category = category;
@@ -42,6 +44,7 @@ public class Transaction {
 		this.transactionDate = requireNonNull(transactionDate);
 		this.transactionType = requireNonNull(transactionType);
 		this.deletedAt = deletedAt;
+		this.dataRetentionConsent = dataRetentionConsent;
 	}
 
 	public static Transaction from(TransactionRequest request) {
@@ -84,6 +87,14 @@ public class Transaction {
 
 	public void softDelete() {
 		this.deletedAt = now();
+	}
+
+	public void updateDataRetentionConsent(Boolean dataRetentionConsent) {
+		this.dataRetentionConsent = dataRetentionConsent;
+	}
+
+	public void anonymize() {
+		this.creator = null;
 	}
 
 	private String validateContent(String content) {

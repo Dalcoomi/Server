@@ -3,6 +3,7 @@ package com.dalcoomi.member.infrastructure;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.member.infrastructure.QSocialConnectionJpaEntity.socialConnectionJpaEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -27,6 +28,15 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	}
 
 	@Override
+	public void saveAll(List<SocialConnection> socialConnections) {
+		List<SocialConnectionJpaEntity> entities = socialConnections.stream()
+			.map(SocialConnectionJpaEntity::from)
+			.toList();
+
+		socialConnectionJpaRepository.saveAll(entities);
+	}
+
+	@Override
 	public Boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType) {
 		return socialConnectionJpaRepository.existsBySocialIdAndSocialType(socialId, socialType);
 	}
@@ -42,7 +52,9 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 					.or(socialConnectionJpaEntity.socialId.eq(socialId))
 			)
 			.fetch()
-			.stream().map(SocialConnectionJpaEntity::toModel).toList();
+			.stream()
+			.map(SocialConnectionJpaEntity::toModel)
+			.toList();
 	}
 
 	@Override
@@ -54,7 +66,33 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	}
 
 	@Override
+	public List<SocialConnection> findExpiredSoftDeletedWithMember(LocalDateTime cutoffDate) {
+		return jpaQueryFactory
+			.selectFrom(socialConnectionJpaEntity)
+			.join(socialConnectionJpaEntity.member, memberJpaEntity).fetchJoin()
+			.where(
+				socialConnectionJpaEntity.deletedAt.isNotNull(),
+				socialConnectionJpaEntity.deletedAt.lt(cutoffDate),
+				memberJpaEntity.deletedAt.isNotNull(),
+				memberJpaEntity.deletedAt.lt(cutoffDate)
+			)
+			.fetch()
+			.stream()
+			.map(SocialConnectionJpaEntity::toModel)
+			.toList();
+	}
+
+	@Override
 	public void deleteByMemberId(Long memberId) {
 		socialConnectionJpaRepository.deleteByMemberId(memberId);
+	}
+
+	@Override
+	public void deleteAll(List<SocialConnection> socialConnections) {
+		List<SocialConnectionJpaEntity> entities = socialConnections.stream()
+			.map(SocialConnectionJpaEntity::from)
+			.toList();
+
+		socialConnectionJpaRepository.deleteAll(entities);
 	}
 }

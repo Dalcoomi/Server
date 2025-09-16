@@ -15,7 +15,12 @@ public record WithdrawRequest(
 	@Size(max = 50, message = "기타 사유 내용은 최대 50자입니다.")
 	String otherReason,
 
-	List<LeaderTransferInfo> leaderTransferInfos
+	List<LeaderTransferInfo> leaderTransferInfos,
+
+	@NotNull
+	Boolean softDelete,
+
+	Boolean dataRetentionConsent
 ) {
 
 }

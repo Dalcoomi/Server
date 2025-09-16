@@ -10,7 +10,6 @@ import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import org.springframework.lang.Nullable;
@@ -25,12 +24,12 @@ import com.dalcoomi.member.application.repository.WithdrawalRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
-import com.dalcoomi.member.domain.WithdrawalType;
 import com.dalcoomi.member.domain.validator.NicknameValidator;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SignUpInfo;
 import com.dalcoomi.member.dto.SocialInfo;
+import com.dalcoomi.member.dto.WithdrawalInfo;
 import com.dalcoomi.team.application.repository.TeamMemberRepository;
 import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
@@ -95,7 +94,7 @@ public class MemberService {
 	}
 
 	@Transactional
-	public void integrate(Long memberId, SocialInfo socialInfo) {
+	public void integrate(SocialInfo socialInfo) {
 		boolean existsSocialConnection = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
 			socialInfo.socialId(), socialInfo.socialType());
 
@@ -103,7 +102,7 @@ public class MemberService {
 			throw new ConflictException(MEMBER_CONFLICT);
 		}
 
-		Member member = memberRepository.findById(memberId);
+		Member member = memberRepository.findByEmail(socialInfo.socialEmail());
 
 		SocialConnection socialConnection = SocialConnection.builder()
 			.member(member)
@@ -193,69 +192,38 @@ public class MemberService {
 	}
 
 	@Transactional
-	public String withdraw(Long memberId, WithdrawalType withdrawalType, @Nullable String otherReason,
-		Map<Long, String> teamToNextLeaderMap) {
+	public String withdraw(Long memberId, WithdrawalInfo withdrawalInfo) {
 		Member member = memberRepository.findById(memberId);
 		String profileImageUrl = member.getProfileImageUrl();
-		String newAvatarUrl = getRandomDefaultProfileImage();
 
-		// 참여 중인 그룹 떠나기 or 삭제
-		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
-
-		if (!teamMembers.isEmpty()) {
-			for (TeamMember teamMember : teamMembers) {
-				Team team = teamMember.getTeam();
-				Long teamId = team.getId();
-				Long leaderId = team.getLeader().getId();
-
-				if (leaderId.equals(memberId)) {
-					String nextLeaderNickname = teamToNextLeaderMap.get(teamId);
-
-					if (nextLeaderNickname != null) {
-						Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
-
-						team.updateLeader(nextLeader);
-
-						teamRepository.save(team);
-					}
-				}
-
-				teamMemberRepository.deleteByTeamIdAndMemberId(teamId, memberId);
-
-				if (teamMemberRepository.countByTeamId(teamId) == 0) {
-					teamRepository.deleteById(teamId);
-					transactionRepository.deleteByTeamId(teamId);
-				}
-			}
-		}
-
-		// 개인 거래 내역 소프트 삭제
 		TransactionSearchCriteria criteria = TransactionSearchCriteria.builder()
 			.memberId(memberId)
-			.teamId(null)
 			.build();
+		List<Transaction> allTransactions = transactionRepository.findTransactions(criteria).stream().toList();
+		List<Transaction> teamTransactions = allTransactions.stream()
+			.filter(transaction -> transaction.getTeamId() != null)
+			.toList();
+		List<Transaction> personalTransactions = allTransactions.stream()
+			.filter(transaction -> transaction.getTeamId() == null)
+			.toList();
 
-		List<Transaction> transactions = transactionRepository.findTransactions(criteria);
+		// 참여 중인 그룹 처리
+		processTeamWithdrawal(memberId, withdrawalInfo);
 
-		for (Transaction transaction : transactions) {
-			transaction.softDelete();
+		// 그룹 거래 내역 익명화
+		anonymizeTeamTransactions(teamTransactions);
+
+		// 탈퇴 방식에 따른 개인 데이터 처리
+		if (withdrawalInfo.softDelete()) {
+			processSoftWithdrawal(member, personalTransactions, withdrawalInfo);
+		} else {
+			processHardWithdrawal(memberId, personalTransactions);
 		}
-
-		transactionRepository.saveAll(transactions);
-
-		// 소셜 연결 삭제
-		socialConnectionRepository.deleteByMemberId(memberId);
-
-		// 회원 정보 소프트 삭제
-		member.updateProfileImageUrl(newAvatarUrl);
-		member.softDelete();
-
-		memberRepository.save(member);
 
 		// 탈퇴 사유 저장
 		Withdrawal withdrawal = Withdrawal.builder()
-			.withdrawalType(withdrawalType)
-			.otherReason(otherReason)
+			.withdrawalType(withdrawalInfo.withdrawalType())
+			.otherReason(withdrawalInfo.otherReason())
 			.withdrawalDate(LocalDateTime.now())
 			.build();
 
@@ -293,5 +261,75 @@ public class MemberService {
 		}
 
 		return false;
+	}
+
+	private void processTeamWithdrawal(Long memberId, WithdrawalInfo withdrawalInfo) {
+		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
+
+		for (TeamMember teamMember : teamMembers) {
+			Team team = teamMember.getTeam();
+			Long teamId = team.getId();
+
+			if (!team.getLeader().getId().equals(memberId)) {
+				return;
+			}
+
+			String nextLeaderNickname = withdrawalInfo.teamToNextLeaderMap().get(team.getId());
+
+			if (nextLeaderNickname != null) {
+				Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
+
+				team.updateLeader(nextLeader);
+
+				teamRepository.save(team);
+			}
+
+			teamMemberRepository.deleteByTeamIdAndMemberId(teamId, memberId);
+
+			if (teamMemberRepository.countByTeamId(teamId) == 0) {
+				teamRepository.deleteById(teamId);
+				transactionRepository.deleteByTeamId(teamId);
+			}
+		}
+	}
+
+	private void anonymizeTeamTransactions(List<Transaction> teamTransactions) {
+		for (Transaction transaction : teamTransactions) {
+			transaction.anonymize();
+		}
+
+		transactionRepository.saveAll(teamTransactions);
+	}
+
+	private void processSoftWithdrawal(Member member, List<Transaction> personalTransactions,
+		WithdrawalInfo withdrawalInfo) {
+		List<SocialConnection> socialConnections = socialConnectionRepository.findByMemberId(member.getId());
+
+		// 개인 거래 내역 소프트 삭제
+		for (Transaction transaction : personalTransactions) {
+			transaction.softDelete();
+			transaction.updateDataRetentionConsent(withdrawalInfo.dataRetentionConsent());
+		}
+
+		transactionRepository.saveAll(personalTransactions);
+
+		// 소셜 연결 소프트 삭제
+		for (SocialConnection socialConnection : socialConnections) {
+			socialConnection.softDelete();
+		}
+
+		socialConnectionRepository.saveAll(socialConnections);
+
+		// 회원 정보 소프트 삭제
+		member.updateProfileImageUrl(getRandomDefaultProfileImage());
+		member.softDelete();
+
+		memberRepository.save(member);
+	}
+
+	private void processHardWithdrawal(Long memberId, List<Transaction> personalTransactions) {
+		transactionRepository.deleteAll(personalTransactions);
+		socialConnectionRepository.deleteByMemberId(memberId);
+		memberRepository.deleteById(memberId);
 	}
 }

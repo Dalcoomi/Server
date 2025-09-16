@@ -187,11 +187,8 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		SocialConnection existingConnection = SocialConnectionFixture.getSocialConnection1(member);
 		socialConnectionRepository.save(existingConnection);
 
-		// 인증 설정
-		setAuthentication(member.getId());
-
 		IntegrateRequest request = new IntegrateRequest(
-			"user@example.com",
+			member.getEmail(),
 			"naver-social-id-123",
 			NAVER
 		);
@@ -225,8 +222,6 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 		SocialConnection existingNaverConnection = SocialConnectionFixture.getSocialConnection2(member2);
 		socialConnectionRepository.save(existingNaverConnection);
-
-		setAuthentication(member1.getId());
 
 		// member1이 이미 존재하는 네이버 계정으로 통합 시도
 		IntegrateRequest request = new IntegrateRequest(
@@ -551,7 +546,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(memberId);
 
-		WithdrawRequest request = new WithdrawRequest(LOW_USAGE_FREQUENCY, null, Collections.emptyList());
+		WithdrawRequest request = new WithdrawRequest(LOW_USAGE_FREQUENCY, null, Collections.emptyList(), false, null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -586,7 +581,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(memberId);
 
 		String customReason = "앱이 너무 복잡해서 사용하기 어려워요";
-		WithdrawRequest request = new WithdrawRequest(OTHER, customReason, Collections.emptyList());
+		WithdrawRequest request = new WithdrawRequest(OTHER, customReason, Collections.emptyList(), false, null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -619,7 +614,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		WithdrawRequest request = new WithdrawRequest(OTHER, null, Collections.emptyList());
+		WithdrawRequest request = new WithdrawRequest(OTHER, null, Collections.emptyList(), false, null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -642,7 +637,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		String tooLongReason = "a".repeat(100);
-		WithdrawRequest request = new WithdrawRequest(OTHER, tooLongReason, Collections.emptyList());
+		WithdrawRequest request = new WithdrawRequest(OTHER, tooLongReason, Collections.emptyList(), false, null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -676,7 +671,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(leader.getId());
 
 		LeaderTransferInfo transferInfo = new LeaderTransferInfo(team.getId(), nextLeader.getNickname());
-		WithdrawRequest request = new WithdrawRequest(USING_OTHER_SERVICE, null, List.of(transferInfo));
+		WithdrawRequest request = new WithdrawRequest(USING_OTHER_SERVICE, null, List.of(transferInfo), false, null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -719,7 +714,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		WithdrawRequest request = new WithdrawRequest(PRIVACY_CONCERN, null, Collections.emptyList());
+		WithdrawRequest request = new WithdrawRequest(PRIVACY_CONCERN, null, Collections.emptyList(), false, null);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -737,6 +732,139 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(PRIVACY_CONCERN);
 		assertThat(savedWithdrawal.getOtherReason()).isNull();
 		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 휴면 탈퇴 (데이터 보존 동의) 성공")
+	void withdraw_soft_delete_with_data_retention_consent_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+		Long memberId = member.getId();
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(memberId);
+
+		WithdrawRequest request = new WithdrawRequest(LOW_USAGE_FREQUENCY, null, Collections.emptyList(), true, true);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Member savedMember = memberRepository.findAll().stream()
+			.filter(m -> m.getId().equals(memberId))
+			.findFirst()
+			.orElseThrow();
+		assertThat(savedMember.getDeletedAt()).isNotNull();
+
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
+		Withdrawal savedWithdrawal = withdrawals.getFirst();
+		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 휴면 탈퇴 (데이터 보존 비동의) 성공")
+	void withdraw_soft_delete_without_data_retention_consent_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+		Long memberId = member.getId();
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(memberId);
+
+		WithdrawRequest request = new WithdrawRequest(LOW_USAGE_FREQUENCY, null, Collections.emptyList(), true, false);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Member savedMember = memberRepository.findAll().stream()
+			.filter(m -> m.getId().equals(memberId))
+			.findFirst()
+			.orElseThrow();
+		assertThat(savedMember.getDeletedAt()).isNotNull();
+
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 영구 탈퇴 (즉시 완전 삭제) 성공")
+	void withdraw_hard_delete_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+		Long memberId = member.getId();
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(memberId);
+
+		WithdrawRequest request = new WithdrawRequest(LOW_USAGE_FREQUENCY, null, Collections.emptyList(), false, null);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		assertThatThrownBy(() -> memberRepository.findById(memberId))
+			.isInstanceOf(NotFoundException.class);
+
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 거래 내역 익명화 확인")
+	void withdraw_member_team_transactions_anonymized_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+		Long memberId = member.getId();
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(memberId);
+
+		WithdrawRequest request = new WithdrawRequest(LOW_USAGE_FREQUENCY, null, Collections.emptyList(), false, null);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/members")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
+		assertThat(withdrawals).hasSize(1);
 	}
 
 	private void setAuthentication(Long memberId) {

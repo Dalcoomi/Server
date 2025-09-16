@@ -39,7 +39,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "creator_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
+	@JoinColumn(name = "creator_id", nullable = true, foreignKey = @ForeignKey(NO_CONSTRAINT))
 	private MemberJpaEntity creator;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -65,10 +65,13 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	@Column(name = "transaction_type", nullable = false)
 	private TransactionType transactionType;
 
+	@Column(name = "data_retention_consent", nullable = true)
+	private Boolean dataRetentionConsent;
+
 	@Builder
 	public TransactionJpaEntity(Long id, MemberJpaEntity creator, CategoryJpaEntity category, Long teamId,
 		LocalDateTime transactionDate, String content, Long amount, TransactionType transactionType,
-		LocalDateTime deletedAt) {
+		LocalDateTime deletedAt, Boolean dataRetentionConsent) {
 		this.id = id;
 		this.creator = creator;
 		this.category = category;
@@ -78,12 +81,13 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 		this.amount = amount;
 		this.transactionType = transactionType;
 		this.deletedAt = deletedAt;
+		this.dataRetentionConsent = dataRetentionConsent;
 	}
 
 	public static TransactionJpaEntity from(Transaction transaction) {
 		return TransactionJpaEntity.builder()
 			.id(transaction.getId())
-			.creator(MemberJpaEntity.from(transaction.getCreator()))
+			.creator(transaction.getCreator() != null ? MemberJpaEntity.from(transaction.getCreator()) : null)
 			.category(CategoryJpaEntity.from(transaction.getCategory()))
 			.teamId(transaction.getTeamId())
 			.transactionDate(transaction.getTransactionDate())
@@ -91,13 +95,14 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 			.amount(transaction.getAmount())
 			.transactionType(transaction.getTransactionType())
 			.deletedAt(transaction.getDeletedAt())
+			.dataRetentionConsent(transaction.getDataRetentionConsent())
 			.build();
 	}
 
 	public Transaction toModel() {
 		return Transaction.builder()
 			.id(this.id)
-			.creator(this.creator.toModel())
+			.creator(this.creator != null ? this.creator.toModel() : null)
 			.category(this.category.toModel())
 			.teamId(this.teamId)
 			.transactionDate(this.transactionDate)
@@ -105,6 +110,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 			.amount(this.amount)
 			.transactionType(this.transactionType)
 			.deletedAt(this.deletedAt)
+			.dataRetentionConsent(this.dataRetentionConsent)
 			.build();
 	}
 }

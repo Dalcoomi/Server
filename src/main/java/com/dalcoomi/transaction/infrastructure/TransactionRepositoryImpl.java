@@ -7,6 +7,7 @@ import static com.dalcoomi.common.jpa.DynamicQuery.generateEqOrIsNull;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.transaction.infrastructure.QTransactionJpaEntity.transactionJpaEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -41,8 +42,14 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
 	@Override
 	public Transaction findById(Long transactionId) {
-		return transactionJpaRepository.findByIdAndDeletedAtIsNull(transactionId)
-			.orElseThrow(() -> new NotFoundException(TRANSACTION_NOT_FOUND)).toModel();
+		return transactionJpaRepository.findById(transactionId)
+			.orElseThrow(() -> new NotFoundException(TRANSACTION_NOT_FOUND))
+			.toModel();
+	}
+
+	@Override
+	public List<Transaction> findAll() {
+		return transactionJpaRepository.findAll().stream().map(TransactionJpaEntity::toModel).toList();
 	}
 
 	@Override
@@ -69,7 +76,46 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	@Override
+	public List<Transaction> findExpiredPersonalTransactions(LocalDateTime cutoffDate) {
+		return jpaQueryFactory
+			.selectFrom(transactionJpaEntity)
+			.where(
+				transactionJpaEntity.deletedAt.isNotNull(),
+				transactionJpaEntity.deletedAt.lt(cutoffDate),
+				transactionJpaEntity.teamId.isNull(),
+				transactionJpaEntity.dataRetentionConsent.isNotNull()
+			)
+			.fetch()
+			.stream()
+			.map(TransactionJpaEntity::toModel)
+			.toList();
+	}
+
+	@Override
+	public List<Transaction> findExpiredAnonymizedPersonalTransactions(LocalDateTime cutoffDate) {
+		return jpaQueryFactory
+			.selectFrom(transactionJpaEntity)
+			.where(
+				transactionJpaEntity.creator.isNull(),
+				transactionJpaEntity.teamId.isNull(),
+				transactionJpaEntity.dataRetentionConsent.isTrue(),
+				transactionJpaEntity.updatedAt.lt(cutoffDate)
+			)
+			.fetch()
+			.stream()
+			.map(TransactionJpaEntity::toModel)
+			.toList();
+	}
+
+	@Override
 	public void deleteByTeamId(Long groupId) {
 		transactionJpaRepository.deleteAllByTeamId(groupId);
+	}
+
+	@Override
+	public void deleteAll(List<Transaction> transactions) {
+		List<TransactionJpaEntity> entities = transactions.stream().map(TransactionJpaEntity::from).toList();
+
+		transactionJpaRepository.deleteAll(entities);
 	}
 }

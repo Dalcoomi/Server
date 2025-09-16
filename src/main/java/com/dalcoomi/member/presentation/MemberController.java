@@ -27,6 +27,7 @@ import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SignUpInfo;
 import com.dalcoomi.member.dto.SocialInfo;
+import com.dalcoomi.member.dto.WithdrawalInfo;
 import com.dalcoomi.member.dto.request.IntegrateRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
@@ -72,14 +73,14 @@ public class MemberController {
 
 	@PostMapping("/integrate")
 	@ResponseStatus(OK)
-	public void integrate(@AuthMember Long memberId, @RequestBody @Valid IntegrateRequest request) {
+	public void integrate(@RequestBody @Valid IntegrateRequest request) {
 		SocialInfo socialInfo = SocialInfo.builder()
 			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
 			.socialType(request.socialType())
 			.build();
 
-		memberService.integrate(memberId, socialInfo);
+		memberService.integrate(socialInfo);
 	}
 
 	@GetMapping
@@ -131,8 +132,14 @@ public class MemberController {
 				LeaderTransferInfo::nextLeaderNickname
 			));
 
-		String profileUrl = memberService.withdraw(memberId, request.withdrawalType(), request.otherReason(),
-			teamToNextLeaderMap);
+		WithdrawalInfo withdrawalInfo = WithdrawalInfo.builder()
+			.withdrawalType(request.withdrawalType())
+			.otherReason(request.otherReason())
+			.teamToNextLeaderMap(teamToNextLeaderMap)
+			.softDelete(request.softDelete())
+			.build();
+
+		String profileUrl = memberService.withdraw(memberId, withdrawalInfo);
 
 		s3Service.deleteImage(profileUrl);
 	}
