@@ -25,6 +25,10 @@ import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
+import com.dalcoomi.member.dto.SignUpInfo;
+import com.dalcoomi.member.dto.SocialInfo;
+import com.dalcoomi.member.dto.WithdrawalInfo;
+import com.dalcoomi.member.dto.request.IntegrateRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
@@ -48,7 +52,8 @@ public class MemberController {
 	@PostMapping("/sign-up")
 	@ResponseStatus(CREATED)
 	public SignUpResponse signUp(@RequestBody @Valid SignUpRequest request) {
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo memberInfo = SignUpInfo.builder()
+			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
 			.socialType(request.socialType())
 			.email(request.email())
@@ -63,7 +68,19 @@ public class MemberController {
 
 		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 
-		return new SignUpResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
+		return SignUpResponse.from(tokenInfo);
+	}
+
+	@PostMapping("/integrate")
+	@ResponseStatus(OK)
+	public void integrate(@RequestBody @Valid IntegrateRequest request) {
+		SocialInfo socialInfo = SocialInfo.builder()
+			.socialEmail(request.socialEmail())
+			.socialId(request.socialId())
+			.socialType(request.socialType())
+			.build();
+
+		memberService.integrate(socialInfo);
 	}
 
 	@GetMapping
@@ -115,8 +132,14 @@ public class MemberController {
 				LeaderTransferInfo::nextLeaderNickname
 			));
 
-		String profileUrl = memberService.withdraw(memberId, request.withdrawalType(), request.otherReason(),
-			teamToNextLeaderMap);
+		WithdrawalInfo withdrawalInfo = WithdrawalInfo.builder()
+			.withdrawalType(request.withdrawalType())
+			.otherReason(request.otherReason())
+			.teamToNextLeaderMap(teamToNextLeaderMap)
+			.softDelete(request.softDelete())
+			.build();
+
+		String profileUrl = memberService.withdraw(memberId, withdrawalInfo);
 
 		s3Service.deleteImage(profileUrl);
 	}

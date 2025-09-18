@@ -51,12 +51,16 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	@Column(name = "collection_agreement", nullable = false)
 	private Boolean collectionAgreement;
 
+	@Column(name = "last_login_at", nullable = true)
+	private LocalDateTime lastLoginAt;
+
 	@Column(name = "deleted_at", nullable = true)
 	private LocalDateTime deletedAt;
 
 	@Builder
 	public MemberJpaEntity(Long id, String email, String name, String nickname, LocalDate birthday, String gender,
-		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, LocalDateTime deletedAt) {
+		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, LocalDateTime lastLoginAt,
+		LocalDateTime deletedAt) {
 		this.id = id;
 		this.email = email;
 		this.name = name;
@@ -66,6 +70,7 @@ public class MemberJpaEntity extends BaseTimeEntity {
 		this.profileImageUrl = profileImageUrl;
 		this.serviceAgreement = serviceAgreement;
 		this.collectionAgreement = collectionAgreement;
+		this.lastLoginAt = lastLoginAt;
 		this.deletedAt = deletedAt;
 	}
 
@@ -80,6 +85,7 @@ public class MemberJpaEntity extends BaseTimeEntity {
 			.profileImageUrl(member.getProfileImageUrl())
 			.serviceAgreement(member.getServiceAgreement())
 			.collectionAgreement(member.getCollectionAgreement())
+			.lastLoginAt(member.getLastLoginAt())
 			.deletedAt(member.getDeletedAt())
 			.build();
 	}
@@ -95,6 +101,9 @@ public class MemberJpaEntity extends BaseTimeEntity {
 			.profileImageUrl(this.profileImageUrl)
 			.serviceAgreement(this.serviceAgreement)
 			.collectionAgreement(this.collectionAgreement)
+			.lastLoginAt(this.lastLoginAt)
+			.createdAt(getCreatedAt())
+			.updatedAt(getUpdatedAt())
 			.deletedAt(this.deletedAt)
 			.build();
 

@@ -38,6 +38,7 @@ public class SecurityConfig {
 		"/api/auth/login",
 		"/api/auth/test/token",
 		"/api/members/sign-up",
+		"/api/members/integrate"
 	};
 
 	private final ObjectMapper objectMapper;

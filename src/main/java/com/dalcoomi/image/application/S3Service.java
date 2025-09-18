@@ -2,6 +2,10 @@ package com.dalcoomi.image.application;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.IMAGE_NOT_FOUND;
 import static com.dalcoomi.common.error.model.ErrorMessage.IMAGE_NOT_SUPPORT;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_1;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_2;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_3;
+import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4;
 import static com.dalcoomi.image.constant.ImageConstants.IMAGE_QUALITY;
 import static com.dalcoomi.image.constant.ImageConstants.MAX_HEIGHT;
 import static com.dalcoomi.image.constant.ImageConstants.MAX_WIDTH;
@@ -71,6 +75,10 @@ public class S3Service {
 	}
 
 	public void deleteImage(String imageUrl) {
+		if (validateDefaultProfileImage(imageUrl)) {
+			return;
+		}
+
 		try {
 			String s3Key = imageUrl.replace(imageBaseUrl, "");
 
@@ -178,5 +186,22 @@ public class S3Service {
 		}
 
 		return image;
+	}
+
+	private boolean validateDefaultProfileImage(String imageUrl) {
+		String[] defaultImages = {
+			DEFAULT_PROFILE_IMAGE_1,
+			DEFAULT_PROFILE_IMAGE_2,
+			DEFAULT_PROFILE_IMAGE_3,
+			DEFAULT_PROFILE_IMAGE_4
+		};
+
+		for (String defaultImage : defaultImages) {
+			if (imageUrl.equals(defaultImage)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

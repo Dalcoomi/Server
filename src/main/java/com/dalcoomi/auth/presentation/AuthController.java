@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.auth.application.AuthService;
+import com.dalcoomi.auth.dto.LoginInfo;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.auth.dto.request.LoginRequest;
 import com.dalcoomi.auth.dto.response.LoginResponse;
@@ -33,13 +34,14 @@ public class AuthController {
 	@ResponseStatus(OK)
 	public LoginResponse login(@RequestBody @Valid LoginRequest request) {
 		SocialInfo socialInfo = SocialInfo.builder()
+			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
 			.socialType(request.socialType())
 			.build();
 
-		TokenInfo tokenInfo = authService.login(socialInfo);
+		LoginInfo loginInfo = authService.login(socialInfo);
 
-		return new LoginResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
+		return LoginResponse.from(loginInfo);
 	}
 
 	@PostMapping("/logout")
@@ -53,7 +55,7 @@ public class AuthController {
 	public ReissueTokenResponse reissueToken(@AuthMember Long memberId) {
 		TokenInfo tokenInfo = authService.reissueToken(memberId);
 
-		return new ReissueTokenResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
+		return ReissueTokenResponse.from(tokenInfo);
 	}
 
 	@GetMapping("/test/token")
@@ -61,6 +63,6 @@ public class AuthController {
 	public TestTokenResponse createTestToken(@RequestParam("memberId") Long memberId) {
 		TokenInfo tokenInfo = authService.createTestToken(memberId);
 
-		return new TestTokenResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
+		return TestTokenResponse.from(tokenInfo);
 	}
 }

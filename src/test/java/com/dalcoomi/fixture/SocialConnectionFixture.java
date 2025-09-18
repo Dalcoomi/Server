@@ -3,6 +3,8 @@ package com.dalcoomi.fixture;
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
 import static com.dalcoomi.member.domain.SocialType.NAVER;
 
+import java.time.LocalDateTime;
+
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 
@@ -13,6 +15,7 @@ public final class SocialConnectionFixture {
 
 		return SocialConnection.builder()
 			.member(member)
+			.socialEmail("test1@naver.com")
 			.socialId(socialId)
 			.socialType(KAKAO)
 			.build();
@@ -23,8 +26,19 @@ public final class SocialConnectionFixture {
 
 		return SocialConnection.builder()
 			.member(member)
+			.socialEmail("abc1@gmail.com")
 			.socialId(socialId)
 			.socialType(NAVER)
+			.build();
+	}
+
+	public static SocialConnection getSoftDeletedSocialConnection1(Member member, int daysAgo) {
+		return SocialConnection.builder()
+			.member(member)
+			.socialEmail("test@example.com")
+			.socialId("social123")
+			.socialType(KAKAO)
+			.deletedAt(LocalDateTime.now().minusDays(daysAgo))
 			.build();
 	}
 }

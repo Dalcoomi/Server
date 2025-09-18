@@ -24,7 +24,7 @@ import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
-import com.dalcoomi.member.dto.MemberInfo;
+import com.dalcoomi.member.dto.SignUpInfo;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -42,19 +42,20 @@ class MemberServiceTest {
 	@DisplayName("이메일 공백으로 인해 회원가입 실패")
 	void email_null_sign_up_over_fail() {
 		// given
+		String socialEmail = "";
 		String socialId = "12345";
 		SocialType socialType = KAKAO;
-		String email = "";
 		String name = "프라이인드로스테쭈젠댄마리소피아수인레나테엘리자벳피아루이제";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "남성";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
+			.socialEmail(socialEmail)
 			.socialId(socialId)
 			.socialType(socialType)
-			.email(email)
+			.email(socialEmail)
 			.name(name)
 			.birthday(birthday)
 			.gender(gender)
@@ -65,7 +66,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_EMAIL.getMessage());
 
@@ -79,20 +80,21 @@ class MemberServiceTest {
 	@DisplayName("이메일 길이 초과로 인해 회원가입 실패")
 	void email_length_over_sign_up_over_fail() {
 		// given
+		String socialEmail = "testtesttesttesttesttesttesttesttesttesttesttest"
+			+ "testtesttesttesttesttesttesttesttesttesttest@example.com";
 		String socialId = "12345";
 		SocialType socialType = KAKAO;
-		String email = "testtesttesttesttesttesttesttesttesttesttesttest"
-			+ "testtesttesttesttesttesttesttesttesttesttest@example.com";
 		String name = "프라이인드로스테쭈젠댄마리소피아수인레나테엘리자벳피아루이제";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "남성";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
+			.socialEmail(socialEmail)
 			.socialId(socialId)
 			.socialType(socialType)
-			.email(email)
+			.email(socialEmail)
 			.name(name)
 			.birthday(birthday)
 			.gender(gender)
@@ -103,7 +105,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_EMAIL.getMessage());
 
@@ -117,18 +119,19 @@ class MemberServiceTest {
 	@DisplayName("이름 공백으로 인해 회원가입 실패")
 	void name_null_sign_up_over_fail() {
 		// given
+		String socialEmail = "test@example.com";
 		String socialId = "12345";
 		SocialType socialType = KAKAO;
-		String email = "test@example.com";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "남성";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
+			.socialEmail(socialEmail)
 			.socialId(socialId)
 			.socialType(socialType)
-			.email(email)
+			.email(socialEmail)
 			.name("")
 			.birthday(birthday)
 			.gender(gender)
@@ -139,7 +142,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -153,19 +156,20 @@ class MemberServiceTest {
 	@DisplayName("이름 길이 부족으로 인해 회원가입 실패")
 	void name_length_less_sign_up_over_fail() {
 		// given
+		String socialEmail = "test@example.com";
 		String socialId = "12345";
 		SocialType socialType = KAKAO;
-		String email = "test@example.com";
 		String name = "프";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "남성";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
+			.socialEmail(socialEmail)
 			.socialId(socialId)
 			.socialType(socialType)
-			.email(email)
+			.email(socialEmail)
 			.name(name)
 			.birthday(birthday)
 			.gender(gender)
@@ -176,7 +180,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -190,19 +194,20 @@ class MemberServiceTest {
 	@DisplayName("이름 길이 초과로 인해 회원가입 실패")
 	void name_length_over_sign_up_over_fail() {
 		// given
+		String socialEmail = "test@example.com";
 		String socialId = "12345";
 		SocialType socialType = KAKAO;
-		String email = "test@example.com";
 		String name = "프라이인드로스테쭈젠댄마리소피아수인레나테엘리자벳피아루이제제";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "남성";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
+			.socialEmail(socialEmail)
 			.socialId(socialId)
 			.socialType(socialType)
-			.email(email)
+			.email(socialEmail)
 			.name(name)
 			.birthday(birthday)
 			.gender(gender)
@@ -213,7 +218,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_NAME.getMessage());
 
@@ -227,19 +232,20 @@ class MemberServiceTest {
 	@DisplayName("성별 길이 초과로 인해 회원가입 실패")
 	void gender_length_over_sign_up_over_fail() {
 		// given
+		String socialEmail = "test@example.com";
 		String socialId = "12345";
 		SocialType socialType = KAKAO;
-		String email = "test@example.com";
 		String name = "프라이인드로스테쭈젠댄마리소피아수인레나테엘리자벳피아루이제";
 		LocalDate birthday = LocalDate.of(1990, 1, 1);
 		String gender = "밝히고 싶지 않음";
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo signUpInfo = SignUpInfo.builder()
+			.socialEmail(socialEmail)
 			.socialId(socialId)
 			.socialType(socialType)
-			.email(email)
+			.email(socialEmail)
 			.name(name)
 			.birthday(birthday)
 			.gender(gender)
@@ -250,7 +256,7 @@ class MemberServiceTest {
 		given(socialConnectionRepository.existsMemberBySocialIdAndSocialType(socialId, socialType)).willReturn(false);
 
 		// when & then
-		assertThatThrownBy(() -> memberService.signUp(memberInfo))
+		assertThatThrownBy(() -> memberService.signUp(signUpInfo))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining(MEMBER_INVALID_GENDER.getMessage());
 

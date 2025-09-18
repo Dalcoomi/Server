@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,11 +17,15 @@ import lombok.RequiredArgsConstructor;
 public class MemberRepositoryImpl implements MemberRepository {
 
 	private final MemberJpaRepository memberJpaRepository;
-	private final JPAQueryFactory jpaQueryFactory;
 
 	@Override
 	public Member save(Member member) {
 		return memberJpaRepository.save(MemberJpaEntity.from(member)).toModel();
+	}
+
+	@Override
+	public boolean existsByEmail(String email) {
+		return memberJpaRepository.existsByEmail(email);
 	}
 
 	@Override
@@ -37,14 +40,33 @@ public class MemberRepositoryImpl implements MemberRepository {
 	}
 
 	@Override
-	public List<Member> findByIds(List<Long> memberIds) {
-		return memberJpaRepository.findAllByIdInAndDeletedAtIsNull(memberIds).stream()
-			.map(MemberJpaEntity::toModel).toList();
-	}
-
-	@Override
 	public Member findByNickname(String nickname) {
 		return memberJpaRepository.findByNicknameAndDeletedAtIsNull(nickname)
 			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).toModel();
+	}
+
+	@Override
+	public Member findByEmail(String email) {
+		return memberJpaRepository.findByEmailAndDeletedAtIsNull(email)
+			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).toModel();
+	}
+
+	@Override
+	public List<Member> findAll() {
+		return memberJpaRepository.findAll().stream().map(MemberJpaEntity::toModel).toList();
+	}
+
+	@Override
+	public void deleteById(Long memberId) {
+		memberJpaRepository.deleteById(memberId);
+	}
+
+	@Override
+	public void deleteAll(List<Member> members) {
+		List<MemberJpaEntity> entities = members.stream()
+			.map(MemberJpaEntity::from)
+			.toList();
+
+		memberJpaRepository.deleteAll(entities);
 	}
 }
