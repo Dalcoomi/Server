@@ -194,10 +194,10 @@ public class MemberService {
 	}
 
 	@Transactional
-	public void updateAiLearningAgreement(Long memberId, Boolean aiLearningAgreement) {
+	public void updateAiLearningAgreement(Long memberId, Boolean agreement) {
 		Member member = memberRepository.findById(memberId);
 
-		member.updateAiLearningAgreement(aiLearningAgreement);
+		member.updateAiLearningAgreement(agreement);
 
 		memberRepository.save(member);
 	}

@@ -127,9 +127,8 @@ public class MemberController {
 
 	@PatchMapping("/ai-learning-agreement")
 	@ResponseStatus(OK)
-	public void updateAiLearningAgreement(@AuthMember Long memberId,
-		@RequestParam("aiLearningAgreement") Boolean aiLearningAgreement) {
-		memberService.updateAiLearningAgreement(memberId, aiLearningAgreement);
+	public void updateAiLearningAgreement(@AuthMember Long memberId, @RequestParam("agreement") Boolean agreement) {
+		memberService.updateAiLearningAgreement(memberId, agreement);
 	}
 
 	@DeleteMapping

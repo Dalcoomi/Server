@@ -546,7 +546,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 		// when & then
 		mockMvc.perform(patch("/api/members/ai-learning-agreement")
-				.param("aiLearningAgreement", "true")
+				.param("agreement", "true")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
@@ -567,7 +567,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 		// when & then
 		mockMvc.perform(patch("/api/members/ai-learning-agreement")
-				.param("aiLearningAgreement", "false")
+				.param("agreement", "false")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
@@ -605,7 +605,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 		// when & then
 		mockMvc.perform(patch("/api/members/ai-learning-agreement")
-				.param("aiLearningAgreement", "invalid")
+				.param("agreement", "invalid")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
 			.andDo(print());
