@@ -35,13 +35,14 @@ public class Member {
 	private LocalDate birthday;
 	private String gender;
 	private String profileImageUrl;
+	private Boolean aiLearningAgreement;
 	private LocalDateTime lastLoginAt;
 	private LocalDateTime deletedAt;
 
 	@Builder
 	public Member(Long id, String email, String name, String nickname, LocalDate birthday, String gender,
-		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, LocalDateTime lastLoginAt,
-		LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, Boolean aiLearningAgreement,
+		LocalDateTime lastLoginAt, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
 		this.id = id;
 		this.email = validateEmail(email);
 		this.name = validateName(name);
@@ -51,6 +52,7 @@ public class Member {
 		this.profileImageUrl = validateProfileImageUrl(profileImageUrl);
 		this.serviceAgreement = requireNonNull(serviceAgreement);
 		this.collectionAgreement = requireNonNull(collectionAgreement);
+		this.aiLearningAgreement = aiLearningAgreement;
 		this.lastLoginAt = lastLoginAt;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
@@ -71,6 +73,10 @@ public class Member {
 
 	public void updateProfileImageUrl(String profileImageUrl) {
 		this.profileImageUrl = validateProfileImageUrl(profileImageUrl);
+	}
+
+	public void updateAiLearningAgreement(Boolean aiLearningAgreement) {
+		this.aiLearningAgreement = aiLearningAgreement;
 	}
 
 	public void updateLoginTime(LocalDateTime loginTime) {

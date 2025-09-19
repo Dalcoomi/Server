@@ -24,6 +24,7 @@ public final class MemberFixture {
 			.profileImageUrl(profileImageUrl)
 			.serviceAgreement(true)
 			.collectionAgreement(true)
+			.aiLearningAgreement(false)
 			.build();
 	}
 
@@ -46,6 +47,7 @@ public final class MemberFixture {
 			.profileImageUrl(profileImageUrl)
 			.serviceAgreement(true)
 			.collectionAgreement(true)
+			.aiLearningAgreement(false)
 			.build();
 	}
 
@@ -66,6 +68,7 @@ public final class MemberFixture {
 			.profileImageUrl(profileImageUrl)
 			.serviceAgreement(true)
 			.collectionAgreement(true)
+			.aiLearningAgreement(false)
 			.deletedAt(LocalDateTime.now())
 			.build();
 	}
@@ -87,6 +90,7 @@ public final class MemberFixture {
 			.profileImageUrl(profileImageUrl)
 			.serviceAgreement(true)
 			.collectionAgreement(true)
+			.aiLearningAgreement(false)
 			.build();
 	}
 
@@ -108,6 +112,7 @@ public final class MemberFixture {
 			.profileImageUrl(profileImageUrl)
 			.serviceAgreement(true)
 			.collectionAgreement(true)
+			.aiLearningAgreement(false)
 			.build();
 	}
 
@@ -128,6 +133,7 @@ public final class MemberFixture {
 			.profileImageUrl(profileImageUrl)
 			.serviceAgreement(true)
 			.collectionAgreement(true)
+			.aiLearningAgreement(false)
 			.build();
 	}
 
@@ -139,6 +145,7 @@ public final class MemberFixture {
 			.profileImageUrl("qweqwdasdas")
 			.serviceAgreement(true)
 			.collectionAgreement(true)
+			.aiLearningAgreement(false)
 			.deletedAt(LocalDateTime.now().minusDays(daysAgo))
 			.build();
 	}

@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.springframework.http.HttpMethod.PATCH;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -113,8 +114,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean collectionAgreement = true;
 
 		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
-			serviceAgreement,
-			collectionAgreement);
+			serviceAgreement, collectionAgreement, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -141,8 +141,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean collectionAgreement = true;
 
 		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
-			serviceAgreement,
-			collectionAgreement);
+			serviceAgreement, collectionAgreement, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -165,7 +164,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		SignUpRequest request = new SignUpRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			KAKAO, socialConnection.getSocialEmail(), "다른이름", LocalDate.of(1995, 5, 5), "여성", true, true);
+			KAKAO, socialConnection.getSocialEmail(), "다른이름", LocalDate.of(1995, 5, 5), "여성", true, true, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -536,6 +535,83 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	}
 
 	@Test
+	@DisplayName("통합 테스트 - AI 학습 동의 설정 true로 변경 성공")
+	void update_ai_learning_agreement_to_true_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(patch("/api/members/ai-learning-agreement")
+				.param("aiLearningAgreement", "true")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Member updatedMember = memberRepository.findById(member.getId());
+		assertThat(updatedMember.getAiLearningAgreement()).isTrue();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - AI 학습 동의 설정 false로 변경 성공")
+	void update_ai_learning_agreement_to_false_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(patch("/api/members/ai-learning-agreement")
+				.param("aiLearningAgreement", "false")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Member updatedMember = memberRepository.findById(member.getId());
+		assertThat(updatedMember.getAiLearningAgreement()).isFalse();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - AI 학습 동의 설정 파라미터 누락 시 실패")
+	void update_ai_learning_agreement_missing_parameter_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(patch("/api/members/ai-learning-agreement")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - AI 학습 동의 설정 잘못된 파라미터 값으로 실패")
+	void update_ai_learning_agreement_invalid_parameter_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(patch("/api/members/ai-learning-agreement")
+				.param("aiLearningAgreement", "invalid")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
 	@DisplayName("통합 테스트 - 고정 사유로 회원탈퇴 성공")
 	void withdraw_member_with_predefined_reason_success() throws Exception {
 		// given
@@ -551,7 +627,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -586,7 +662,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -619,7 +695,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().is5xxServerError())
@@ -642,7 +718,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isBadRequest())
@@ -676,7 +752,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -719,7 +795,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -753,7 +829,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -790,7 +866,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -825,7 +901,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -839,7 +915,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 그룹 거래 내역 익명화 확인")
+	@DisplayName("통합 테스트 - 탈퇴 시 그룹 거래 내역 익명화 확인")
 	void withdraw_member_team_transactions_anonymized_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
@@ -857,7 +933,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/members")
+		mockMvc.perform(delete("/api/members")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())

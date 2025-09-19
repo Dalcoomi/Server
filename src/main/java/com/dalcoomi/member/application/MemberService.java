@@ -75,6 +75,7 @@ public class MemberService {
 			.profileImageUrl(randomProfileUrl)
 			.serviceAgreement(signUpInfo.serviceAgreement())
 			.collectionAgreement(signUpInfo.collectionAgreement())
+			.aiLearningAgreement(signUpInfo.aiLearningAgreement())
 			.build();
 
 		member.skipValidationNickname(nickname);
@@ -127,6 +128,7 @@ public class MemberService {
 			.birthday(member.getBirthday())
 			.gender(member.getGender())
 			.profileImageUrl(member.getProfileImageUrl())
+			.aiLearningAgreement(member.getAiLearningAgreement())
 			.build();
 	}
 
@@ -189,6 +191,15 @@ public class MemberService {
 			.birthday(member.getBirthday())
 			.gender(member.getGender())
 			.build();
+	}
+
+	@Transactional
+	public void updateAiLearningAgreement(Long memberId, Boolean aiLearningAgreement) {
+		Member member = memberRepository.findById(memberId);
+
+		member.updateAiLearningAgreement(aiLearningAgreement);
+
+		memberRepository.save(member);
 	}
 
 	@Transactional

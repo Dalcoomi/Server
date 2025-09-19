@@ -7,6 +7,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -62,6 +63,7 @@ public class MemberController {
 			.gender(request.gender())
 			.serviceAgreement(request.serviceAgreement())
 			.collectionAgreement(request.collectionAgreement())
+			.aiLearningAgreement(request.aiLearningAgreement())
 			.build();
 
 		Long memberId = memberService.signUp(memberInfo);
@@ -123,7 +125,14 @@ public class MemberController {
 		return UpdateProfileResponse.from(memberInfo);
 	}
 
-	@PatchMapping
+	@PatchMapping("/ai-learning-agreement")
+	@ResponseStatus(OK)
+	public void updateAiLearningAgreement(@AuthMember Long memberId,
+		@RequestParam("aiLearningAgreement") Boolean aiLearningAgreement) {
+		memberService.updateAiLearningAgreement(memberId, aiLearningAgreement);
+	}
+
+	@DeleteMapping
 	@ResponseStatus(OK)
 	public void withdraw(@AuthMember Long memberId, @RequestBody @Valid WithdrawRequest request) {
 		Map<Long, String> teamToNextLeaderMap = request.leaderTransferInfos().stream()
