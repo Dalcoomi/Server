@@ -141,8 +141,8 @@ public class TeamService {
 		teamMemberRepository.deleteByTeamIdAndMemberId(teamId, memberId);
 
 		if (teamMemberRepository.countByTeamId(teamId) == 0) {
-			teamRepository.deleteById(teamId);
 			transactionRepository.deleteByTeamId(teamId);
+			teamRepository.deleteById(teamId);
 		}
 	}
 
