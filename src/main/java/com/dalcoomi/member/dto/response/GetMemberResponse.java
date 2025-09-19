@@ -16,7 +16,8 @@ public record GetMemberResponse(
 	String nickname,
 	LocalDate birthday,
 	String gender,
-	String profileImageUrl
+	String profileImageUrl,
+	Boolean aiLearningAgreement
 ) {
 
 	public static GetMemberResponse from(MemberInfo memberInfo) {
@@ -28,6 +29,7 @@ public record GetMemberResponse(
 			.birthday(memberInfo.birthday())
 			.gender(memberInfo.gender())
 			.profileImageUrl(memberInfo.profileImageUrl())
+			.aiLearningAgreement(memberInfo.aiLearningAgreement())
 			.build();
 	}
 }
