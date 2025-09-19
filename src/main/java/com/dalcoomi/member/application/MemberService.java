@@ -79,6 +79,7 @@ public class MemberService {
 			.serviceAgreement(signUpInfo.serviceAgreement())
 			.collectionAgreement(signUpInfo.collectionAgreement())
 			.aiLearningAgreement(signUpInfo.aiLearningAgreement())
+			.lastLoginAt(LocalDateTime.now())
 			.build();
 
 		member.skipValidationNickname(nickname);
