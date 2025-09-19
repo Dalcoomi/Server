@@ -3,7 +3,6 @@ package com.dalcoomi.team.infrastructure;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
 import static java.util.stream.Collectors.toSet;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Repository;
@@ -26,6 +25,11 @@ public class TeamRepositoryImpl implements TeamRepository {
 	}
 
 	@Override
+	public boolean existsById(Long teamId) {
+		return teamJpaRepository.existsById(teamId);
+	}
+
+	@Override
 	public Set<String> findExistingCodes(Set<String> candidates) {
 		return teamJpaRepository.findByInvitationCodeIn(candidates)
 			.stream().map(TeamJpaEntity::getInvitationCode).collect(toSet());
@@ -40,11 +44,6 @@ public class TeamRepositoryImpl implements TeamRepository {
 	public Team findByInvitationCode(String invitationCode) {
 		return teamJpaRepository.findByInvitationCode(invitationCode)
 			.orElseThrow(() -> new NotFoundException(TEAM_NOT_FOUND)).toModel();
-	}
-
-	@Override
-	public List<Team> findByLeaderId(Long leaderId) {
-		return teamJpaRepository.findByLeaderId(leaderId).stream().map(TeamJpaEntity::toModel).toList();
 	}
 
 	@Override
