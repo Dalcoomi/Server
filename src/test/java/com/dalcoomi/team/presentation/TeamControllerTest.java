@@ -208,16 +208,13 @@ class TeamControllerTest {
 		// 인증 설정
 		setAuthentication(newMember.getId());
 
-		String invitationCode = "12345678";
-
 		// when & then
-		mockMvc.perform(post("/api/teams/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/teams/join/{invitationCode}", team.getInvitationCode())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
 
 		boolean joined = teamMemberRepository.existsByTeamIdAndMemberId(team.getId(), newMember.getId());
-
 		assertThat(joined).isTrue();
 	}
 
@@ -240,10 +237,8 @@ class TeamControllerTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		String invitationCode = "12345678";
-
 		// when & then
-		mockMvc.perform(post("/api/teams/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/teams/join/{invitationCode}", team.getInvitationCode())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isConflict())
 			.andExpect(jsonPath("$.message").value(TEAM_MEMBER_ALREADY_EXISTS.getMessage()))
@@ -269,10 +264,8 @@ class TeamControllerTest {
 		// 인증 설정
 		setAuthentication(newMember.getId());
 
-		String invitationCode = "12345678";
-
 		// when & then
-		mockMvc.perform(post("/api/teams/join/{invitationCode}", invitationCode)
+		mockMvc.perform(post("/api/teams/join/{invitationCode}", team.getInvitationCode())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isConflict())
 			.andExpect(jsonPath("$.message").value(TEAM_MEMBER_COUNT_EXCEEDED.getMessage()))
