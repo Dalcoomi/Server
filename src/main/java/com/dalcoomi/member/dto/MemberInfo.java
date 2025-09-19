@@ -10,7 +10,7 @@ import lombok.Builder;
 @Builder
 public record MemberInfo(
 	String socialId,
-	List<SocialType> socialType,
+	List<SocialType> socialTypes,
 	String email,
 	String name,
 	String nickname,

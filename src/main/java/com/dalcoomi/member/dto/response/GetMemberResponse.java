@@ -10,7 +10,7 @@ import lombok.Builder;
 
 @Builder
 public record GetMemberResponse(
-	List<SocialType> socialType,
+	List<SocialType> socialTypes,
 	String email,
 	String name,
 	String nickname,
@@ -22,7 +22,7 @@ public record GetMemberResponse(
 
 	public static GetMemberResponse from(MemberInfo memberInfo) {
 		return GetMemberResponse.builder()
-			.socialType(memberInfo.socialType())
+			.socialTypes(memberInfo.socialTypes())
 			.email(memberInfo.email())
 			.name(memberInfo.name())
 			.nickname(memberInfo.nickname())

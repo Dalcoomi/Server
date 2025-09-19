@@ -121,7 +121,7 @@ public class MemberService {
 		List<SocialConnection> socialConnection = socialConnectionRepository.findByMemberId(memberId);
 
 		return MemberInfo.builder()
-			.socialType(socialConnection.stream().map(SocialConnection::getSocialType).toList())
+			.socialTypes(socialConnection.stream().map(SocialConnection::getSocialType).toList())
 			.email(member.getEmail())
 			.name(member.getName())
 			.nickname(member.getNickname())
