@@ -20,6 +20,8 @@ public interface SocialConnectionRepository {
 
 	List<SocialConnection> findExpiredSoftDeletedWithMember(LocalDateTime cutoffDate);
 
+	void deleteById(Long socialConnectionId);
+
 	void deleteByMemberId(Long memberId);
 
 	void deleteAll(List<SocialConnection> socialConnections);

@@ -261,7 +261,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		mockMvc.perform(get("/api/members")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.socialType").value(socialConnection.getSocialType().toString()))
+			.andExpect(jsonPath("$.socialTypes").value(socialConnection.getSocialType().toString()))
 			.andExpect(jsonPath("$.email").value(member.getEmail()))
 			.andExpect(jsonPath("$.name").value(member.getName()))
 			.andExpect(jsonPath("$.nickname").value(member.getNickname()))
@@ -609,6 +609,83 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
 			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 소셜 연결 해제 성공")
+	void unlink_social_connection_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection kakaoConnection = SocialConnectionFixture.getSocialConnection1(member);
+		SocialConnection naverConnection = SocialConnectionFixture.getSocialConnection2(member);
+		socialConnectionRepository.save(kakaoConnection);
+		socialConnectionRepository.save(naverConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(delete("/api/members/unlink")
+				.param("socialType", "KAKAO")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		List<SocialConnection> remainingConnections = socialConnectionRepository.findByMemberId(member.getId());
+		assertThat(remainingConnections).hasSize(1);
+		assertThat(remainingConnections.getFirst().getSocialType()).isEqualTo(NAVER);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 마지막 소셜 연결 해제 시 실패")
+	void unlink_last_social_connection_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection kakaoConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(kakaoConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(delete("/api/members/unlink")
+				.param("socialType", "KAKAO")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+
+		List<SocialConnection> connections = socialConnectionRepository.findByMemberId(member.getId());
+		assertThat(connections).hasSize(1);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 지원하지 않는 소셜 타입으로 연결 해제 시 실패")
+	void unlink_non_supporting_social_type_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection kakaoConnection = SocialConnectionFixture.getSocialConnection1(member);
+		SocialConnection naverConnection = SocialConnectionFixture.getSocialConnection2(member);
+		socialConnectionRepository.save(kakaoConnection);
+		socialConnectionRepository.save(naverConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(delete("/api/members/unlink")
+				.param("socialType", "GOOGLE")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+
+		List<SocialConnection> connections = socialConnectionRepository.findByMemberId(member.getId());
+		assertThat(connections).hasSize(2);
 	}
 
 	@Test

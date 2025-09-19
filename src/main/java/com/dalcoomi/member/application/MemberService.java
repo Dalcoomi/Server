@@ -1,5 +1,6 @@
 package com.dalcoomi.member.application;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.LAST_SOCIAL_CONNECTION;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_NICKNAME_CONFLICT;
 import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_1;
@@ -16,6 +17,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.common.error.exception.BadRequestException;
 import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.util.provider.NicknameProvider;
 import com.dalcoomi.member.application.repository.MemberRepository;
@@ -23,6 +25,7 @@ import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.application.repository.WithdrawalRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
+import com.dalcoomi.member.domain.SocialType;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.domain.validator.NicknameValidator;
 import com.dalcoomi.member.dto.AvatarInfo;
@@ -200,6 +203,21 @@ public class MemberService {
 		member.updateAiLearningAgreement(agreement);
 
 		memberRepository.save(member);
+	}
+
+	@Transactional
+	public void unlink(Long memberId, SocialType socialType) {
+		List<SocialConnection> socialConnections = socialConnectionRepository.findByMemberId(memberId);
+
+		if (socialConnections.size() == 1) {
+			throw new BadRequestException(LAST_SOCIAL_CONNECTION);
+		}
+
+		for (SocialConnection socialConnection : socialConnections) {
+			if (socialConnection.getSocialType().equals(socialType)) {
+				socialConnectionRepository.deleteById(socialConnection.getId());
+			}
+		}
 	}
 
 	@Transactional
