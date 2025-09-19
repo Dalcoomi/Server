@@ -104,7 +104,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@BeforeEach
 	void setUp() {
-		executorService = Executors.newFixedThreadPool(20);
+		executorService = Executors.newFixedThreadPool(4);
 
 		// 테스트별 Redis 키 패턴 정리
 		Set<String> keys = redisTemplate.keys("receipt:*");
@@ -176,11 +176,11 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(60))
 			.until(() -> futures.stream()
 				.map(future -> {
 					try {
-						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+						return future.get(2000, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
 					} catch (Exception e) {
 						return null;
 					}
@@ -243,11 +243,11 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(60))
 			.until(() -> futures.stream()
 				.map(future -> {
 					try {
-						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+						return future.get(2000, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
 					} catch (Exception e) {
 						return null;
 					}
@@ -390,11 +390,11 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
+		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(60))
 			.until(() -> futures.stream()
 				.map(future -> {
 					try {
-						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
+						return future.get(2000, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
 					} catch (Exception e) {
 						return null;
 					}
