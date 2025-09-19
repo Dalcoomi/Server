@@ -18,7 +18,8 @@ public record MemberInfo(
 	String gender,
 	String profileImageUrl,
 	Boolean serviceAgreement,
-	Boolean collectionAgreement
+	Boolean collectionAgreement,
+	Boolean aiLearningAgreement
 ) {
 
 }

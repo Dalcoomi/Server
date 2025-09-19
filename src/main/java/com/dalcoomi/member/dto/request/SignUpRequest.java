@@ -38,7 +38,9 @@ public record SignUpRequest(
 	Boolean serviceAgreement,
 
 	@NotNull(message = "개인 정보 수집 동의 여부는 필수입니다.")
-	Boolean collectionAgreement
+	Boolean collectionAgreement,
+
+	Boolean aiLearningAgreement
 ) {
 
 }
