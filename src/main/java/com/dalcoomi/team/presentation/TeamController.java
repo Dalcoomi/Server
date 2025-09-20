@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dalcoomi.auth.annotation.AuthMember;
+import com.dalcoomi.common.util.lock.RedisLockUtil;
+import com.dalcoomi.common.util.lock.TeamLockKeyGenerator;
 import com.dalcoomi.team.application.TeamService;
 import com.dalcoomi.team.domain.Team;
 import com.dalcoomi.team.dto.LeaveTeamInfo;
@@ -32,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 public class TeamController {
 
 	private final TeamService teamService;
+	private final RedisLockUtil redisLockUtil;
+	private final TeamLockKeyGenerator teamLockKeyGenerator;
 
 	@PostMapping
 	@ResponseStatus(CREATED)
@@ -66,8 +70,15 @@ public class TeamController {
 	@DeleteMapping("/leave")
 	@ResponseStatus(OK)
 	public void leave(@AuthMember Long memberId, @RequestBody @Valid LeaveTeamRequest request) {
-		LeaveTeamInfo leaveTeamInfo = LeaveTeamInfo.of(request.teamId(), request.nextLeaderNickname());
+		Long teamId = request.teamId();
+		String lockKey = teamLockKeyGenerator.generateLeaveLockKey(teamId);
 
-		teamService.leave(leaveTeamInfo, memberId);
+		redisLockUtil.acquireAndRunLock(lockKey, () -> {
+			LeaveTeamInfo leaveTeamInfo = LeaveTeamInfo.of(teamId, request.nextLeaderNickname());
+
+			teamService.leave(leaveTeamInfo, memberId);
+
+			return null;
+		});
 	}
 }

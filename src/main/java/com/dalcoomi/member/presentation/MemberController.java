@@ -23,6 +23,7 @@ import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.image.application.S3Service;
 import com.dalcoomi.member.application.MemberService;
+import com.dalcoomi.member.domain.SocialType;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
@@ -129,6 +130,12 @@ public class MemberController {
 	@ResponseStatus(OK)
 	public void updateAiLearningAgreement(@AuthMember Long memberId, @RequestParam("agreement") Boolean agreement) {
 		memberService.updateAiLearningAgreement(memberId, agreement);
+	}
+
+	@DeleteMapping("/unlink")
+	@ResponseStatus(OK)
+	public void unlink(@AuthMember Long memberId, @RequestParam("socialType") SocialType socialType) {
+		memberService.unlink(memberId, socialType);
 	}
 
 	@DeleteMapping

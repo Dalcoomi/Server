@@ -83,6 +83,11 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	}
 
 	@Override
+	public void deleteById(Long socialConnectionId) {
+		socialConnectionJpaRepository.deleteById(socialConnectionId);
+	}
+
+	@Override
 	public void deleteByMemberId(Long memberId) {
 		socialConnectionJpaRepository.deleteByMemberId(memberId);
 	}

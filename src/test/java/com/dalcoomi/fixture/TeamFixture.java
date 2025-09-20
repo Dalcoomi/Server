@@ -7,7 +7,7 @@ public final class TeamFixture {
 
 	public static Team getTeam1(Member leader) {
 		String title = "그룹1";
-		String invitationCode = "12345678";
+		String invitationCode = "12345678" + System.currentTimeMillis() % 10000;
 		Integer memberLimit = 1;
 		String purpose = "절약";
 
