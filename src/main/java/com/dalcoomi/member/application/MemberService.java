@@ -251,11 +251,7 @@ public class MemberService {
 		}
 
 		// 탈퇴 사유 저장
-		Withdrawal withdrawal = Withdrawal.builder()
-			.withdrawalType(withdrawalInfo.withdrawalType())
-			.otherReason(withdrawalInfo.otherReason())
-			.withdrawalDate(LocalDateTime.now())
-			.build();
+		Withdrawal withdrawal = Withdrawal.from(withdrawalInfo.withdrawalType(), withdrawalInfo.otherReason());
 
 		withdrawalRepository.save(withdrawal);
 

@@ -152,6 +152,7 @@ public class MemberController {
 			.otherReason(request.otherReason())
 			.teamToNextLeaderMap(teamToNextLeaderMap)
 			.softDelete(request.softDelete())
+			.dataRetentionConsent(request.dataRetentionConsent())
 			.build();
 
 		String profileUrl = memberService.withdraw(memberId, withdrawalInfo);

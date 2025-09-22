@@ -717,9 +717,9 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(withdrawals).hasSize(1);
 
 		Withdrawal savedWithdrawal = withdrawals.getFirst();
-		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
-		assertThat(savedWithdrawal.getOtherReason()).isNull();
-		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+		assertThat(savedWithdrawal.withdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
+		assertThat(savedWithdrawal.otherReason()).isNull();
+		assertThat(savedWithdrawal.withdrawalDate()).isNotNull();
 	}
 
 	@Test
@@ -752,9 +752,9 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(withdrawals).hasSize(1);
 
 		Withdrawal savedWithdrawal = withdrawals.getFirst();
-		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(OTHER);
-		assertThat(savedWithdrawal.getOtherReason()).isEqualTo(customReason);
-		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+		assertThat(savedWithdrawal.withdrawalType()).isEqualTo(OTHER);
+		assertThat(savedWithdrawal.otherReason()).isEqualTo(customReason);
+		assertThat(savedWithdrawal.withdrawalDate()).isNotNull();
 	}
 
 	@Test
@@ -846,9 +846,9 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(withdrawals).hasSize(1);
 
 		Withdrawal savedWithdrawal = withdrawals.getFirst();
-		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(USING_OTHER_SERVICE);
-		assertThat(savedWithdrawal.getOtherReason()).isNull();
-		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+		assertThat(savedWithdrawal.withdrawalType()).isEqualTo(USING_OTHER_SERVICE);
+		assertThat(savedWithdrawal.otherReason()).isNull();
+		assertThat(savedWithdrawal.withdrawalDate()).isNotNull();
 	}
 
 	@Test
@@ -882,9 +882,9 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(withdrawals).hasSize(1);
 
 		Withdrawal savedWithdrawal = withdrawals.getFirst();
-		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(PRIVACY_CONCERN);
-		assertThat(savedWithdrawal.getOtherReason()).isNull();
-		assertThat(savedWithdrawal.getWithdrawalDate()).isNotNull();
+		assertThat(savedWithdrawal.withdrawalType()).isEqualTo(PRIVACY_CONCERN);
+		assertThat(savedWithdrawal.otherReason()).isNull();
+		assertThat(savedWithdrawal.withdrawalDate()).isNotNull();
 	}
 
 	@Test
@@ -921,7 +921,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		List<Withdrawal> withdrawals = withdrawalRepository.findAll();
 		assertThat(withdrawals).hasSize(1);
 		Withdrawal savedWithdrawal = withdrawals.getFirst();
-		assertThat(savedWithdrawal.getWithdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
+		assertThat(savedWithdrawal.withdrawalType()).isEqualTo(LOW_USAGE_FREQUENCY);
 	}
 
 	@Test

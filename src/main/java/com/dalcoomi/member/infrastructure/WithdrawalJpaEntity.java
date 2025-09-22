@@ -2,7 +2,6 @@ package com.dalcoomi.member.infrastructure;
 
 import java.time.LocalDateTime;
 
-import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.domain.WithdrawalType;
 
@@ -23,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "withdrawal")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class WithdrawalJpaEntity extends BaseTimeEntity {
+public class WithdrawalJpaEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,10 +50,9 @@ public class WithdrawalJpaEntity extends BaseTimeEntity {
 
 	public static WithdrawalJpaEntity from(Withdrawal withdrawal) {
 		return WithdrawalJpaEntity.builder()
-			.id(withdrawal.getId())
-			.withdrawalType(withdrawal.getWithdrawalType())
-			.otherReason(withdrawal.getOtherReason())
-			.withdrawalDate(withdrawal.getWithdrawalDate())
+			.withdrawalType(withdrawal.withdrawalType())
+			.otherReason(withdrawal.otherReason())
+			.withdrawalDate(withdrawal.withdrawalDate())
 			.build();
 	}
 
