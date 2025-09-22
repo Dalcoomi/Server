@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -196,6 +197,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("동시성 테스트 - 동일한 taskId 저장 요청 시 하나만 성공")
+	@Transactional(propagation = NOT_SUPPORTED)
 	void save_one_task_id_success() {
 		// given
 		Member member = MemberFixture.getMember1();
@@ -229,7 +231,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
+					barrier.await(10, TimeUnit.SECONDS);
 
 					return mockMvc.perform(post("/api/transactions/receipts/save")
 						.content(objectMapper.writeValueAsString(saveRequest))
@@ -243,22 +245,40 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(60))
-			.until(() -> futures.stream()
-				.map(future -> {
-					try {
-						return future.get(2000, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
-					} catch (Exception e) {
-						return null;
-					}
-				})
-				.filter(Objects::nonNull).toList(), hasSize(threadCount));
+		List<Integer> statusCodes = new ArrayList<>();
+		List<Exception> exceptions = new ArrayList<>();
+
+		// 모든 Future가 완료될 때까지 대기
+		for (Future<ResultActions> future : futures) {
+			try {
+				ResultActions result = future.get(10, TimeUnit.SECONDS);
+				statusCodes.add(result.andReturn().getResponse().getStatus());
+			} catch (Exception e) {
+				exceptions.add(e);
+				System.err.println("Future execution failed: " + e.getMessage());
+			}
+		}
+
+		// 예외가 발생한 경우 로깅
+		if (!exceptions.isEmpty()) {
+			System.err.println("Total exceptions: " + exceptions.size());
+			exceptions.forEach(Throwable::printStackTrace);
+		}
+
+		// 실제로 완료된 요청들만 검증
+		assertThat(statusCodes).hasSize(threadCount);
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
 
-		assertThat(successCount).isEqualTo(1);
+		// 동시성 제어가 정상 작동했는지 검증
+		assertThat(successCount + conflictCount).isEqualTo(threadCount);
+		assertThat(successCount).isEqualTo(1L);
 		assertThat(conflictCount).isEqualTo(threadCount - 1);
+
+		// 테스트 후 Redis 락 정리
+		String lockKey = "receipt:save:" + member.getId() + ":" + taskId;
+		redisTemplate.delete(lockKey);
 	}
 
 	@Test
