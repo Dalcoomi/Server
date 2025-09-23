@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -80,6 +81,7 @@ public class MemberController {
 		SocialInfo socialInfo = SocialInfo.builder()
 			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
+			.socialRefreshToken(request.socialRefreshToken())
 			.socialType(request.socialType())
 			.build();
 
@@ -92,6 +94,12 @@ public class MemberController {
 		MemberInfo memberInfo = memberService.get(memberId);
 
 		return GetMemberResponse.from(memberInfo);
+	}
+
+	@GetMapping("/refresh-token/{socialType}")
+	@ResponseStatus(OK)
+	public String getSocialRefreshToken(@AuthMember Long memberId, @PathVariable SocialType socialType) {
+		return memberService.getSocialRefreshToken(memberId, socialType);
 	}
 
 	@GetMapping("/nickname/availability")

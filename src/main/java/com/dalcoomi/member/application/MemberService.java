@@ -139,6 +139,14 @@ public class MemberService {
 	}
 
 	@Transactional(readOnly = true)
+	public String getSocialRefreshToken(Long memberId, SocialType socialType) {
+		SocialConnection socialConnection = socialConnectionRepository.findByMemberIdAndSocialType(memberId,
+			socialType);
+
+		return socialConnection.getSocialRefreshToken();
+	}
+
+	@Transactional(readOnly = true)
 	public boolean checkNicknameAvailability(Long memberId, String nickname) {
 		Member member = memberRepository.findById(memberId);
 

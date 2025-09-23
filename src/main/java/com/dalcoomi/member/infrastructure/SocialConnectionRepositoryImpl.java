@@ -42,6 +42,12 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	}
 
 	@Override
+	public SocialConnection findByMemberIdAndSocialType(Long memberId, SocialType socialType) {
+		return socialConnectionJpaRepository.findByMemberIdAndSocialType(memberId, socialType)
+			.toModel();
+	}
+
+	@Override
 	public List<SocialConnection> findBySocialEmailOrSocialId(String socialEmail, String socialId) {
 		return jpaQueryFactory
 			.selectDistinct(socialConnectionJpaEntity)

@@ -30,10 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -44,8 +40,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
@@ -69,8 +63,6 @@ import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
 import com.dalcoomi.team.domain.TeamMember;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import reactor.core.publisher.Mono;
 
 @Transactional
 @SpringBootTest
@@ -189,7 +181,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		ConnectRequest request = new ConnectRequest(
 			member.getEmail(),
 			"naver-social-id-123",
-			"test-token",
+			"test-token2",
 			NAVER
 		);
 
@@ -1022,6 +1014,48 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(withdrawals).hasSize(1);
 	}
 
+	@Test
+	@DisplayName("통합 테스트 - 소셜 리프레시 토큰 조회 성공")
+	void get_social_refresh_token_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		String refreshToken = "test-token";
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(get("/api/members/refresh-token/{socialType}", KAKAO)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(content().string(refreshToken))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 존재하지 않는 소셜 타입으로 리프레시 토큰 조회 시 실패")
+	void get_social_refresh_token_not_found() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(get("/api/members/refresh-token/{socialType}", NAVER)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().is5xxServerError())
+			.andDo(print());
+	}
+
 	private void setAuthentication(Long memberId) {
 		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
 			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
@@ -1030,25 +1064,5 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-	}
-
-	@TestConfiguration
-	static class TestConfig {
-
-		@Bean
-		@Primary
-		public WebClient mockWebClient() {
-			return WebClient.builder()
-				.exchangeFunction(clientRequest -> {
-					if (clientRequest.url().toString().contains("unlink")) {
-						return Mono.just(ClientResponse.create(HttpStatus.OK)
-							.header("content-type", "application/json")
-							.body("{\"id\":123456789}")
-							.build());
-					}
-					return Mono.just(ClientResponse.create(HttpStatus.OK).build());
-				})
-				.build();
-		}
 	}
 }
