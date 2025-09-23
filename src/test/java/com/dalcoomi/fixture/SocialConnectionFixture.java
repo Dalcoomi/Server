@@ -17,6 +17,7 @@ public final class SocialConnectionFixture {
 			.member(member)
 			.socialEmail("test1@naver.com")
 			.socialId(socialId)
+			.socialRefreshToken("test-token")
 			.socialType(KAKAO)
 			.build();
 	}
@@ -28,6 +29,7 @@ public final class SocialConnectionFixture {
 			.member(member)
 			.socialEmail("abc1@gmail.com")
 			.socialId(socialId)
+			.socialRefreshToken("test-token")
 			.socialType(NAVER)
 			.build();
 	}
@@ -37,6 +39,7 @@ public final class SocialConnectionFixture {
 			.member(member)
 			.socialEmail("test@example.com")
 			.socialId("social123")
+			.socialRefreshToken("test-token")
 			.socialType(KAKAO)
 			.deletedAt(LocalDateTime.now().minusDays(daysAgo))
 			.build();

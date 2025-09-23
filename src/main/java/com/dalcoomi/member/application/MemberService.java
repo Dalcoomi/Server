@@ -91,6 +91,7 @@ public class MemberService {
 			.member(member)
 			.socialEmail(signUpInfo.socialEmail())
 			.socialId(signUpInfo.socialId())
+			.socialRefreshToken(signUpInfo.socialRefreshToken())
 			.socialType(signUpInfo.socialType())
 			.build();
 
@@ -100,7 +101,7 @@ public class MemberService {
 	}
 
 	@Transactional
-	public void integrate(SocialInfo socialInfo) {
+	public void connect(SocialInfo socialInfo) {
 		boolean existsSocialConnection = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
 			socialInfo.socialId(), socialInfo.socialType());
 
@@ -114,6 +115,7 @@ public class MemberService {
 			.member(member)
 			.socialEmail(socialInfo.socialEmail())
 			.socialId(socialInfo.socialId())
+			.socialRefreshToken(socialInfo.socialRefreshToken())
 			.socialType(socialInfo.socialType())
 			.build();
 
@@ -135,6 +137,14 @@ public class MemberService {
 			.profileImageUrl(member.getProfileImageUrl())
 			.aiLearningAgreement(member.getAiLearningAgreement())
 			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public String getSocialRefreshToken(Long memberId, SocialType socialType) {
+		SocialConnection socialConnection = socialConnectionRepository.findByMemberIdAndSocialType(memberId,
+			socialType);
+
+		return socialConnection.getSocialRefreshToken();
 	}
 
 	@Transactional(readOnly = true)
@@ -222,7 +232,7 @@ public class MemberService {
 	}
 
 	@Transactional
-	public void unlink(Long memberId, SocialType socialType) {
+	public void disconnect(Long memberId, SocialType socialType) {
 		List<SocialConnection> socialConnections = socialConnectionRepository.findByMemberId(memberId);
 
 		if (socialConnections.size() == 1) {
