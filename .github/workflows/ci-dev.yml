@@ -1,8 +1,6 @@
 name: Dalcoomi Server CI Dev
 
 on:
-  push:
-    branches: [ develop ]
   pull_request:
     branches: [ develop ]
 
