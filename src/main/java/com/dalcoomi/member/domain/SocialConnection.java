@@ -18,22 +18,28 @@ public class SocialConnection {
 	private final Member member;
 	private final String socialId;
 	private final SocialType socialType;
-	private LocalDateTime deletedAt;
 	private String socialEmail;
+	private String socialRefreshToken;
+	private LocalDateTime deletedAt;
 
 	@Builder
-	public SocialConnection(Long id, Member member, String socialEmail, String socialId, SocialType socialType,
-		LocalDateTime deletedAt) {
+	public SocialConnection(Long id, Member member, String socialEmail, String socialId, String socialRefreshToken,
+		SocialType socialType, LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
 		this.socialEmail = socialEmail;
 		this.socialId = validateSocialId(socialId);
+		this.socialRefreshToken = socialRefreshToken;
 		this.socialType = socialType;
 		this.deletedAt = deletedAt;
 	}
 
 	public void updateSocialEmail(String socialEmail) {
 		this.socialEmail = socialEmail;
+	}
+
+	public void updateSocialRefreshToken(String socialRefreshToken) {
+		this.socialRefreshToken = socialRefreshToken;
 	}
 
 	public void softDelete() {

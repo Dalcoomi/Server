@@ -8,6 +8,7 @@ import lombok.Builder;
 public record SocialInfo(
 	String socialEmail,
 	String socialId,
+	String socialRefreshToken,
 	SocialType socialType
 ) {
 

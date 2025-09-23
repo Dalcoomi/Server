@@ -38,6 +38,7 @@ public class AuthController {
 		SocialInfo socialInfo = SocialInfo.builder()
 			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
+			.socialRefreshToken(request.socialRefreshToken())
 			.socialType(request.socialType())
 			.build();
 

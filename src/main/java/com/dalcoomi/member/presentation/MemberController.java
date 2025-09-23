@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,7 +31,7 @@ import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SignUpInfo;
 import com.dalcoomi.member.dto.SocialInfo;
 import com.dalcoomi.member.dto.WithdrawalInfo;
-import com.dalcoomi.member.dto.request.IntegrateRequest;
+import com.dalcoomi.member.dto.request.ConnectRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
@@ -57,6 +58,7 @@ public class MemberController {
 		SignUpInfo memberInfo = SignUpInfo.builder()
 			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
+			.socialRefreshToken(request.socialRefreshToken())
 			.socialType(request.socialType())
 			.email(request.email())
 			.name(request.name())
@@ -74,16 +76,17 @@ public class MemberController {
 		return SignUpResponse.from(tokenInfo);
 	}
 
-	@PostMapping("/integrate")
+	@PostMapping("/connect")
 	@ResponseStatus(OK)
-	public void integrate(@RequestBody @Valid IntegrateRequest request) {
+	public void connect(@RequestBody @Valid ConnectRequest request) {
 		SocialInfo socialInfo = SocialInfo.builder()
 			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
+			.socialRefreshToken(request.socialRefreshToken())
 			.socialType(request.socialType())
 			.build();
 
-		memberService.integrate(socialInfo);
+		memberService.connect(socialInfo);
 	}
 
 	@GetMapping
@@ -92,6 +95,12 @@ public class MemberController {
 		MemberInfo memberInfo = memberService.get(memberId);
 
 		return GetMemberResponse.from(memberInfo);
+	}
+
+	@GetMapping("/refresh-token/{socialType}")
+	@ResponseStatus(OK)
+	public String getSocialRefreshToken(@AuthMember Long memberId, @PathVariable SocialType socialType) {
+		return memberService.getSocialRefreshToken(memberId, socialType);
 	}
 
 	@GetMapping("/nickname/availability")
@@ -132,10 +141,10 @@ public class MemberController {
 		memberService.updateAiLearningAgreement(memberId, agreement);
 	}
 
-	@DeleteMapping("/unlink")
+	@DeleteMapping("/disconnect")
 	@ResponseStatus(OK)
 	public void unlink(@AuthMember Long memberId, @RequestParam("socialType") SocialType socialType) {
-		memberService.unlink(memberId, socialType);
+		memberService.disconnect(memberId, socialType);
 	}
 
 	@DeleteMapping

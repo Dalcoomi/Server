@@ -30,10 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -44,8 +40,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
@@ -60,7 +54,7 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
-import com.dalcoomi.member.dto.request.IntegrateRequest;
+import com.dalcoomi.member.dto.request.ConnectRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
@@ -69,8 +63,6 @@ import com.dalcoomi.team.application.repository.TeamRepository;
 import com.dalcoomi.team.domain.Team;
 import com.dalcoomi.team.domain.TeamMember;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import reactor.core.publisher.Mono;
 
 @Transactional
 @SpringBootTest
@@ -113,8 +105,8 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
-			serviceAgreement, collectionAgreement, true);
+		SignUpRequest request = new SignUpRequest(socialEmail, socialId, "test-token", KAKAO, socialEmail, name,
+			birthday, gender, serviceAgreement, collectionAgreement, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -140,8 +132,8 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
-			serviceAgreement, collectionAgreement, true);
+		SignUpRequest request = new SignUpRequest(socialEmail, socialId, "test-token", KAKAO, socialEmail, name,
+			birthday, gender, serviceAgreement, collectionAgreement, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -164,7 +156,8 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		SignUpRequest request = new SignUpRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			KAKAO, socialConnection.getSocialEmail(), "다른이름", LocalDate.of(1995, 5, 5), "여성", true, true, true);
+			socialConnection.getSocialRefreshToken(), KAKAO, socialConnection.getSocialEmail(), "다른이름",
+			LocalDate.of(1995, 5, 5), "여성", true, true, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -178,7 +171,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 소셜 계정 통합 성공")
-	void integrate_social_account_success() throws Exception {
+	void connect_social_account_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -186,16 +179,17 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		SocialConnection existingConnection = SocialConnectionFixture.getSocialConnection1(member);
 		socialConnectionRepository.save(existingConnection);
 
-		IntegrateRequest request = new IntegrateRequest(
+		ConnectRequest request = new ConnectRequest(
 			member.getEmail(),
 			"naver-social-id-123",
+			"test-token2",
 			NAVER
 		);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/members/integrate")
+		mockMvc.perform(post("/api/members/connect")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -211,7 +205,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 이미 존재하는 소셜 계정으로 통합 시도 시 실패")
-	void integrate_already_existing_social_account_fail() throws Exception {
+	void connect_already_existing_social_account_fail() throws Exception {
 		// given
 		Member member1 = MemberFixture.getMember1();
 		member1 = memberRepository.save(member1);
@@ -223,16 +217,17 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		socialConnectionRepository.save(existingNaverConnection);
 
 		// member1이 이미 존재하는 네이버 계정으로 통합 시도
-		IntegrateRequest request = new IntegrateRequest(
+		ConnectRequest request = new ConnectRequest(
 			existingNaverConnection.getSocialEmail(),
 			existingNaverConnection.getSocialId(),
+			existingNaverConnection.getSocialRefreshToken(),
 			existingNaverConnection.getSocialType()
 		);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/members/integrate")
+		mockMvc.perform(post("/api/members/connect")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isConflict())
@@ -613,7 +608,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 소셜 연결 해제 성공")
-	void unlink_social_connection_success() throws Exception {
+	void disconnect_social_connection_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -627,7 +622,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		// when & then
-		mockMvc.perform(delete("/api/members/unlink")
+		mockMvc.perform(delete("/api/members/disconnect")
 				.param("socialType", "KAKAO")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -640,7 +635,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 마지막 소셜 연결 해제 시 실패")
-	void unlink_last_social_connection_fail() throws Exception {
+	void disconnect_last_social_connection_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -652,7 +647,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		// when & then
-		mockMvc.perform(delete("/api/members/unlink")
+		mockMvc.perform(delete("/api/members/disconnect")
 				.param("socialType", "KAKAO")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
@@ -664,7 +659,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 지원하지 않는 소셜 타입으로 연결 해제 시 실패")
-	void unlink_non_supporting_social_type_fail() throws Exception {
+	void disconnect_non_supporting_social_type_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -678,7 +673,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		// when & then
-		mockMvc.perform(delete("/api/members/unlink")
+		mockMvc.perform(delete("/api/members/disconnect")
 				.param("socialType", "GOOGLE")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
@@ -1020,6 +1015,48 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		assertThat(withdrawals).hasSize(1);
 	}
 
+	@Test
+	@DisplayName("통합 테스트 - 소셜 리프레시 토큰 조회 성공")
+	void get_social_refresh_token_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		String refreshToken = "test-token";
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(get("/api/members/refresh-token/{socialType}", KAKAO)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(content().string(refreshToken))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 존재하지 않는 소셜 타입으로 리프레시 토큰 조회 시 실패")
+	void get_social_refresh_token_not_found() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		// when & then
+		mockMvc.perform(get("/api/members/refresh-token/{socialType}", NAVER)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().is5xxServerError())
+			.andDo(print());
+	}
+
 	private void setAuthentication(Long memberId) {
 		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
 			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
@@ -1028,25 +1065,5 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 			authoritiesMapper.mapAuthorities(memberUserDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-	}
-
-	@TestConfiguration
-	static class TestConfig {
-
-		@Bean
-		@Primary
-		public WebClient mockWebClient() {
-			return WebClient.builder()
-				.exchangeFunction(clientRequest -> {
-					if (clientRequest.url().toString().contains("unlink")) {
-						return Mono.just(ClientResponse.create(HttpStatus.OK)
-							.header("content-type", "application/json")
-							.body("{\"id\":123456789}")
-							.build());
-					}
-					return Mono.just(ClientResponse.create(HttpStatus.OK).build());
-				})
-				.build();
-		}
 	}
 }

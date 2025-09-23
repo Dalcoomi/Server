@@ -10,6 +10,7 @@ import lombok.Builder;
 public record SignUpInfo(
 	String socialEmail,
 	String socialId,
+	String socialRefreshToken,
 	SocialType socialType,
 	String email,
 	String name,
