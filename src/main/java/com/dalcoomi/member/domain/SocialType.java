@@ -2,7 +2,7 @@ package com.dalcoomi.member.domain;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.UNSUPPORTED_SOCIAL_TYPE;
 
-import com.dalcoomi.common.error.exception.DalcoomiException;
+import com.dalcoomi.common.error.exception.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum SocialType {
@@ -17,6 +17,7 @@ public enum SocialType {
 				return type;
 			}
 		}
-		throw new DalcoomiException(UNSUPPORTED_SOCIAL_TYPE);
+
+		throw new BadRequestException(UNSUPPORTED_SOCIAL_TYPE);
 	}
 }

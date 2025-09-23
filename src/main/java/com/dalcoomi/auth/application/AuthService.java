@@ -2,13 +2,23 @@ package com.dalcoomi.auth.application;
 
 import static com.dalcoomi.auth.constant.TokenConstants.MEMBER_ROLE;
 import static com.dalcoomi.auth.constant.TokenConstants.TEST_ROLE;
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_DORMANT_ACCOUNT;
+import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_NOT_FOUND;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.auth.dto.LoginInfo;
 import com.dalcoomi.auth.dto.TokenInfo;
+import com.dalcoomi.common.error.exception.LockedException;
+import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
+import com.dalcoomi.member.domain.Member;
+import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.dto.SocialInfo;
 
 import lombok.RequiredArgsConstructor;
@@ -24,15 +34,54 @@ public class AuthService {
 	private final SocialConnectionRepository socialConnectionRepository;
 
 	@Transactional
-	public TokenInfo login(SocialInfo socialInfo) {
-		Long memberId = socialConnectionRepository.findMemberIdBySocialIdAndSocialType(socialInfo.socialId(),
-			socialInfo.socialType());
+	public LoginInfo login(SocialInfo socialInfo) {
+		List<SocialConnection> socialConnections = socialConnectionRepository.findBySocialEmailOrSocialId(
+			socialInfo.socialEmail(), socialInfo.socialId());
 
-		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
+		// 신규 회원 = 영구 탈퇴 회원
+		if (socialConnections.isEmpty()) {
+			throw new NotFoundException(MEMBER_NOT_FOUND);
+		}
 
-		log.info("로그인 성공 - memberId: {}", memberId);
+		SocialConnection existingSocialConnection = socialConnections.getFirst();
+		Member member = existingSocialConnection.getMember();
 
-		return tokenInfo;
+		// 휴면 회원
+		if (member.getDeletedAt() != null) {
+			throw new LockedException(MEMBER_DORMANT_ACCOUNT);
+		}
+
+		for (SocialConnection socialConnection : socialConnections) {
+			if (socialConnection.getSocialId().equals(socialInfo.socialId())
+				&& socialConnection.getSocialType() == socialInfo.socialType()) {
+				TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE);
+
+				if (!socialConnection.getSocialEmail().equals(socialInfo.socialEmail())) {
+					socialConnection.updateSocialEmail(socialInfo.socialEmail());
+
+					socialConnectionRepository.save(socialConnection);
+				}
+
+				member.updateLoginTime(LocalDateTime.now());
+
+				memberRepository.save(member);
+
+				log.info("로그인 성공 - memberId: {}", member.getId());
+
+				return LoginInfo.builder()
+					.sameSocial(true)
+					.existingSocialType(socialConnection.getSocialType())
+					.accessToken(tokenInfo.accessToken())
+					.refreshToken(tokenInfo.refreshToken())
+					.build();
+			}
+		}
+
+		// 다른 소셜 계정으로 로그인 시도한 경우, 기존 소셜 타입 반환
+		return LoginInfo.builder()
+			.sameSocial(false)
+			.existingSocialType(existingSocialConnection.getSocialType())
+			.build();
 	}
 
 	public void logout(Long memberId) {

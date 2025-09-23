@@ -2,6 +2,8 @@ package com.dalcoomi.member.infrastructure;
 
 import static jakarta.persistence.ConstraintMode.NO_CONSTRAINT;
 
+import java.time.LocalDateTime;
+
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
@@ -37,6 +39,9 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 	@JoinColumn(name = "member_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
 	private MemberJpaEntity member;
 
+	@Column(name = "social_email", nullable = false)
+	private String socialEmail;
+
 	@Column(name = "social_id", nullable = false)
 	private String socialId;
 
@@ -44,20 +49,28 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 	@Column(name = "social_type", nullable = false)
 	private SocialType socialType;
 
+	@Column(name = "deleted_at", nullable = true)
+	private LocalDateTime deletedAt;
+
 	@Builder
-	public SocialConnectionJpaEntity(Long id, MemberJpaEntity member, String socialId, SocialType socialType) {
+	public SocialConnectionJpaEntity(Long id, MemberJpaEntity member, String socialEmail, String socialId,
+		SocialType socialType, LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
+		this.socialEmail = socialEmail;
 		this.socialId = socialId;
 		this.socialType = socialType;
+		this.deletedAt = deletedAt;
 	}
 
 	public static SocialConnectionJpaEntity from(SocialConnection socialConnection) {
 		return SocialConnectionJpaEntity.builder()
 			.id(socialConnection.getId())
 			.member(MemberJpaEntity.from(socialConnection.getMember()))
+			.socialEmail(socialConnection.getSocialEmail())
 			.socialId(socialConnection.getSocialId())
 			.socialType(socialConnection.getSocialType())
+			.deletedAt(socialConnection.getDeletedAt())
 			.build();
 	}
 
@@ -65,8 +78,10 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 		return SocialConnection.builder()
 			.id(this.id)
 			.member(this.member.toModel())
+			.socialEmail(this.socialEmail)
 			.socialId(this.socialId)
 			.socialType(this.socialType)
+			.deletedAt(this.deletedAt)
 			.build();
 	}
 }

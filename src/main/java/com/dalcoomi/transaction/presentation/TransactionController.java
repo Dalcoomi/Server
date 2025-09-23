@@ -49,7 +49,7 @@ public class TransactionController {
 	private final CategoryService categoryService;
 	private final ApplicationEventPublisher applicationEventPublisher;
 	private final RedisLockUtil redisLockUtil;
-	private final ReceiptLockKeyGenerator lockKeyGenerator;
+	private final ReceiptLockKeyGenerator receiptLockKeyGenerator;
 
 	@PostMapping
 	@ResponseStatus(CREATED)
@@ -63,7 +63,7 @@ public class TransactionController {
 	@ResponseStatus(OK)
 	public UploadReceiptResponse uploadReceipt(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
 		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") MultipartFile receipt) {
-		String lockKey = lockKeyGenerator.generateUploadLockKey(memberId, teamId, receipt);
+		String lockKey = receiptLockKeyGenerator.generateUploadLockKey(memberId, teamId, receipt);
 
 		return redisLockUtil.acquireAndRunLock(lockKey, () -> {
 			List<String> categoryNames = categoryService.fetchCategoryNames(memberId, teamId);
@@ -76,7 +76,7 @@ public class TransactionController {
 	@PostMapping("/receipts/save")
 	@ResponseStatus(OK)
 	public void saveReceipt(@AuthMember Long memberId, @RequestBody @Valid SaveReceiptRequest request) {
-		String lockKey = lockKeyGenerator.generateSaveLockKey(memberId, request.taskId());
+		String lockKey = receiptLockKeyGenerator.generateSaveLockKey(memberId, request.taskId());
 
 		redisLockUtil.acquireAndRunLock(lockKey, () -> {
 			List<Transaction> transactions = request.transactions().stream().map(Transaction::from).toList();

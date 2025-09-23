@@ -11,6 +11,10 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 
 public record SignUpRequest(
+	@NotNull(message = "소셜 이메일은 필수입니다.")
+	@Email(message = "올바른 이메일 형식이 아닙니다.")
+	String socialEmail,
+
 	@NotBlank(message = "소셜 ID는 필수입니다.")
 	String socialId,
 
@@ -34,7 +38,9 @@ public record SignUpRequest(
 	Boolean serviceAgreement,
 
 	@NotNull(message = "개인 정보 수집 동의 여부는 필수입니다.")
-	Boolean collectionAgreement
+	Boolean collectionAgreement,
+
+	Boolean aiLearningAgreement
 ) {
 
 }

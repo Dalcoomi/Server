@@ -1,6 +1,7 @@
 package com.dalcoomi.member.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.dalcoomi.member.domain.SocialType;
 
@@ -9,7 +10,7 @@ import lombok.Builder;
 @Builder
 public record MemberInfo(
 	String socialId,
-	SocialType socialType,
+	List<SocialType> socialTypes,
 	String email,
 	String name,
 	String nickname,
@@ -17,7 +18,8 @@ public record MemberInfo(
 	String gender,
 	String profileImageUrl,
 	Boolean serviceAgreement,
-	Boolean collectionAgreement
+	Boolean collectionAgreement,
+	Boolean aiLearningAgreement
 ) {
 
 }

@@ -7,6 +7,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,9 +23,14 @@ import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.image.application.S3Service;
 import com.dalcoomi.member.application.MemberService;
+import com.dalcoomi.member.domain.SocialType;
 import com.dalcoomi.member.dto.AvatarInfo;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
 import com.dalcoomi.member.dto.MemberInfo;
+import com.dalcoomi.member.dto.SignUpInfo;
+import com.dalcoomi.member.dto.SocialInfo;
+import com.dalcoomi.member.dto.WithdrawalInfo;
+import com.dalcoomi.member.dto.request.IntegrateRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
@@ -48,7 +54,8 @@ public class MemberController {
 	@PostMapping("/sign-up")
 	@ResponseStatus(CREATED)
 	public SignUpResponse signUp(@RequestBody @Valid SignUpRequest request) {
-		MemberInfo memberInfo = MemberInfo.builder()
+		SignUpInfo memberInfo = SignUpInfo.builder()
+			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
 			.socialType(request.socialType())
 			.email(request.email())
@@ -57,13 +64,26 @@ public class MemberController {
 			.gender(request.gender())
 			.serviceAgreement(request.serviceAgreement())
 			.collectionAgreement(request.collectionAgreement())
+			.aiLearningAgreement(request.aiLearningAgreement())
 			.build();
 
 		Long memberId = memberService.signUp(memberInfo);
 
 		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 
-		return new SignUpResponse(tokenInfo.accessToken(), tokenInfo.refreshToken());
+		return SignUpResponse.from(tokenInfo);
+	}
+
+	@PostMapping("/integrate")
+	@ResponseStatus(OK)
+	public void integrate(@RequestBody @Valid IntegrateRequest request) {
+		SocialInfo socialInfo = SocialInfo.builder()
+			.socialEmail(request.socialEmail())
+			.socialId(request.socialId())
+			.socialType(request.socialType())
+			.build();
+
+		memberService.integrate(socialInfo);
 	}
 
 	@GetMapping
@@ -85,7 +105,7 @@ public class MemberController {
 	public String updateAvatar(@AuthMember Long memberId, @ModelAttribute @Valid UpdateAvatarRequest request) {
 		AvatarInfo avatarInfo = memberService.getAvatarInfo(memberId);
 
-		String newAvatarUrl = s3Service.handleAvatar(request.removeAvatar(), avatarInfo, request.profileImage());
+		String newAvatarUrl = s3Service.updateAvatar(request.removeAvatar(), avatarInfo, request.profileImage());
 
 		return memberService.updateAvatar(avatarInfo.member(), newAvatarUrl);
 	}
@@ -106,7 +126,19 @@ public class MemberController {
 		return UpdateProfileResponse.from(memberInfo);
 	}
 
-	@PatchMapping
+	@PatchMapping("/ai-learning-agreement")
+	@ResponseStatus(OK)
+	public void updateAiLearningAgreement(@AuthMember Long memberId, @RequestParam("agreement") Boolean agreement) {
+		memberService.updateAiLearningAgreement(memberId, agreement);
+	}
+
+	@DeleteMapping("/unlink")
+	@ResponseStatus(OK)
+	public void unlink(@AuthMember Long memberId, @RequestParam("socialType") SocialType socialType) {
+		memberService.unlink(memberId, socialType);
+	}
+
+	@DeleteMapping
 	@ResponseStatus(OK)
 	public void withdraw(@AuthMember Long memberId, @RequestBody @Valid WithdrawRequest request) {
 		Map<Long, String> teamToNextLeaderMap = request.leaderTransferInfos().stream()
@@ -115,6 +147,16 @@ public class MemberController {
 				LeaderTransferInfo::nextLeaderNickname
 			));
 
-		memberService.withdraw(memberId, request.withdrawalType(), request.otherReason(), teamToNextLeaderMap);
+		WithdrawalInfo withdrawalInfo = WithdrawalInfo.builder()
+			.withdrawalType(request.withdrawalType())
+			.otherReason(request.otherReason())
+			.teamToNextLeaderMap(teamToNextLeaderMap)
+			.softDelete(request.softDelete())
+			.dataRetentionConsent(request.dataRetentionConsent())
+			.build();
+
+		String profileUrl = memberService.withdraw(memberId, withdrawalInfo);
+
+		s3Service.deleteImage(profileUrl);
 	}
 }

@@ -47,3 +47,6 @@ application-prod.yml
 ./src/main/resources/config
 
 /logs
+
+# Claude Code
+CLAUDE.md

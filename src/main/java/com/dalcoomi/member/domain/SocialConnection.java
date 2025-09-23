@@ -2,6 +2,9 @@ package com.dalcoomi.member.domain;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_INVALID_SOCIAL_ID;
 import static io.micrometer.common.util.StringUtils.isBlank;
+import static java.time.LocalDateTime.now;
+
+import java.time.LocalDateTime;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -15,13 +18,26 @@ public class SocialConnection {
 	private final Member member;
 	private final String socialId;
 	private final SocialType socialType;
+	private LocalDateTime deletedAt;
+	private String socialEmail;
 
 	@Builder
-	public SocialConnection(Long id, Member member, String socialId, SocialType socialType) {
+	public SocialConnection(Long id, Member member, String socialEmail, String socialId, SocialType socialType,
+		LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
+		this.socialEmail = socialEmail;
 		this.socialId = validateSocialId(socialId);
 		this.socialType = socialType;
+		this.deletedAt = deletedAt;
+	}
+
+	public void updateSocialEmail(String socialEmail) {
+		this.socialEmail = socialEmail;
+	}
+
+	public void softDelete() {
+		this.deletedAt = now();
 	}
 
 	private String validateSocialId(String socialId) {

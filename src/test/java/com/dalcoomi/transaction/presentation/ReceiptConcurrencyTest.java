@@ -3,8 +3,6 @@ package com.dalcoomi.transaction.presentation;
 import static com.dalcoomi.common.error.model.ErrorMessage.LOCK_EXIST_ERROR;
 import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -16,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -24,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -104,7 +102,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@BeforeEach
 	void setUp() {
-		executorService = Executors.newFixedThreadPool(20);
+		executorService = Executors.newFixedThreadPool(4);
 
 		// 테스트별 Redis 키 패턴 정리
 		Set<String> keys = redisTemplate.keys("receipt:*");
@@ -121,6 +119,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("동시성 테스트 - 동일한 영수증 업로드 요청 시 하나만 성공")
+	@Transactional(propagation = NOT_SUPPORTED)
 	void upload_one_receipt_success() {
 		// given
 		Long memberId = 1L;
@@ -176,26 +175,37 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
-			.until(() -> futures.stream()
-				.map(future -> {
-					try {
-						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
-					} catch (Exception e) {
-						return null;
-					}
-				})
-				.filter(Objects::nonNull).toList(), hasSize(threadCount));
+		List<Integer> statusCodes = new ArrayList<>();
+		List<Exception> exceptions = new ArrayList<>();
+
+		for (Future<ResultActions> future : futures) {
+			try {
+				ResultActions result = future.get(15, TimeUnit.SECONDS);
+				statusCodes.add(result.andReturn().getResponse().getStatus());
+			} catch (Exception e) {
+				exceptions.add(e);
+				System.err.println("Receipt upload future execution failed: " + e.getMessage());
+			}
+		}
+
+		if (!exceptions.isEmpty()) {
+			System.err.println("Total exceptions in receipt upload: " + exceptions.size());
+			exceptions.forEach(Throwable::printStackTrace);
+		}
+
+		assertThat(statusCodes).hasSize(threadCount);
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
 
-		assertThat(successCount).isEqualTo(1);
+		assertThat(successCount + conflictCount).isEqualTo(threadCount);
+		assertThat(successCount).isEqualTo(1L);
 		assertThat(conflictCount).isEqualTo(threadCount - 1);
 	}
 
 	@Test
 	@DisplayName("동시성 테스트 - 동일한 taskId 저장 요청 시 하나만 성공")
+	@Transactional(propagation = NOT_SUPPORTED)
 	void save_one_task_id_success() {
 		// given
 		Member member = MemberFixture.getMember1();
@@ -229,7 +239,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
+					barrier.await(10, TimeUnit.SECONDS);
 
 					return mockMvc.perform(post("/api/transactions/receipts/save")
 						.content(objectMapper.writeValueAsString(saveRequest))
@@ -243,22 +253,35 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
-			.until(() -> futures.stream()
-				.map(future -> {
-					try {
-						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
-					} catch (Exception e) {
-						return null;
-					}
-				})
-				.filter(Objects::nonNull).toList(), hasSize(threadCount));
+		List<Integer> statusCodes = new ArrayList<>();
+		List<Exception> exceptions = new ArrayList<>();
+
+		for (Future<ResultActions> future : futures) {
+			try {
+				ResultActions result = future.get(10, TimeUnit.SECONDS);
+				statusCodes.add(result.andReturn().getResponse().getStatus());
+			} catch (Exception e) {
+				exceptions.add(e);
+				System.err.println("Future execution failed: " + e.getMessage());
+			}
+		}
+
+		if (!exceptions.isEmpty()) {
+			System.err.println("Total exceptions: " + exceptions.size());
+			exceptions.forEach(Throwable::printStackTrace);
+		}
+
+		assertThat(statusCodes).hasSize(threadCount);
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
 
-		assertThat(successCount).isEqualTo(1);
+		assertThat(successCount + conflictCount).isEqualTo(threadCount);
+		assertThat(successCount).isEqualTo(1L);
 		assertThat(conflictCount).isEqualTo(threadCount - 1);
+
+		String lockKey = "receipt:save:" + member.getId() + ":" + taskId;
+		redisTemplate.delete(lockKey);
 	}
 
 	@Test
@@ -337,6 +360,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("동시성 테스트 - 동일한 그룹 영수증 업로드 요청 시 하나만 성공")
+	@Transactional(propagation = NOT_SUPPORTED)
 	void upload_one_team_receipt_success() {
 		// given
 		Long memberId = 1L;
@@ -390,21 +414,31 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		}
 
 		// then
-		List<Integer> statusCodes = await().atMost(Duration.ofSeconds(30))
-			.until(() -> futures.stream()
-				.map(future -> {
-					try {
-						return future.get(500, TimeUnit.MILLISECONDS).andReturn().getResponse().getStatus();
-					} catch (Exception e) {
-						return null;
-					}
-				})
-				.filter(Objects::nonNull).toList(), hasSize(threadCount));
+		List<Integer> statusCodes = new ArrayList<>();
+		List<Exception> exceptions = new ArrayList<>();
+
+		for (Future<ResultActions> future : futures) {
+			try {
+				ResultActions result = future.get(15, TimeUnit.SECONDS);
+				statusCodes.add(result.andReturn().getResponse().getStatus());
+			} catch (Exception e) {
+				exceptions.add(e);
+				System.err.println("Team receipt upload future execution failed: " + e.getMessage());
+			}
+		}
+
+		if (!exceptions.isEmpty()) {
+			System.err.println("Total exceptions in team receipt upload: " + exceptions.size());
+			exceptions.forEach(Throwable::printStackTrace);
+		}
+
+		assertThat(statusCodes).hasSize(threadCount);
 
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
 
-		assertThat(successCount).isEqualTo(1);
+		assertThat(successCount + conflictCount).isEqualTo(threadCount);
+		assertThat(successCount).isEqualTo(1L);
 		assertThat(conflictCount).isEqualTo(threadCount - 1);
 	}
 

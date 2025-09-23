@@ -1,5 +1,6 @@
 package com.dalcoomi.transaction.application.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.dalcoomi.transaction.domain.Transaction;
@@ -13,7 +14,15 @@ public interface TransactionRepository {
 
 	Transaction findById(Long transactionId);
 
+	List<Transaction> findAll();
+
 	List<Transaction> findTransactions(TransactionSearchCriteria criteria);
 
+	List<Transaction> findExpiredPersonalTransactions(LocalDateTime cutoffDate);
+
+	List<Transaction> findExpiredAnonymizedPersonalTransactions(LocalDateTime cutoffDate);
+
 	void deleteByTeamId(Long groupId);
+
+	void deleteAll(List<Transaction> personalTransactions);
 }
