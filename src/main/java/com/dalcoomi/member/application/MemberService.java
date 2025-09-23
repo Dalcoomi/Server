@@ -91,6 +91,7 @@ public class MemberService {
 			.member(member)
 			.socialEmail(signUpInfo.socialEmail())
 			.socialId(signUpInfo.socialId())
+			.socialRefreshToken(signUpInfo.socialRefreshToken())
 			.socialType(signUpInfo.socialType())
 			.build();
 

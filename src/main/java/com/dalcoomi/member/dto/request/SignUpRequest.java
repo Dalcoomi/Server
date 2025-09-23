@@ -18,6 +18,9 @@ public record SignUpRequest(
 	@NotBlank(message = "소셜 ID는 필수입니다.")
 	String socialId,
 
+	@NotBlank(message = "소셜 리프레시 토큰은 필수입니다.")
+	String socialRefreshToken,
+
 	@NotNull(message = "소셜 로그인 타입은 필수입니다.")
 	SocialType socialType,
 

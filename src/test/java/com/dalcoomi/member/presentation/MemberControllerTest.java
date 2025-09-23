@@ -105,8 +105,8 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
-			serviceAgreement, collectionAgreement, true);
+		SignUpRequest request = new SignUpRequest(socialEmail, socialId, "test-token", KAKAO, socialEmail, name,
+			birthday, gender, serviceAgreement, collectionAgreement, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -132,8 +132,8 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean serviceAgreement = true;
 		boolean collectionAgreement = true;
 
-		SignUpRequest request = new SignUpRequest(socialEmail, socialId, KAKAO, socialEmail, name, birthday, gender,
-			serviceAgreement, collectionAgreement, true);
+		SignUpRequest request = new SignUpRequest(socialEmail, socialId, "test-token", KAKAO, socialEmail, name,
+			birthday, gender, serviceAgreement, collectionAgreement, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -156,7 +156,8 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		SignUpRequest request = new SignUpRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			KAKAO, socialConnection.getSocialEmail(), "다른이름", LocalDate.of(1995, 5, 5), "여성", true, true, true);
+			socialConnection.getSocialRefreshToken(), KAKAO, socialConnection.getSocialEmail(), "다른이름",
+			LocalDate.of(1995, 5, 5), "여성", true, true, true);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);

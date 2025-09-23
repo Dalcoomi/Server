@@ -58,6 +58,7 @@ public class MemberController {
 		SignUpInfo memberInfo = SignUpInfo.builder()
 			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
+			.socialRefreshToken(request.socialRefreshToken())
 			.socialType(request.socialType())
 			.email(request.email())
 			.name(request.name())
