@@ -30,7 +30,7 @@ import com.dalcoomi.member.dto.MemberInfo;
 import com.dalcoomi.member.dto.SignUpInfo;
 import com.dalcoomi.member.dto.SocialInfo;
 import com.dalcoomi.member.dto.WithdrawalInfo;
-import com.dalcoomi.member.dto.request.IntegrateRequest;
+import com.dalcoomi.member.dto.request.ConnectRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateAvatarRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
@@ -74,16 +74,16 @@ public class MemberController {
 		return SignUpResponse.from(tokenInfo);
 	}
 
-	@PostMapping("/integrate")
+	@PostMapping("/connect")
 	@ResponseStatus(OK)
-	public void integrate(@RequestBody @Valid IntegrateRequest request) {
+	public void connect(@RequestBody @Valid ConnectRequest request) {
 		SocialInfo socialInfo = SocialInfo.builder()
 			.socialEmail(request.socialEmail())
 			.socialId(request.socialId())
 			.socialType(request.socialType())
 			.build();
 
-		memberService.integrate(socialInfo);
+		memberService.connect(socialInfo);
 	}
 
 	@GetMapping
@@ -132,10 +132,10 @@ public class MemberController {
 		memberService.updateAiLearningAgreement(memberId, agreement);
 	}
 
-	@DeleteMapping("/unlink")
+	@DeleteMapping("/disconnect")
 	@ResponseStatus(OK)
 	public void unlink(@AuthMember Long memberId, @RequestParam("socialType") SocialType socialType) {
-		memberService.unlink(memberId, socialType);
+		memberService.disconnect(memberId, socialType);
 	}
 
 	@DeleteMapping
