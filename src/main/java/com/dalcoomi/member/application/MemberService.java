@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -204,6 +205,20 @@ public class MemberService {
 		member.updateAiLearningAgreement(agreement);
 
 		memberRepository.save(member);
+	}
+
+	@Async
+	@Transactional
+	public void updateLastLoginTime(Long memberId) {
+		try {
+			Member member = memberRepository.findById(memberId);
+
+			member.updateLoginTime(LocalDateTime.now());
+
+			memberRepository.save(member);
+		} catch (Exception e) {
+			// do nothing
+		}
 	}
 
 	@Transactional

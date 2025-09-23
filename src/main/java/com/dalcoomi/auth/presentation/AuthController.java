@@ -18,6 +18,7 @@ import com.dalcoomi.auth.dto.request.LoginRequest;
 import com.dalcoomi.auth.dto.response.LoginResponse;
 import com.dalcoomi.auth.dto.response.ReissueTokenResponse;
 import com.dalcoomi.auth.dto.response.TestTokenResponse;
+import com.dalcoomi.member.application.MemberService;
 import com.dalcoomi.member.dto.SocialInfo;
 
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final AuthService authService;
+	private final MemberService memberService;
 
 	@PostMapping("/login")
 	@ResponseStatus(OK)
@@ -54,6 +56,8 @@ public class AuthController {
 	@ResponseStatus(OK)
 	public ReissueTokenResponse reissueToken(@AuthMember Long memberId) {
 		TokenInfo tokenInfo = authService.reissueToken(memberId);
+
+		memberService.updateLastLoginTime(memberId);
 
 		return ReissueTokenResponse.from(tokenInfo);
 	}
