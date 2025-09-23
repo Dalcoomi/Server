@@ -60,7 +60,7 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.Withdrawal;
 import com.dalcoomi.member.dto.LeaderTransferInfo;
-import com.dalcoomi.member.dto.request.IntegrateRequest;
+import com.dalcoomi.member.dto.request.ConnectRequest;
 import com.dalcoomi.member.dto.request.SignUpRequest;
 import com.dalcoomi.member.dto.request.UpdateProfileRequest;
 import com.dalcoomi.member.dto.request.WithdrawRequest;
@@ -178,7 +178,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 소셜 계정 통합 성공")
-	void integrate_social_account_success() throws Exception {
+	void connect_social_account_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -186,16 +186,17 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		SocialConnection existingConnection = SocialConnectionFixture.getSocialConnection1(member);
 		socialConnectionRepository.save(existingConnection);
 
-		IntegrateRequest request = new IntegrateRequest(
+		ConnectRequest request = new ConnectRequest(
 			member.getEmail(),
 			"naver-social-id-123",
+			"test-token",
 			NAVER
 		);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/members/integrate")
+		mockMvc.perform(post("/api/members/connect")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isOk())
@@ -211,7 +212,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 이미 존재하는 소셜 계정으로 통합 시도 시 실패")
-	void integrate_already_existing_social_account_fail() throws Exception {
+	void connect_already_existing_social_account_fail() throws Exception {
 		// given
 		Member member1 = MemberFixture.getMember1();
 		member1 = memberRepository.save(member1);
@@ -223,16 +224,17 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		socialConnectionRepository.save(existingNaverConnection);
 
 		// member1이 이미 존재하는 네이버 계정으로 통합 시도
-		IntegrateRequest request = new IntegrateRequest(
+		ConnectRequest request = new ConnectRequest(
 			existingNaverConnection.getSocialEmail(),
 			existingNaverConnection.getSocialId(),
+			existingNaverConnection.getSocialRefreshToken(),
 			existingNaverConnection.getSocialType()
 		);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/members/integrate")
+		mockMvc.perform(post("/api/members/connect")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isConflict())
@@ -613,7 +615,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 소셜 연결 해제 성공")
-	void unlink_social_connection_success() throws Exception {
+	void disconnect_social_connection_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -627,7 +629,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		// when & then
-		mockMvc.perform(delete("/api/members/unlink")
+		mockMvc.perform(delete("/api/members/disconnect")
 				.param("socialType", "KAKAO")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -640,7 +642,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 마지막 소셜 연결 해제 시 실패")
-	void unlink_last_social_connection_fail() throws Exception {
+	void disconnect_last_social_connection_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -652,7 +654,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		// when & then
-		mockMvc.perform(delete("/api/members/unlink")
+		mockMvc.perform(delete("/api/members/disconnect")
 				.param("socialType", "KAKAO")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
@@ -664,7 +666,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 지원하지 않는 소셜 타입으로 연결 해제 시 실패")
-	void unlink_non_supporting_social_type_fail() throws Exception {
+	void disconnect_non_supporting_social_type_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -678,7 +680,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		// when & then
-		mockMvc.perform(delete("/api/members/unlink")
+		mockMvc.perform(delete("/api/members/disconnect")
 				.param("socialType", "GOOGLE")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())

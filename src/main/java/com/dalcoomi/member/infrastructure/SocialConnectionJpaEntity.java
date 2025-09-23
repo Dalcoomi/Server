@@ -45,6 +45,9 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 	@Column(name = "social_id", nullable = false)
 	private String socialId;
 
+	@Column(name = "social_refresh_token", nullable = false)
+	private String socialRefreshToken;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "social_type", nullable = false)
 	private SocialType socialType;
@@ -54,11 +57,12 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 
 	@Builder
 	public SocialConnectionJpaEntity(Long id, MemberJpaEntity member, String socialEmail, String socialId,
-		SocialType socialType, LocalDateTime deletedAt) {
+		String socialRefreshToken, SocialType socialType, LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
 		this.socialEmail = socialEmail;
 		this.socialId = socialId;
+		this.socialRefreshToken = socialRefreshToken;
 		this.socialType = socialType;
 		this.deletedAt = deletedAt;
 	}
@@ -69,6 +73,7 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 			.member(MemberJpaEntity.from(socialConnection.getMember()))
 			.socialEmail(socialConnection.getSocialEmail())
 			.socialId(socialConnection.getSocialId())
+			.socialRefreshToken(socialConnection.getSocialRefreshToken())
 			.socialType(socialConnection.getSocialType())
 			.deletedAt(socialConnection.getDeletedAt())
 			.build();
@@ -80,6 +85,7 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 			.member(this.member.toModel())
 			.socialEmail(this.socialEmail)
 			.socialId(this.socialId)
+			.socialRefreshToken(this.socialRefreshToken)
 			.socialType(this.socialType)
 			.deletedAt(this.deletedAt)
 			.build();
