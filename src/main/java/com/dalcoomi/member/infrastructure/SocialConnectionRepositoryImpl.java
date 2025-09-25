@@ -1,5 +1,6 @@
 package com.dalcoomi.member.infrastructure;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.SOCIAL_CONNECTION_NOT_FOUND;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.member.infrastructure.QSocialConnectionJpaEntity.socialConnectionJpaEntity;
 
@@ -8,6 +9,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
@@ -44,6 +46,7 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	@Override
 	public SocialConnection findByMemberIdAndSocialType(Long memberId, SocialType socialType) {
 		return socialConnectionJpaRepository.findByMemberIdAndSocialType(memberId, socialType)
+			.orElseThrow(() -> new NotFoundException(SOCIAL_CONNECTION_NOT_FOUND))
 			.toModel();
 	}
 

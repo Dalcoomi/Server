@@ -45,6 +45,8 @@ public enum ErrorMessage {
 	MEMBER_INVALID_PROFILE_IMAGE_URL("유효하지 않는 프로필입니다."),
 	MEMBER_INVALID_SERVICE_AGREEMENT("서비스 이용 약관 동의 여부는 true 여야 합니다."),
 	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다."),
+
+	SOCIAL_CONNECTION_NOT_FOUND("존재하지 않는 소셜 정보입니다."),
 	LAST_SOCIAL_CONNECTION("소셜 연결은 최소 1개 이상 있어야 합니다."),
 
 	WITHDRAWAL_NOT_FOUND("탈퇴 데이터가 존재하지 않습니다."),

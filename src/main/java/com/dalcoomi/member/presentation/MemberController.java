@@ -105,7 +105,7 @@ public class MemberController {
 
 	@GetMapping("/nickname/availability")
 	@ResponseStatus(OK)
-	public Boolean checkNicknameAvailability(@AuthMember Long memberId, @RequestParam String nickname) {
+	public Boolean checkNicknameAvailability(@AuthMember Long memberId, @RequestParam("nickname") String nickname) {
 		return memberService.checkNicknameAvailability(memberId, nickname);
 	}
 
