@@ -25,11 +25,11 @@ import lombok.Getter;
 public class Member {
 
 	private final Long id;
-	private final String email;
 	private final Boolean serviceAgreement;
 	private final Boolean collectionAgreement;
 	private final LocalDateTime createdAt;
 	private final LocalDateTime updatedAt;
+	private String email;
 	private String name;
 	private String nickname;
 	private LocalDate birthday;
@@ -61,6 +61,10 @@ public class Member {
 
 	public void skipValidationNickname(String nickname) {
 		this.nickname = nickname;
+	}
+
+	public void updateEmail(String email) {
+		this.email = email;
 	}
 
 	public void updateProfile(String name, String nickname, LocalDate birthday, String gender) {
