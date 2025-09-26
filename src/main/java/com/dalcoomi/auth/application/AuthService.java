@@ -102,6 +102,13 @@ public class AuthService {
 	public TokenInfo createTestToken(Long memberId) {
 		memberRepository.findById(memberId);
 
+		// 기존 리프레시 토큰이 있으면 제거
+		try {
+			jwtService.deleteRefreshToken(memberId);
+		} catch (NotFoundException e) {
+			log.info("기존 리프레시 토큰 없음 - memberId: {}", memberId);
+		}
+
 		return jwtService.createAndSaveToken(memberId, TEST_ROLE);
 	}
 }
