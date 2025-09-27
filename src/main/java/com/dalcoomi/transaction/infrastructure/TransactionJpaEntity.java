@@ -6,6 +6,8 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 import java.time.LocalDateTime;
 
 import com.dalcoomi.category.infrastructure.CategoryJpaEntity;
+import com.dalcoomi.common.encryption.EncryptedLongConverter;
+import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.transaction.domain.Transaction;
@@ -23,9 +25,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import com.dalcoomi.common.encryption.EncryptedStringConverter;
-import com.dalcoomi.common.encryption.EncryptedLongConverter;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

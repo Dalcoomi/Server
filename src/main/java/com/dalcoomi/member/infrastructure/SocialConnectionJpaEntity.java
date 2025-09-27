@@ -4,6 +4,7 @@ import static jakarta.persistence.ConstraintMode.NO_CONSTRAINT;
 
 import java.time.LocalDateTime;
 
+import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
@@ -20,8 +21,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

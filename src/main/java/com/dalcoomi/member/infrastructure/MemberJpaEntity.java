@@ -3,6 +3,7 @@ package com.dalcoomi.member.infrastructure;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.domain.Member;
 
@@ -12,8 +13,6 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
-import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
