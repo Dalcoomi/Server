@@ -8,9 +8,12 @@ import com.dalcoomi.member.domain.Member;
 
 import io.hypersistence.utils.hibernate.id.Tsid;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
+import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,9 +30,11 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	@Column(name = "id", nullable = false, unique = true)
 	private Long id;
 
+	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "email", nullable = false)
 	private String email;
 
+	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "name", nullable = false)
 	private String name;
 
@@ -39,6 +44,7 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	@Column(name = "birthday", nullable = true)
 	private LocalDate birthday;
 
+	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "gender", nullable = true)
 	private String gender;
 

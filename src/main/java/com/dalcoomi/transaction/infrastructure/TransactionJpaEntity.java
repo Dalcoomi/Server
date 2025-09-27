@@ -12,6 +12,7 @@ import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.TransactionType;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -22,6 +23,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import com.dalcoomi.common.encryption.EncryptedStringConverter;
+import com.dalcoomi.common.encryption.EncryptedLongConverter;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -52,9 +56,11 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	@Column(name = "transaction_date", nullable = false)
 	private LocalDateTime transactionDate;
 
+	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "content", nullable = true)
 	private String content;
 
+	@Convert(converter = EncryptedLongConverter.class)
 	@Column(name = "amount", nullable = false)
 	private Long amount;
 
