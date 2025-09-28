@@ -9,7 +9,7 @@ import com.dalcoomi.member.domain.SocialType;
 
 public interface SocialConnectionJpaRepository extends JpaRepository<SocialConnectionJpaEntity, Long> {
 
-	boolean existsBySocialIdAndSocialType(String socialId, SocialType socialType);
+	boolean existsBySocialIdHashAndSocialType(String socialIdHash, SocialType socialType);
 
 	Optional<SocialConnectionJpaEntity> findByMemberIdAndSocialType(Long memberId, SocialType socialType);
 

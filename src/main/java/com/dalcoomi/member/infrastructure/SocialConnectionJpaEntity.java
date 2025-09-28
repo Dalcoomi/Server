@@ -45,9 +45,15 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 	@Column(name = "social_email", nullable = false)
 	private String socialEmail;
 
+	@Column(name = "social_email_hash", nullable = false)
+	private String socialEmailHash;
+
 	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "social_id", nullable = false)
 	private String socialId;
+
+	@Column(name = "social_id_hash", nullable = false)
+	private String socialIdHash;
 
 	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "social_refresh_token", nullable = false)
@@ -61,12 +67,15 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 	private LocalDateTime deletedAt;
 
 	@Builder
-	public SocialConnectionJpaEntity(Long id, MemberJpaEntity member, String socialEmail, String socialId,
-		String socialRefreshToken, SocialType socialType, LocalDateTime deletedAt) {
+	public SocialConnectionJpaEntity(Long id, MemberJpaEntity member, String socialEmail, String socialEmailHash,
+		String socialId, String socialIdHash, String socialRefreshToken, SocialType socialType,
+		LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
 		this.socialEmail = socialEmail;
+		this.socialEmailHash = socialEmailHash;
 		this.socialId = socialId;
+		this.socialIdHash = socialIdHash;
 		this.socialRefreshToken = socialRefreshToken;
 		this.socialType = socialType;
 		this.deletedAt = deletedAt;
@@ -77,7 +86,9 @@ public class SocialConnectionJpaEntity extends BaseTimeEntity {
 			.id(socialConnection.getId())
 			.member(MemberJpaEntity.from(socialConnection.getMember()))
 			.socialEmail(socialConnection.getSocialEmail())
+			.socialEmailHash("")
 			.socialId(socialConnection.getSocialId())
+			.socialIdHash("")
 			.socialRefreshToken(socialConnection.getSocialRefreshToken())
 			.socialType(socialConnection.getSocialType())
 			.deletedAt(socialConnection.getDeletedAt())

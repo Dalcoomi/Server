@@ -6,11 +6,11 @@ import static com.dalcoomi.common.error.model.ErrorMessage.ENCRYPTION_KEY_GENERA
 import static com.dalcoomi.common.error.model.ErrorMessage.ENCRYPTION_KEY_INVALID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -45,9 +45,8 @@ public class EncryptionService {
 
 		try {
 			Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-
 			byte[] iv = new byte[GCM_IV_LENGTH];
-
+			
 			new SecureRandom().nextBytes(iv);
 
 			GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
@@ -63,7 +62,6 @@ public class EncryptionService {
 			return Base64.getEncoder().encodeToString(encryptedWithIv);
 		} catch (Exception e) {
 			log.error(ENCRYPTION_FAILED.getMessage(), e);
-
 			throw new DalcoomiException(ENCRYPTION_FAILED, e);
 		}
 	}
@@ -75,11 +73,12 @@ public class EncryptionService {
 
 		try {
 			byte[] decodedText = Base64.getDecoder().decode(cipherText);
-
 			byte[] iv = new byte[GCM_IV_LENGTH];
+
 			System.arraycopy(decodedText, 0, iv, 0, GCM_IV_LENGTH);
 
 			byte[] encrypted = new byte[decodedText.length - GCM_IV_LENGTH];
+
 			System.arraycopy(decodedText, GCM_IV_LENGTH, encrypted, 0, encrypted.length);
 
 			Cipher cipher = Cipher.getInstance(TRANSFORMATION);
@@ -103,17 +102,16 @@ public class EncryptionService {
 				throw new DalcoomiException(ENCRYPTION_KEY_INVALID);
 			}
 
-			return new SecretKeySpec(encryptionKey.getBytes(UTF_8), ALGORITHM);
+			try {
+				MessageDigest digest = MessageDigest.getInstance("SHA-256");
+				byte[] keyBytes = digest.digest(encryptionKey.getBytes(UTF_8));
+
+				return new SecretKeySpec(keyBytes, ALGORITHM);
+			} catch (Exception e) {
+				throw new DalcoomiException(ENCRYPTION_KEY_GENERATION_FAILED, e);
+			}
 		}
 
-		try {
-			KeyGenerator keyGenerator = KeyGenerator.getInstance(ALGORITHM);
-
-			keyGenerator.init(256);
-
-			return keyGenerator.generateKey();
-		} catch (Exception e) {
-			throw new DalcoomiException(ENCRYPTION_KEY_GENERATION_FAILED, e);
-		}
+		throw new DalcoomiException(ENCRYPTION_KEY_INVALID);
 	}
 }

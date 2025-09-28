@@ -3,6 +3,7 @@ package com.dalcoomi.member.infrastructure;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.dalcoomi.common.encryption.EncryptedLocalDateConverter;
 import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.domain.Member;
@@ -33,19 +34,32 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	@Column(name = "email", nullable = false)
 	private String email;
 
+	@Column(name = "email_hash", nullable = false)
+	private String emailHash;
+
 	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "name", nullable = false)
 	private String name;
 
+	@Column(name = "name_hash", nullable = false)
+	private String nameHash;
+
 	@Column(name = "nickname", nullable = false)
 	private String nickname;
 
+	@Convert(converter = EncryptedLocalDateConverter.class)
 	@Column(name = "birthday", nullable = true)
 	private LocalDate birthday;
+
+	@Column(name = "birthday_hash", nullable = true)
+	private String birthdayHash;
 
 	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "gender", nullable = true)
 	private String gender;
+
+	@Column(name = "gender_hash", nullable = true)
+	private String genderHash;
 
 	@Column(name = "profile_image_url", nullable = false)
 	private String profileImageUrl;
@@ -66,15 +80,20 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	private LocalDateTime deletedAt;
 
 	@Builder
-	public MemberJpaEntity(Long id, String email, String name, String nickname, LocalDate birthday, String gender,
-		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, Boolean aiLearningAgreement,
-		LocalDateTime lastLoginAt, LocalDateTime deletedAt) {
+	public MemberJpaEntity(Long id, String email, String emailHash, String name, String nameHash, String nickname,
+		LocalDate birthday, String birthdayHash, String gender, String genderHash, String profileImageUrl,
+		Boolean serviceAgreement, Boolean collectionAgreement, Boolean aiLearningAgreement, LocalDateTime lastLoginAt,
+		LocalDateTime deletedAt) {
 		this.id = id;
 		this.email = email;
+		this.emailHash = emailHash;
 		this.name = name;
+		this.nameHash = nameHash;
 		this.nickname = nickname;
 		this.birthday = birthday;
+		this.birthdayHash = birthdayHash;
 		this.gender = gender;
+		this.genderHash = genderHash;
 		this.profileImageUrl = profileImageUrl;
 		this.serviceAgreement = serviceAgreement;
 		this.collectionAgreement = collectionAgreement;
@@ -87,10 +106,14 @@ public class MemberJpaEntity extends BaseTimeEntity {
 		return MemberJpaEntity.builder()
 			.id(member.getId())
 			.email(member.getEmail())
+			.emailHash("")
 			.name(member.getName())
+			.nameHash("")
 			.nickname(member.getNickname())
 			.birthday(member.getBirthday())
+			.birthdayHash("")
 			.gender(member.getGender())
+			.genderHash("")
 			.profileImageUrl(member.getProfileImageUrl())
 			.serviceAgreement(member.getServiceAgreement())
 			.collectionAgreement(member.getCollectionAgreement())
