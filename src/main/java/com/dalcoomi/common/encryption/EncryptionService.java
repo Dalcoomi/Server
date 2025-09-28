@@ -46,7 +46,7 @@ public class EncryptionService {
 		try {
 			Cipher cipher = Cipher.getInstance(TRANSFORMATION);
 			byte[] iv = new byte[GCM_IV_LENGTH];
-			
+
 			new SecureRandom().nextBytes(iv);
 
 			GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
