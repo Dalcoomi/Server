@@ -1,6 +1,9 @@
 package com.dalcoomi.common.encryption;
 
+import java.util.Base64;
+
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -20,6 +23,28 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
 
 	@Override
 	public String convertToEntityAttribute(String dbData) {
-		return encryptionService.decrypt(dbData);
+		if (!StringUtils.hasText(dbData)) {
+			return dbData;
+		}
+
+		if (isEncrypted(dbData)) {
+			return encryptionService.decrypt(dbData);
+		}
+
+		return dbData;
+	}
+
+	private boolean isEncrypted(String value) {
+		if (!StringUtils.hasText(value) || value.length() < 20) {
+			return false;
+		}
+
+		try {
+			Base64.getDecoder().decode(value);
+
+			return true;
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
 	}
 }
