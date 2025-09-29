@@ -97,6 +97,7 @@ public class Transaction {
 		this.creator = null;
 	}
 
+
 	private String validateContent(String content) {
 		if (!isBlank(content) && content.length() > CONTENT_LENGTH) {
 			throw new IllegalArgumentException(TRANSACTION_INVALID_CONTENT.getMessage());

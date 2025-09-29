@@ -1053,7 +1053,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		mockMvc.perform(get("/api/members/refresh-token/{socialType}", NAVER)
 				.contentType(APPLICATION_JSON))
-			.andExpect(status().is5xxServerError())
+			.andExpect(status().isNotFound())
 			.andDo(print());
 	}
 
