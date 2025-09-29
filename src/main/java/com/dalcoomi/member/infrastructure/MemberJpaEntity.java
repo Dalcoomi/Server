@@ -3,7 +3,6 @@ package com.dalcoomi.member.infrastructure;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.dalcoomi.common.encryption.EncryptedLocalDateConverter;
 import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.domain.Member;
@@ -47,9 +46,9 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	@Column(name = "nickname", nullable = false)
 	private String nickname;
 
-	@Convert(converter = EncryptedLocalDateConverter.class)
+	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "birthday", nullable = true)
-	private LocalDate birthday;
+	private String birthday;
 
 	@Column(name = "birthday_hash", nullable = true)
 	private String birthdayHash;
@@ -81,7 +80,7 @@ public class MemberJpaEntity extends BaseTimeEntity {
 
 	@Builder
 	public MemberJpaEntity(Long id, String email, String emailHash, String name, String nameHash, String nickname,
-		LocalDate birthday, String birthdayHash, String gender, String genderHash, String profileImageUrl,
+		String birthday, String birthdayHash, String gender, String genderHash, String profileImageUrl,
 		Boolean serviceAgreement, Boolean collectionAgreement, Boolean aiLearningAgreement, LocalDateTime lastLoginAt,
 		LocalDateTime deletedAt) {
 		this.id = id;
@@ -106,14 +105,14 @@ public class MemberJpaEntity extends BaseTimeEntity {
 		return MemberJpaEntity.builder()
 			.id(member.getId())
 			.email(member.getEmail())
-			.emailHash("")
+			.emailHash(member.getEmailHash())
 			.name(member.getName())
-			.nameHash("")
+			.nameHash(member.getNameHash())
 			.nickname(member.getNickname())
-			.birthday(member.getBirthday())
-			.birthdayHash("")
+			.birthday(member.getBirthday() != null ? member.getBirthday().toString() : null)
+			.birthdayHash(member.getBirthdayHash())
 			.gender(member.getGender())
-			.genderHash("")
+			.genderHash(member.getGenderHash())
 			.profileImageUrl(member.getProfileImageUrl())
 			.serviceAgreement(member.getServiceAgreement())
 			.collectionAgreement(member.getCollectionAgreement())
@@ -127,10 +126,14 @@ public class MemberJpaEntity extends BaseTimeEntity {
 		Member member = Member.builder()
 			.id(this.id)
 			.email(this.email)
+			.emailHash(this.emailHash)
 			.name(this.name)
+			.nameHash(this.nameHash)
 			.nickname("dummy")
-			.birthday(this.birthday)
+			.birthday(this.birthday != null ? LocalDate.parse(this.birthday) : null)
+			.birthdayHash(this.birthdayHash)
 			.gender(this.gender)
+			.genderHash(this.genderHash)
 			.profileImageUrl(this.profileImageUrl)
 			.serviceAgreement(this.serviceAgreement)
 			.collectionAgreement(this.collectionAgreement)
@@ -145,4 +148,5 @@ public class MemberJpaEntity extends BaseTimeEntity {
 
 		return member;
 	}
+
 }
