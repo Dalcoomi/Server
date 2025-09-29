@@ -30,25 +30,34 @@ public class Member {
 	private final LocalDateTime createdAt;
 	private final LocalDateTime updatedAt;
 	private String email;
+	private String emailHash;
 	private String name;
+	private String nameHash;
 	private String nickname;
 	private LocalDate birthday;
+	private String birthdayHash;
 	private String gender;
+	private String genderHash;
 	private String profileImageUrl;
 	private Boolean aiLearningAgreement;
 	private LocalDateTime lastLoginAt;
 	private LocalDateTime deletedAt;
 
 	@Builder
-	public Member(Long id, String email, String name, String nickname, LocalDate birthday, String gender,
-		String profileImageUrl, Boolean serviceAgreement, Boolean collectionAgreement, Boolean aiLearningAgreement,
+	public Member(Long id, String email, String emailHash, String name, String nameHash, String nickname,
+		LocalDate birthday, String birthdayHash, String gender, String genderHash, String profileImageUrl,
+		Boolean serviceAgreement, Boolean collectionAgreement, Boolean aiLearningAgreement,
 		LocalDateTime lastLoginAt, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
 		this.id = id;
 		this.email = validateEmail(email);
+		this.emailHash = emailHash;
 		this.name = validateName(name);
+		this.nameHash = nameHash;
 		this.nickname = validateNickname(nickname);
 		this.birthday = birthday;
+		this.birthdayHash = birthdayHash;
 		this.gender = validateGender(gender);
+		this.genderHash = genderHash;
 		this.profileImageUrl = validateProfileImageUrl(profileImageUrl);
 		this.serviceAgreement = requireNonNull(serviceAgreement);
 		this.collectionAgreement = requireNonNull(collectionAgreement);
@@ -89,6 +98,25 @@ public class Member {
 
 	public void softDelete() {
 		this.deletedAt = LocalDateTime.now();
+	}
+
+	public void updateEmailForEncryption(String encryptedEmail, String emailHash) {
+		this.email = encryptedEmail;
+		this.emailHash = emailHash;
+	}
+
+	public void updateNameForEncryption(String encryptedName, String nameHash) {
+		this.name = encryptedName;
+		this.nameHash = nameHash;
+	}
+
+	public void updateBirthdayHashForEncryption(String birthdayHash) {
+		this.birthdayHash = birthdayHash;
+	}
+
+	public void updateGenderForEncryption(String encryptedGender, String genderHash) {
+		this.gender = encryptedGender;
+		this.genderHash = genderHash;
 	}
 
 	private String validateEmail(String email) {
