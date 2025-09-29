@@ -1,6 +1,17 @@
 -- V3: 검색 가능한 암호화를 위한 해시 컬럼 추가
 -- 하이브리드 암호화 방식: 원본은 AES-GCM으로 암호화, 검색용은 HMAC 해시
 
+-- 1. 컬럼 타입 변경 (JPA 엔티티 변경 사항 반영)
+----------------------------------------------------------------------------------
+
+-- member 테이블: birthday 컬럼을 String(VARCHAR)으로 변경
+ALTER TABLE member
+MODIFY COLUMN birthday VARCHAR(10) NULL;
+
+-- transaction 테이블: amount 컬럼을 String(VARCHAR)으로 변경
+ALTER TABLE transaction
+MODIFY COLUMN amount VARCHAR(255) NOT NULL;
+
 -- Member 테이블에 해시 컬럼 추가
 ALTER TABLE member
 ADD COLUMN email_hash VARCHAR(255) NOT NULL DEFAULT '',
