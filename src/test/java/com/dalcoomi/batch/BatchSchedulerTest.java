@@ -20,6 +20,9 @@ class BatchSchedulerTest {
 	@Mock
 	private TransactionBatchService transactionBatchService;
 
+	@Mock
+	private DataMigrationBatchService dataMigrationBatchService;
+
 	@InjectMocks
 	private BatchScheduler batchScheduler;
 
@@ -47,6 +50,19 @@ class BatchSchedulerTest {
 
 		// then
 		then(transactionBatchService).should().deleteExpiredAnonymizedData();
+	}
+
+	@Test
+	@DisplayName("데이터 마이그레이션 배치 스케줄러 실행 성공")
+	void run_data_migration_batch_service_success() {
+		// given
+		willDoNothing().given(dataMigrationBatchService).migratePlainTextData();
+
+		// when
+		batchScheduler.runDataMigrationBatch();
+
+		// then
+		then(dataMigrationBatchService).should().migratePlainTextData();
 	}
 
 	@Test

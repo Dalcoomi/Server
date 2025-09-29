@@ -6,12 +6,14 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 import java.time.LocalDateTime;
 
 import com.dalcoomi.category.infrastructure.CategoryJpaEntity;
+import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.TransactionType;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -52,11 +54,13 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 	@Column(name = "transaction_date", nullable = false)
 	private LocalDateTime transactionDate;
 
+	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "content", nullable = true)
 	private String content;
 
+	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "amount", nullable = false)
-	private Long amount;
+	private String amount;
 
 	@Column(name = "deleted_at", nullable = true)
 	private LocalDateTime deletedAt;
@@ -70,7 +74,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 
 	@Builder
 	public TransactionJpaEntity(Long id, MemberJpaEntity creator, CategoryJpaEntity category, Long teamId,
-		LocalDateTime transactionDate, String content, Long amount, TransactionType transactionType,
+		LocalDateTime transactionDate, String content, String amount, TransactionType transactionType,
 		LocalDateTime deletedAt, Boolean dataRetentionConsent) {
 		this.id = id;
 		this.creator = creator;
@@ -92,7 +96,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 			.teamId(transaction.getTeamId())
 			.transactionDate(transaction.getTransactionDate())
 			.content(transaction.getContent())
-			.amount(transaction.getAmount())
+			.amount(transaction.getAmount() != null ? transaction.getAmount().toString() : null)
 			.transactionType(transaction.getTransactionType())
 			.deletedAt(transaction.getDeletedAt())
 			.dataRetentionConsent(transaction.getDataRetentionConsent())
@@ -107,7 +111,7 @@ public class TransactionJpaEntity extends BaseTimeEntity {
 			.teamId(this.teamId)
 			.transactionDate(this.transactionDate)
 			.content(this.content)
-			.amount(this.amount)
+			.amount(this.amount != null && !this.amount.isEmpty() ? Long.parseLong(amount) : null)
 			.transactionType(this.transactionType)
 			.deletedAt(this.deletedAt)
 			.dataRetentionConsent(this.dataRetentionConsent)

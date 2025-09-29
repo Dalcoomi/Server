@@ -233,6 +233,7 @@ public class MemberService {
 
 	@Transactional
 	public void disconnect(Long memberId, SocialType socialType) {
+		Member member = memberRepository.findById(memberId);
 		List<SocialConnection> socialConnections = socialConnectionRepository.findByMemberId(memberId);
 
 		if (socialConnections.size() == 1) {
@@ -242,6 +243,10 @@ public class MemberService {
 		for (SocialConnection socialConnection : socialConnections) {
 			if (socialConnection.getSocialType().equals(socialType)) {
 				socialConnectionRepository.deleteById(socialConnection.getId());
+			} else {
+				member.updateEmail(socialConnection.getSocialEmail());
+
+				memberRepository.save(member);
 			}
 		}
 	}

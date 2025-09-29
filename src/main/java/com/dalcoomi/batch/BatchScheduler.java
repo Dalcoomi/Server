@@ -15,6 +15,7 @@ public class BatchScheduler {
 
 	private final WithdrawalBatchService withdrawalBatchService;
 	private final TransactionBatchService transactionBatchService;
+	private final DataMigrationBatchService dataMigrationBatchService;
 
 	/**
 	 * 휴면 탈퇴 데이터 정리 배치
@@ -53,5 +54,25 @@ public class BatchScheduler {
 		}
 
 		log.info("================================");
+	}
+
+	/**
+	 * 평문 데이터 암호화 마이그레이션 배치
+	 * 매일 새벽 4시에 실행 (임시 - 마이그레이션 완료 후 제거 예정)
+	 * - 평문으로 저장된 개인정보를 암호화로 변환
+	 * - 검색용 해시 값 생성
+	 */
+	@Scheduled(cron = "0 0 4 * * *")
+	public void runDataMigrationBatch() {
+		log.info("===== 평문 데이터 암호화 마이그레이션 배치 시작 =====");
+
+		try {
+			dataMigrationBatchService.migratePlainTextData();
+			log.info("평문 데이터 암호화 마이그레이션 배치 완료");
+		} catch (Exception e) {
+			log.error("평문 데이터 암호화 마이그레이션 배치 실행 중 오류 발생", e);
+		}
+
+		log.info("================================================");
 	}
 }

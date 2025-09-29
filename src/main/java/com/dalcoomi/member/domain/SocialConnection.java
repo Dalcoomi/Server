@@ -19,16 +19,20 @@ public class SocialConnection {
 	private final String socialId;
 	private final SocialType socialType;
 	private String socialEmail;
+	private String socialEmailHash;
+	private String socialIdHash;
 	private String socialRefreshToken;
 	private LocalDateTime deletedAt;
 
 	@Builder
-	public SocialConnection(Long id, Member member, String socialEmail, String socialId, String socialRefreshToken,
-		SocialType socialType, LocalDateTime deletedAt) {
+	public SocialConnection(Long id, Member member, String socialEmail, String socialEmailHash, String socialId,
+		String socialIdHash, String socialRefreshToken, SocialType socialType, LocalDateTime deletedAt) {
 		this.id = id;
 		this.member = member;
 		this.socialEmail = socialEmail;
+		this.socialEmailHash = socialEmailHash;
 		this.socialId = validateSocialId(socialId);
+		this.socialIdHash = socialIdHash;
 		this.socialRefreshToken = socialRefreshToken;
 		this.socialType = socialType;
 		this.deletedAt = deletedAt;
@@ -44,6 +48,15 @@ public class SocialConnection {
 
 	public void softDelete() {
 		this.deletedAt = now();
+	}
+
+	public void updateSocialEmailForEncryption(String encryptedSocialEmail, String socialEmailHash) {
+		this.socialEmail = encryptedSocialEmail;
+		this.socialEmailHash = socialEmailHash;
+	}
+
+	public void updateSocialIdForEncryption(String socialIdHash) {
+		this.socialIdHash = socialIdHash;
 	}
 
 	private String validateSocialId(String socialId) {

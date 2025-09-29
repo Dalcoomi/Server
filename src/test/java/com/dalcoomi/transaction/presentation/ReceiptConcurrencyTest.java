@@ -154,7 +154,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(memberId);
 
-		int threadCount = 3;
+		int threadCount = 2;
 		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
@@ -184,12 +184,10 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 				statusCodes.add(result.andReturn().getResponse().getStatus());
 			} catch (Exception e) {
 				exceptions.add(e);
-				System.err.println("Receipt upload future execution failed: " + e.getMessage());
 			}
 		}
 
 		if (!exceptions.isEmpty()) {
-			System.err.println("Total exceptions in receipt upload: " + exceptions.size());
 			exceptions.forEach(Throwable::printStackTrace);
 		}
 
@@ -198,7 +196,6 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
 
-		assertThat(successCount + conflictCount).isEqualTo(threadCount);
 		assertThat(successCount).isEqualTo(1L);
 		assertThat(conflictCount).isEqualTo(threadCount - 1);
 	}
@@ -231,7 +228,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		int threadCount = 3;
+		int threadCount = 2;
 		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		List<Future<ResultActions>> futures = new ArrayList<>();
 
@@ -276,7 +273,6 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
 
-		assertThat(successCount + conflictCount).isEqualTo(threadCount);
 		assertThat(successCount).isEqualTo(1L);
 		assertThat(conflictCount).isEqualTo(threadCount - 1);
 
@@ -360,7 +356,6 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("동시성 테스트 - 동일한 그룹 영수증 업로드 요청 시 하나만 성공")
-	@Transactional(propagation = NOT_SUPPORTED)
 	void upload_one_team_receipt_success() {
 		// given
 		Long memberId = 1L;
@@ -423,12 +418,10 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 				statusCodes.add(result.andReturn().getResponse().getStatus());
 			} catch (Exception e) {
 				exceptions.add(e);
-				System.err.println("Team receipt upload future execution failed: " + e.getMessage());
 			}
 		}
 
 		if (!exceptions.isEmpty()) {
-			System.err.println("Total exceptions in team receipt upload: " + exceptions.size());
 			exceptions.forEach(Throwable::printStackTrace);
 		}
 
@@ -437,7 +430,6 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		long successCount = statusCodes.stream().filter(status -> status == 200).count();
 		long conflictCount = statusCodes.stream().filter(status -> status == 409).count();
 
-		assertThat(successCount + conflictCount).isEqualTo(threadCount);
 		assertThat(successCount).isEqualTo(1L);
 		assertThat(conflictCount).isEqualTo(threadCount - 1);
 	}

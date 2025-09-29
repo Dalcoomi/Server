@@ -50,7 +50,7 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("5년 경과한 익명화된 개인 거래 내역 삭제")
-	void deleteExpiredAnonymizedData_5_years_expired_transactions_deleted() {
+	void delete_expired_anonymized_data_5_years_expired_transactions_deleted() {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -70,14 +70,13 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 
 		// then
 		List<Transaction> remainingTransactions = transactionRepository.findAll();
-		boolean exists = remainingTransactions.stream()
-			.anyMatch(t -> t.getId().equals(transactionId));
+		boolean exists = remainingTransactions.stream().anyMatch(t -> t.getId().equals(transactionId));
 		assertThat(exists).isFalse();
 	}
 
 	@Test
 	@DisplayName("5년 미만 경과한 익명화된 거래 내역은 삭제하지 않음")
-	void deleteExpiredAnonymizedData_not_expired_transactions_not_deleted() {
+	void delete_expired_anonymized_data_not_expired_transactions_not_deleted() {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -97,14 +96,13 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 
 		// then
 		List<Transaction> remainingTransactions = transactionRepository.findAll();
-		boolean exists = remainingTransactions.stream()
-			.anyMatch(t -> t.getId().equals(transactionId));
+		boolean exists = remainingTransactions.stream().anyMatch(t -> t.getId().equals(transactionId));
 		assertThat(exists).isTrue();
 	}
 
 	@Test
 	@DisplayName("비익명화 거래 내역이나 그룹 거래 내역은 삭제하지 않음")
-	void deleteExpiredAnonymizedData_non_anonymized_or_team_transactions_not_deleted() {
+	void delete_expired_anonymized_data_non_anonymized_or_team_transactions_not_deleted() {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);

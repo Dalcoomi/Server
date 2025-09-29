@@ -8,13 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorMessage {
 
 	SERVER_ERROR("서버 에러가 발생했습니다."),
-	S3_UPLOAD_ERROR("S3로 이미지 업로드 중 오류가 발생했습니다."),
-	S3_DELETE_ERROR("S3 이미지 삭제 중 오류가 발생했습니다."),
-	IMAGE_NOT_FOUND("이미지가 존재하지 않습니다."),
-	IMAGE_NOT_SUPPORT("지원하지 않는 이미지 형식입니다. jpg, jpeg, png, svg만 가능합니다."),
-	INVALID_REQUEST_BODY("요청 바디가 올바르지 않습니다."),
-	MAX_UPLOAD_SIZE_EXCEEDED("파일 업로드 크기 10MB 제한을 초과했습니다."),
 
+	INVALID_REQUEST_BODY("요청 바디가 올바르지 않습니다."),
 	MISSING_REQUIRED_PARAMETER_ERROR("필수 파라미터 '%s'가 누락되었습니다."),
 	PARAMETER_FORMAT_NOT_CORRECT("파라미터 '%s'의 형식이 올바르지 않습니다."),
 	INPUT_VALUE_IS_INVALID("입력값이 유효하지 않습니다."),
@@ -26,7 +21,17 @@ public enum ErrorMessage {
 	INVALID_TOKEN("유효하지 않는 토큰입니다."),
 	TOKEN_NOT_FOUND("토큰이 존재하지 않습니다."),
 
-	UNSUPPORTED_SOCIAL_TYPE("지원하지 않는 소셜 서비스입니다."),
+	S3_UPLOAD_ERROR("S3로 이미지 업로드 중 오류가 발생했습니다."),
+	S3_DELETE_ERROR("S3 이미지 삭제 중 오류가 발생했습니다."),
+
+	IMAGE_NOT_FOUND("이미지가 존재하지 않습니다."),
+	IMAGE_NOT_SUPPORT("지원하지 않는 이미지 형식입니다. jpg, jpeg, png, svg만 가능합니다."),
+	MAX_UPLOAD_SIZE_EXCEEDED("파일 업로드 크기 10MB 제한을 초과했습니다."),
+
+	ENCRYPTION_FAILED("데이터 암호화에 실패했습니다."),
+	DECRYPTION_FAILED("데이터 복호화에 실패했습니다."),
+	ENCRYPTION_KEY_INVALID("암호화 키가 유효하지 않습니다. 32자여야 합니다."),
+	ENCRYPTION_KEY_GENERATION_FAILED("암호화 키 생성에 실패했습니다."),
 
 	LOCK_EXIST_ERROR("동일한 요청이 처리 중입니다."),
 
@@ -45,6 +50,9 @@ public enum ErrorMessage {
 	MEMBER_INVALID_PROFILE_IMAGE_URL("유효하지 않는 프로필입니다."),
 	MEMBER_INVALID_SERVICE_AGREEMENT("서비스 이용 약관 동의 여부는 true 여야 합니다."),
 	MEMBER_INVALID_COLLECTION_AGREEMENT("개인 정보 수집 동의 여부는 true 여야 합니다."),
+
+	UNSUPPORTED_SOCIAL_TYPE("지원하지 않는 소셜 서비스입니다."),
+	SOCIAL_CONNECTION_NOT_FOUND("존재하지 않는 소셜 정보입니다."),
 	LAST_SOCIAL_CONNECTION("소셜 연결은 최소 1개 이상 있어야 합니다."),
 
 	WITHDRAWAL_NOT_FOUND("탈퇴 데이터가 존재하지 않습니다."),
