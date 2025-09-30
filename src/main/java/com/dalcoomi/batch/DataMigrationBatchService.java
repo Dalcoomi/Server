@@ -1,5 +1,7 @@
 package com.dalcoomi.batch;
 
+import static org.springframework.util.StringUtils.hasText;
+
 import java.util.Base64;
 import java.util.List;
 
@@ -134,7 +136,7 @@ public class DataMigrationBatchService {
 				var member = memberEntity.toModel();
 				boolean needsUpdate = false;
 
-				if (isPlainText(member.getEmail()) && (member.getEmailHash().isBlank())) {
+				if (isPlainText(member.getEmail()) && !hasText(member.getEmailHash())) {
 					String originalEmail = member.getEmail();
 
 					member.updateEmailForEncryption(originalEmail, hashService.hash(originalEmail));
@@ -142,7 +144,7 @@ public class DataMigrationBatchService {
 					needsUpdate = true;
 				}
 
-				if (isPlainText(member.getName()) && (member.getNameHash().isBlank())) {
+				if (isPlainText(member.getName()) && !hasText(member.getNameHash())) {
 					String originalName = member.getName();
 
 					member.updateNameForEncryption(originalName, hashService.hash(originalName));
@@ -150,7 +152,7 @@ public class DataMigrationBatchService {
 					needsUpdate = true;
 				}
 
-				if (member.getBirthdayHash().isBlank()) {
+				if (!hasText(member.getBirthdayHash())) {
 					String birthdayStr = member.getBirthday().toString();
 
 					member.updateBirthdayHashForEncryption(hashService.hash(birthdayStr));
@@ -158,7 +160,7 @@ public class DataMigrationBatchService {
 					needsUpdate = true;
 				}
 
-				if (member.getGenderHash().isBlank()) {
+				if (!hasText(member.getGenderHash())) {
 					String originalGender = member.getGender();
 
 					member.updateGenderForEncryption(originalGender, hashService.hash(originalGender));
@@ -182,8 +184,7 @@ public class DataMigrationBatchService {
 			try {
 				boolean needsUpdate = false;
 
-				if (isPlainText(socialConnection.getSocialEmail()) && (socialConnection.getSocialEmailHash()
-					.isBlank())) {
+				if (isPlainText(socialConnection.getSocialEmail()) && !hasText(socialConnection.getSocialEmailHash())) {
 					String originalEmail = socialConnection.getSocialEmail();
 
 					socialConnection.updateSocialEmailForEncryption(originalEmail, hashService.hash(originalEmail));
@@ -191,7 +192,7 @@ public class DataMigrationBatchService {
 					needsUpdate = true;
 				}
 
-				if (isPlainText(socialConnection.getSocialId()) && (socialConnection.getSocialIdHash().isBlank())) {
+				if (isPlainText(socialConnection.getSocialId()) && !hasText(socialConnection.getSocialIdHash())) {
 					String originalId = socialConnection.getSocialId();
 
 					socialConnection.updateSocialIdForEncryption(hashService.hash(originalId));
@@ -240,8 +241,6 @@ public class DataMigrationBatchService {
 
 			return false;
 		} catch (Exception e) {
-			log.error("복호화 실패", e);
-
 			return true;
 		}
 	}
