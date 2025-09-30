@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dalcoomi.common.encryption.EncryptionService;
 import com.dalcoomi.common.encryption.HashService;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaRepository;
@@ -24,11 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class DataMigrationBatchService {
 
-	private static final int BATCH_SIZE = 100;
+	private static final int BATCH_SIZE = 500;
 	private final MemberJpaRepository memberJpaRepository;
 	private final SocialConnectionJpaRepository socialConnectionJpaRepository;
 	private final TransactionJpaRepository transactionJpaRepository;
-	private final EncryptionService encryptionService;
 	private final HashService hashService;
 
 	@Transactional
@@ -222,12 +220,9 @@ public class DataMigrationBatchService {
 
 	private void migrateSingleTransaction(TransactionJpaEntity transactionEntity) {
 		var transaction = transactionEntity.toModel();
-		boolean needsUpdate = false;
+		boolean needsUpdate = transaction.getContent() != null && isPlainText(transaction.getContent());
 
-		// content가 평문이면 암호화
-		if (transaction.getContent() != null && isPlainText(transaction.getContent())) {
-			String originalContent = transaction.getContent();
-			transaction.updateContent(originalContent);
+		if (transaction.getAmount() != null && isPlainText(String.valueOf(transaction.getAmount()))) {
 			needsUpdate = true;
 		}
 
