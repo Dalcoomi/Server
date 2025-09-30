@@ -245,10 +245,11 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			.build();
 
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
-		given(transactionService.create(eq(member.getId()), any(List.class), any(List.class))).willAnswer(invocation -> {
-			Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
-			return List.of(); // 빈 리스트 반환
-		});
+		given(transactionService.create(eq(member.getId()), any(List.class), any(List.class)))
+			.willAnswer(invocation -> {
+				Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
+				return List.of(); // 빈 리스트 반환
+			});
 
 		// 인증 설정
 		setAuthentication(member.getId());
