@@ -115,6 +115,20 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 	@AfterEach
 	void tearDown() {
 		executorService.shutdown();
+		try {
+			if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+				executorService.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			executorService.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
+
+		// Redis 키 정리
+		Set<String> keys = redisTemplate.keys("receipt:*");
+		if (keys != null && !keys.isEmpty()) {
+			redisTemplate.delete(keys);
+		}
 	}
 
 	@Test
@@ -153,6 +167,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		// 인증 설정
 		setAuthentication(memberId);
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
 		int threadCount = 2;
 		CyclicBarrier barrier = new CyclicBarrier(threadCount);
@@ -162,7 +177,8 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
+					SecurityContextHolder.getContext().setAuthentication(auth);
+					barrier.await(15, TimeUnit.SECONDS); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -227,6 +243,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		// 인증 설정
 		setAuthentication(member.getId());
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
 		int threadCount = 2;
 		CyclicBarrier barrier = new CyclicBarrier(threadCount);
@@ -236,6 +253,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
+					SecurityContextHolder.getContext().setAuthentication(auth);
 					barrier.await(10, TimeUnit.SECONDS);
 
 					return mockMvc.perform(post("/api/transactions/receipts/save")
@@ -308,6 +326,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		// 인증 설정
 		setAuthentication(memberId);
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
 		int threadCount = 3;
 		CountDownLatch latch = new CountDownLatch(threadCount);
@@ -319,6 +338,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
+					SecurityContextHolder.getContext().setAuthentication(auth);
 					MockMultipartFile receipt = new MockMultipartFile(
 						"receipt",
 						"test-receipt-" + index + ".jpg",
@@ -327,7 +347,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 					);
 
 					latch.countDown();
-					latch.await();
+					latch.await(15, TimeUnit.SECONDS);
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -385,6 +405,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		// 인증 설정
 		setAuthentication(memberId);
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
 		int threadCount = 3;
 		CyclicBarrier barrier = new CyclicBarrier(threadCount);
@@ -394,7 +415,8 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		for (int i = 0; i < threadCount; i++) {
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
-					barrier.await(); // 모든 스레드가 이 지점에 도달할 때까지 대기
+					SecurityContextHolder.getContext().setAuthentication(auth);
+					barrier.await(15, TimeUnit.SECONDS); // 모든 스레드가 이 지점에 도달할 때까지 대기
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -446,6 +468,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		// 인증 설정
 		setAuthentication(member.getId());
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
 		int threadCount = 3;
 		CountDownLatch latch = new CountDownLatch(threadCount);
@@ -458,6 +481,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 			Future<ResultActions> future = executorService.submit(() -> {
 				try {
+					SecurityContextHolder.getContext().setAuthentication(auth);
 					List<TransactionRequest> transactionRequests = List.of(
 						new TransactionRequest(null, 1000L * index, "테스트" + index,
 							LocalDateTime.of(2025, 1, 23, 10, 30), EXPENSE, categoryId, null));
@@ -468,7 +492,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 						.build();
 
 					latch.countDown();
-					latch.await();
+					latch.await(15, TimeUnit.SECONDS);
 
 					return mockMvc.perform(post("/api/transactions/receipts/save")
 						.content(objectMapper.writeValueAsString(saveRequest))
