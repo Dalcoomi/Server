@@ -157,7 +157,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(categoryService.fetchCategoryNames(eq(memberId), isNull())).willReturn(Arrays.asList("카페", "식비"));
 		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willAnswer(invocation -> {
-			Thread.sleep(100); // 락 유지 시간 연장
+			Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
 			return response;
 		});
 
@@ -243,6 +243,13 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 			.taskId(taskId)
 			.transactions(transactionRequests)
 			.build();
+
+		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
+		given(transactionService.create(eq(member.getId()), any(List.class), any(List.class)))
+			.willAnswer(invocation -> {
+				Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
+				return List.of(); // 빈 리스트 반환
+			});
 
 		// 인증 설정
 		setAuthentication(member.getId());
@@ -397,7 +404,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(categoryService.fetchCategoryNames(memberId, teamId)).willReturn(Arrays.asList("회식", "대관"));
 		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willAnswer(invocation -> {
-			Thread.sleep(100); // 락 유지 시간 연장
+			Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
 			return response;
 		});
 
