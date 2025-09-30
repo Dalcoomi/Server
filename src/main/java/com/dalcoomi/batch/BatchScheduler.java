@@ -1,6 +1,5 @@
 package com.dalcoomi.batch;
 
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -9,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-@EnableScheduling
 @RequiredArgsConstructor
 public class BatchScheduler {
 
@@ -62,7 +60,7 @@ public class BatchScheduler {
 	 * - 평문으로 저장된 개인정보를 암호화로 변환
 	 * - 검색용 해시 값 생성
 	 */
-	@Scheduled(cron = "0 30 9 * * *")
+	@Scheduled(cron = "0 5 11 * * *")
 	public void runDataMigrationBatch() {
 		log.info("===== 평문 데이터 암호화 마이그레이션 배치 시작 =====");
 
