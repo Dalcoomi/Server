@@ -56,6 +56,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 		List<TransactionJpaEntity> content = jpaQueryFactory
 			.selectFrom(transactionJpaEntity)
 			.join(transactionJpaEntity.creator, memberJpaEntity).fetchJoin()
+			.join(transactionJpaEntity.category, categoryJpaEntity).fetchJoin()
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())
 			.fetch();
