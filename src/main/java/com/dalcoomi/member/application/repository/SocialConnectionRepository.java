@@ -3,6 +3,9 @@ package com.dalcoomi.member.application.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.domain.SocialType;
 
@@ -21,6 +24,8 @@ public interface SocialConnectionRepository {
 	List<SocialConnection> findByMemberId(Long memberId);
 
 	List<SocialConnection> findExpiredSoftDeletedWithMember(LocalDateTime cutoffDate);
+
+	Page<SocialConnection> findAll(Pageable pageable);
 
 	void deleteById(Long socialConnectionId);
 

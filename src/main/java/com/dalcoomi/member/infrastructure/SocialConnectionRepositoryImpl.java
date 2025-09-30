@@ -3,10 +3,14 @@ package com.dalcoomi.member.infrastructure;
 import static com.dalcoomi.common.error.model.ErrorMessage.SOCIAL_CONNECTION_NOT_FOUND;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.member.infrastructure.QSocialConnectionJpaEntity.socialConnectionJpaEntity;
+import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.dalcoomi.common.encryption.HashService;
@@ -124,6 +128,27 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 			.stream()
 			.map(SocialConnectionJpaEntity::toModel)
 			.toList();
+	}
+
+	@Override
+	public Page<SocialConnection> findAll(Pageable pageable) {
+		List<SocialConnectionJpaEntity> content = jpaQueryFactory
+			.selectFrom(socialConnectionJpaEntity)
+			.join(socialConnectionJpaEntity.member, memberJpaEntity).fetchJoin()
+			.offset(pageable.getOffset())
+			.limit(pageable.getPageSize())
+			.fetch();
+
+		Long total = jpaQueryFactory
+			.select(socialConnectionJpaEntity.count())
+			.from(socialConnectionJpaEntity)
+			.fetchOne();
+
+		List<SocialConnection> socialConnections = content.stream()
+			.map(SocialConnectionJpaEntity::toModel)
+			.toList();
+
+		return new PageImpl<>(socialConnections, pageable, requireNonNull(total));
 	}
 
 	@Override

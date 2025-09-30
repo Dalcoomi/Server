@@ -8,12 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.dalcoomi.common.encryption.HashService;
+import com.dalcoomi.member.application.repository.SocialConnectionRepository;
+import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.member.infrastructure.MemberJpaRepository;
-import com.dalcoomi.member.infrastructure.SocialConnectionJpaEntity;
-import com.dalcoomi.member.infrastructure.SocialConnectionJpaRepository;
-import com.dalcoomi.transaction.infrastructure.TransactionJpaEntity;
-import com.dalcoomi.transaction.infrastructure.TransactionJpaRepository;
+import com.dalcoomi.transaction.application.repository.TransactionRepository;
+import com.dalcoomi.transaction.domain.Transaction;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +25,8 @@ public class DataMigrationBatchService {
 
 	private static final int BATCH_SIZE = 500;
 	private final MemberJpaRepository memberJpaRepository;
-	private final SocialConnectionJpaRepository socialConnectionJpaRepository;
-	private final TransactionJpaRepository transactionJpaRepository;
+	private final SocialConnectionRepository socialConnectionRepository;
+	private final TransactionRepository transactionRepository;
 	private final HashService hashService;
 
 	public void migratePlainTextData() {
@@ -80,8 +80,7 @@ public class DataMigrationBatchService {
 
 		do {
 			Pageable pageable = PageRequest.of(0, BATCH_SIZE);
-			List<SocialConnectionJpaEntity> plainTextConnections
-				= socialConnectionJpaRepository.findAll(pageable).getContent();
+			List<SocialConnection> plainTextConnections = socialConnectionRepository.findAll(pageable).getContent();
 			processedCount = plainTextConnections.size();
 
 			if (processedCount > 0) {
@@ -105,7 +104,7 @@ public class DataMigrationBatchService {
 
 		do {
 			Pageable pageable = PageRequest.of(0, BATCH_SIZE);
-			List<TransactionJpaEntity> plainTextTransactions = transactionJpaRepository.findAll(pageable).getContent();
+			List<Transaction> plainTextTransactions = transactionRepository.findAll(pageable).getContent();
 			processedCount = plainTextTransactions.size();
 
 			if (processedCount > 0) {
@@ -178,10 +177,9 @@ public class DataMigrationBatchService {
 		}
 	}
 
-	private void migrateSocialConnectionBatch(List<SocialConnectionJpaEntity> socialConnectionEntities) {
-		for (SocialConnectionJpaEntity connectionEntity : socialConnectionEntities) {
+	private void migrateSocialConnectionBatch(List<SocialConnection> socialConnections) {
+		for (SocialConnection socialConnection : socialConnections) {
 			try {
-				var socialConnection = connectionEntity.toModel();
 				boolean needsUpdate = false;
 
 				if (isPlainText(socialConnection.getSocialEmail()) && (socialConnection.getSocialEmailHash()
@@ -202,20 +200,19 @@ public class DataMigrationBatchService {
 				}
 
 				if (needsUpdate) {
-					socialConnectionJpaRepository.save(SocialConnectionJpaEntity.from(socialConnection));
+					socialConnectionRepository.save(socialConnection);
 
 					log.debug("소셜 연결 ID {} 마이그레이션 완료", socialConnection.getId());
 				}
 			} catch (Exception e) {
-				log.error("소셜 연결 ID {} 마이그레이션 실패", connectionEntity.getId(), e);
+				log.error("소셜 연결 ID {} 마이그레이션 실패", socialConnection.getId(), e);
 			}
 		}
 	}
 
-	private void migrateTransactionBatch(List<TransactionJpaEntity> transactionEntities) {
-		for (TransactionJpaEntity transactionEntity : transactionEntities) {
+	private void migrateTransactionBatch(List<Transaction> transactions) {
+		for (Transaction transaction : transactions) {
 			try {
-				var transaction = transactionEntity.toModel();
 				boolean needsUpdate = transaction.getContent() != null && isPlainText(transaction.getContent());
 
 				if (transaction.getAmount() != null && isPlainText(String.valueOf(transaction.getAmount()))) {
@@ -223,12 +220,12 @@ public class DataMigrationBatchService {
 				}
 
 				if (needsUpdate) {
-					transactionJpaRepository.save(TransactionJpaEntity.from(transaction));
+					transactionRepository.save(transaction);
 
 					log.debug("거래 내역 ID {} 마이그레이션 완료", transaction.getId());
 				}
 			} catch (Exception e) {
-				log.error("거래 내역 ID {} 마이그레이션 실패", transactionEntity.getId(), e);
+				log.error("거래 내역 ID {} 마이그레이션 실패", transaction.getId(), e);
 			}
 		}
 	}

@@ -6,10 +6,14 @@ import static com.dalcoomi.common.jpa.DynamicQuery.generateEq;
 import static com.dalcoomi.common.jpa.DynamicQuery.generateEqOrIsNull;
 import static com.dalcoomi.member.infrastructure.QMemberJpaEntity.memberJpaEntity;
 import static com.dalcoomi.transaction.infrastructure.QTransactionJpaEntity.transactionJpaEntity;
+import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.dalcoomi.common.error.exception.NotFoundException;
@@ -48,8 +52,24 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	@Override
-	public List<Transaction> findAll() {
-		return transactionJpaRepository.findAll().stream().map(TransactionJpaEntity::toModel).toList();
+	public Page<Transaction> findAll(Pageable pageable) {
+		List<TransactionJpaEntity> content = jpaQueryFactory
+			.selectFrom(transactionJpaEntity)
+			.join(transactionJpaEntity.creator, memberJpaEntity).fetchJoin()
+			.offset(pageable.getOffset())
+			.limit(pageable.getPageSize())
+			.fetch();
+
+		Long total = jpaQueryFactory
+			.select(transactionJpaEntity.count())
+			.from(transactionJpaEntity)
+			.fetchOne();
+
+		List<Transaction> transactions = content.stream()
+			.map(TransactionJpaEntity::toModel)
+			.toList();
+
+		return new PageImpl<>(transactions, pageable, requireNonNull(total));
 	}
 
 	@Override

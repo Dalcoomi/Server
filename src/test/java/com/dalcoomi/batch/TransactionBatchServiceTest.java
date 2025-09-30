@@ -23,6 +23,8 @@ import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.infrastructure.TransactionJpaEntity;
+import com.dalcoomi.transaction.infrastructure.TransactionJpaRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -38,6 +40,9 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 
 	@Autowired
 	private TransactionRepository transactionRepository;
+
+	@Autowired
+	private TransactionJpaRepository transactionJpaRepository;
 
 	@Autowired
 	private MemberRepository memberRepository;
@@ -69,7 +74,10 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 		transactionBatchService.deleteExpiredAnonymizedData();
 
 		// then
-		List<Transaction> remainingTransactions = transactionRepository.findAll();
+		List<Transaction> remainingTransactions = transactionJpaRepository.findAll()
+			.stream()
+			.map(TransactionJpaEntity::toModel)
+			.toList();
 		boolean exists = remainingTransactions.stream().anyMatch(t -> t.getId().equals(transactionId));
 		assertThat(exists).isFalse();
 	}
@@ -95,7 +103,10 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 		transactionBatchService.deleteExpiredAnonymizedData();
 
 		// then
-		List<Transaction> remainingTransactions = transactionRepository.findAll();
+		List<Transaction> remainingTransactions = transactionJpaRepository.findAll()
+			.stream()
+			.map(TransactionJpaEntity::toModel)
+			.toList();
 		boolean exists = remainingTransactions.stream().anyMatch(t -> t.getId().equals(transactionId));
 		assertThat(exists).isTrue();
 	}
@@ -126,7 +137,10 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 		transactionBatchService.deleteExpiredAnonymizedData();
 
 		// then
-		List<Transaction> remainingTransactions = transactionRepository.findAll();
+		List<Transaction> remainingTransactions = transactionJpaRepository.findAll()
+			.stream()
+			.map(TransactionJpaEntity::toModel)
+			.toList();
 		boolean nonAnonymizedExists = remainingTransactions.stream()
 			.anyMatch(t -> t.getId().equals(nonAnonymizedId));
 		boolean teamTransactionExists = remainingTransactions.stream()
