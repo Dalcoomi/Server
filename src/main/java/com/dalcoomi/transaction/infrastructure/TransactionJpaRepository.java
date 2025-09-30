@@ -13,8 +13,8 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEn
 	@Query("""
 		SELECT t
 		FROM TransactionJpaEntity t
-		WHERE (t.content IS NOT NULL AND LENGTH(t.content) < 100 AND t.content NOT LIKE '%==%')
-		OR (t.amount IS NOT NULL AND LENGTH(t.amount) < 20 AND t.amount NOT LIKE '%==%')
+		WHERE (t.content IS NOT NULL)
+		OR (t.amount IS NOT NULL)
 		""")
 	List<TransactionJpaEntity> findPlainTextTransactions(Pageable pageable);
 }
