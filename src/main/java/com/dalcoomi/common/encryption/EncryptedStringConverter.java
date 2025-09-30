@@ -35,8 +35,6 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
 	}
 
 	private boolean isEncrypted(String value) {
-		// AES-GCM 암호문 최소 길이: Base64(IV 12바이트 + 최소 암호문 + Tag 16바이트) = 약 50자 이상
-		// 평문 이메일/이름은 대부분 100자 이하이므로 100자 기준으로 판별
 		if (!StringUtils.hasText(value) || value.length() < 150) {
 			return false;
 		}
