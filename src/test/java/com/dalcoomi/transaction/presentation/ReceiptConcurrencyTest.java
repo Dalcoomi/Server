@@ -126,7 +126,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		// Redis 키 정리
 		Set<String> keys = redisTemplate.keys("receipt:*");
-		if (keys != null && !keys.isEmpty()) {
+		if (!keys.isEmpty()) {
 			redisTemplate.delete(keys);
 		}
 	}
@@ -154,9 +154,12 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		);
 		AiReceiptResponse response = AiReceiptResponse.builder().taskId(taskId).transactions(mockReceiptInfos).build();
 
-		// Mock 설정
+		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(categoryService.fetchCategoryNames(eq(memberId), isNull())).willReturn(Arrays.asList("카페", "식비"));
-		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(response);
+		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willAnswer(invocation -> {
+			Thread.sleep(100); // 락 유지 시간 연장
+			return response;
+		});
 
 		MockMultipartFile receipt = new MockMultipartFile(
 			"receipt",
@@ -376,7 +379,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("동시성 테스트 - 동일한 그룹 영수증 업로드 요청 시 하나만 성공")
-	void upload_one_team_receipt_success() {
+	void upload_one_team_receipt_success() throws Exception {
 		// given
 		Long memberId = 1L;
 		Long teamId = 2L;
@@ -391,9 +394,12 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		);
 		AiReceiptResponse response = AiReceiptResponse.builder().taskId(taskId).transactions(mockReceiptInfos).build();
 
-		// Mock 설정
+		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(categoryService.fetchCategoryNames(memberId, teamId)).willReturn(Arrays.asList("회식", "대관"));
-		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(response);
+		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willAnswer(invocation -> {
+			Thread.sleep(100); // 락 유지 시간 연장
+			return response;
+		});
 
 		// 동일한 영수증 파일 생성
 		MockMultipartFile receipt = new MockMultipartFile(
