@@ -1,7 +1,5 @@
 package com.dalcoomi.common.encryption;
 
-import java.util.Base64;
-
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -27,24 +25,10 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
 			return dbData;
 		}
 
-		if (isEncrypted(dbData)) {
-			return encryptionService.decrypt(dbData);
-		}
-
-		return dbData;
-	}
-
-	private boolean isEncrypted(String value) {
-		if (!StringUtils.hasText(value) || value.length() < 150) {
-			return false;
-		}
-
 		try {
-			Base64.getDecoder().decode(value);
-
-			return true;
-		} catch (IllegalArgumentException e) {
-			return false;
+			return encryptionService.decrypt(dbData);
+		} catch (Exception e) {
+			return dbData;
 		}
 	}
 }
