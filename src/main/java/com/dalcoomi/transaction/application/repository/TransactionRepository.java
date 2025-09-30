@@ -3,6 +3,9 @@ package com.dalcoomi.transaction.application.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 
@@ -14,7 +17,7 @@ public interface TransactionRepository {
 
 	Transaction findById(Long transactionId);
 
-	List<Transaction> findAll();
+	Page<Transaction> findAll(Pageable pageable);
 
 	List<Transaction> findTransactions(TransactionSearchCriteria criteria);
 

@@ -25,6 +25,8 @@ import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
+import com.dalcoomi.transaction.infrastructure.TransactionJpaEntity;
+import com.dalcoomi.transaction.infrastructure.TransactionJpaRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -46,6 +48,9 @@ class WithdrawalBatchServiceTest extends AbstractContainerBaseTest {
 
 	@Autowired
 	private TransactionRepository transactionRepository;
+
+	@Autowired
+	private TransactionJpaRepository transactionJpaRepository;
 
 	@Autowired
 	private CategoryRepository categoryRepository;
@@ -103,7 +108,10 @@ class WithdrawalBatchServiceTest extends AbstractContainerBaseTest {
 
 		// then
 		Long transactionId = personalTransaction.getId();
-		List<Transaction> remainingTransactions = transactionRepository.findAll();
+		List<Transaction> remainingTransactions = transactionJpaRepository.findAll()
+			.stream()
+			.map(TransactionJpaEntity::toModel)
+			.toList();
 		boolean transactionExists = remainingTransactions.stream().anyMatch(t -> t.getId().equals(transactionId));
 		assertThat(transactionExists).isFalse();
 
