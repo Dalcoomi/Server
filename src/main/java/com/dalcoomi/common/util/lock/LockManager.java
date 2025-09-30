@@ -15,7 +15,7 @@ public class LockManager {
 
 	public Boolean lock(String key) {
 		try {
-			Boolean result = redisTemplate.opsForValue().setIfAbsent(key, "lock", Duration.ofSeconds(10));
+			Boolean result = redisTemplate.opsForValue().setIfAbsent(key, "lock", Duration.ofSeconds(30));
 
 			return Boolean.TRUE.equals(result);
 		} catch (Exception e) {
