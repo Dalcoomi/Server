@@ -99,6 +99,8 @@ public class DataMigrationBatchService {
 	private int migrateTransactionData() {
 		int processedCount = 0;
 		int totalProcessed = 0;
+		int maxIterations = 5;
+		int iteration = 0;
 
 		do {
 			Pageable pageable = PageRequest.of(0, BATCH_SIZE);
@@ -110,6 +112,12 @@ public class DataMigrationBatchService {
 				migrateTransactionBatch(plainTextTransactions);
 				totalProcessed += processedCount;
 				log.info("거래 내역 배치 처리 완료: {} 건, 총 처리: {} 건", processedCount, totalProcessed);
+			}
+
+			iteration++;
+			if (iteration >= maxIterations) {
+				log.error("거래 내역 마이그레이션 최대 반복 횟수({}) 초과. 무한 루프 가능성. 중단합니다.", maxIterations);
+				break;
 			}
 		} while (processedCount == BATCH_SIZE);
 
@@ -233,12 +241,13 @@ public class DataMigrationBatchService {
 	}
 
 	private boolean isPlainText(String value) {
-		if (value == null || value.length() < 20) {
+		if (value == null || value.length() < 150) {
 			return true;
 		}
 
 		try {
 			java.util.Base64.getDecoder().decode(value);
+
 			return false;
 		} catch (IllegalArgumentException e) {
 			return true;
