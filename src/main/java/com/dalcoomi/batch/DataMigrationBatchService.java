@@ -37,16 +37,16 @@ public class DataMigrationBatchService {
 		try {
 			int totalProcessed = 0;
 
-			log.info("회원 데이터 마이그레이션 시작");
+			log.info("==== 회원 데이터 마이그레이션 시작 ====");
 			totalProcessed += migrateMemberData();
 
-			log.info("소셜 연결 데이터 마이그레이션 시작");
+			log.info("==== 소셜 연결 데이터 마이그레이션 시작 ====");
 			totalProcessed += migrateSocialConnectionData();
 
-			log.info("거래 내역 데이터 마이그레이션 시작");
+			log.info("==== 거래 내역 데이터 마이그레이션 시작 ====");
 			totalProcessed += migrateTransactionData();
 
-			log.info("평문 데이터 암호화 마이그레이션 완료. 총 {} 건 처리", totalProcessed);
+			log.info("==== 평문 데이터 암호화 마이그레이션 완료. 총 {} 건 처리 ====", totalProcessed);
 		} catch (Exception e) {
 			log.error("평문 데이터 마이그레이션 중 오류 발생", e);
 
@@ -67,8 +67,6 @@ public class DataMigrationBatchService {
 				migrateMemberBatch(plainTextMembers);
 
 				totalProcessed += processedCount;
-
-				log.info("회원 배치 처리 완료: {} 건, 총 처리: {} 건", processedCount, totalProcessed);
 			}
 		} while (processedCount == BATCH_SIZE);
 		log.info("회원 데이터 마이그레이션 완료: {} 건", totalProcessed);
@@ -89,8 +87,6 @@ public class DataMigrationBatchService {
 				migrateSocialConnectionBatch(plainTextConnections);
 
 				totalProcessed += processedCount;
-
-				log.info("소셜 연결 배치 처리 완료: {} 건, 총 처리: {} 건", processedCount, totalProcessed);
 			}
 		} while (processedCount == BATCH_SIZE);
 		log.info("소셜 연결 데이터 마이그레이션 완료: {} 건", totalProcessed);
@@ -101,11 +97,10 @@ public class DataMigrationBatchService {
 	private int migrateTransactionData() {
 		int processedCount;
 		int totalProcessed = 0;
-		int maxIterations = 2;
-		int iteration = 0;
+		int page = 0;
 
 		do {
-			Pageable pageable = PageRequest.of(0, BATCH_SIZE);
+			Pageable pageable = PageRequest.of(page, BATCH_SIZE);
 			List<Transaction> plainTextTransactions = transactionRepository.findAll(pageable).getContent();
 			processedCount = plainTextTransactions.size();
 
@@ -113,16 +108,7 @@ public class DataMigrationBatchService {
 				migrateTransactionBatch(plainTextTransactions);
 
 				totalProcessed += processedCount;
-
-				log.info("거래 내역 배치 처리 완료: {} 건, 총 처리: {} 건", processedCount, totalProcessed);
-			}
-
-			iteration++;
-
-			if (iteration >= maxIterations) {
-				log.error("거래 내역 마이그레이션 최대 반복 횟수({}) 초과. 무한 루프 가능성. 중단합니다.", maxIterations);
-
-				break;
+				page++;
 			}
 		} while (processedCount == BATCH_SIZE);
 		log.info("거래 내역 데이터 마이그레이션 완료: {} 건", totalProcessed);
@@ -203,7 +189,7 @@ public class DataMigrationBatchService {
 				if (needsUpdate) {
 					socialConnectionRepository.save(socialConnection);
 
-					log.debug("소셜 연결 ID {} 마이그레이션 완료", socialConnection.getId());
+					log.info("소셜 연결 ID {} 마이그레이션 완료", socialConnection.getId());
 				}
 			} catch (Exception e) {
 				log.error("소셜 연결 ID {} 마이그레이션 실패", socialConnection.getId(), e);

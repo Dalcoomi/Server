@@ -62,6 +62,7 @@ public class EncryptionService {
 			return Base64.getEncoder().encodeToString(encryptedWithIv);
 		} catch (Exception e) {
 			log.error(ENCRYPTION_FAILED.getMessage(), e);
+
 			throw new DalcoomiException(ENCRYPTION_FAILED, e);
 		}
 	}
@@ -90,9 +91,9 @@ public class EncryptionService {
 
 			return new String(decryptedText, UTF_8);
 		} catch (Exception e) {
-			log.error(DECRYPTION_FAILED.getMessage(), e);
+			log.error("{} 복호화 대상: {}", DECRYPTION_FAILED.getMessage(), cipherText);
 
-			throw new DalcoomiException(DECRYPTION_FAILED, e);
+			throw new DalcoomiException(DECRYPTION_FAILED);
 		}
 	}
 
