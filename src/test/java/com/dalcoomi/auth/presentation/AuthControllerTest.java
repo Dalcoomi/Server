@@ -35,6 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.AbstractContainerBaseTest;
+import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.dto.request.LoginRequest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.fixture.MemberFixture;
@@ -67,6 +68,9 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 
 	@Autowired
 	private StringRedisTemplate redisTemplate;
+
+	@Autowired
+	private JwtService jwtService;
 
 	@AfterEach
 	void tearDown() {
@@ -366,6 +370,68 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 				.header("Refresh-Token", invalidToken)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isUnauthorized())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 다른 Refresh Token으로 재발급 시도 시 실패")
+	void reissue_token_fail_with_different_user_token() throws Exception {
+		// given - 첫 번째 사용자
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		SocialConnection socialConnection1 = SocialConnectionFixture.getSocialConnection1(member1);
+		socialConnection1 = socialConnectionRepository.save(socialConnection1);
+
+		String fakeRefreshToken = jwtService.createToken(member1.getId(), 259200000L, "REFRESH", "MEMBER");
+		redisTemplate.opsForValue().set(member1.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, fakeRefreshToken);
+
+		LoginRequest loginRequest1 = new LoginRequest(socialConnection1.getSocialEmail(),
+			socialConnection1.getSocialId(),
+			socialConnection1.getSocialRefreshToken(), socialConnection1.getSocialType());
+		String loginJson1 = objectMapper.writeValueAsString(loginRequest1);
+
+		mockMvc.perform(post("/api/auth/login")
+				.contentType(APPLICATION_JSON)
+				.content(loginJson1))
+			.andExpect(status().isOk());
+
+		// when & then
+		mockMvc.perform(post("/api/auth/reissue")
+				.header("Refresh-Token", fakeRefreshToken)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isUnauthorized())
+			.andExpect(result -> {
+				String content = result.getResponse().getContentAsString();
+
+				assertThat(content).contains("잘못된 형식의 토큰입니다.");
+			})
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 만료된 Refresh Token으로 재발급 시도 시 실패")
+	void reissue_token_fail_with_expired_token() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 이미 만료된 토큰 생성 (duration: -1ms)
+		String expiredToken = jwtService.createToken(member.getId(), -1L, "REFRESH", "MEMBER");
+
+		// Redis에는 저장 (실제로는 만료되어도 Redis에는 남아있을 수 있음)
+		redisTemplate.opsForValue().set(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, expiredToken);
+
+		// when & then
+		mockMvc.perform(post("/api/auth/reissue")
+				.header("Refresh-Token", expiredToken)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isUnauthorized())
+			.andExpect(result -> {
+				String content = result.getResponse().getContentAsString();
+
+				assertThat(content).contains("토큰이 만료되었습니다.");
+			})
 			.andDo(print());
 	}
 
