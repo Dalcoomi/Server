@@ -11,7 +11,9 @@ import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_HAS_EXPIRED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_NOT_FOUND;
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.UUID.randomUUID;
 
+import java.time.Duration;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
@@ -55,13 +57,17 @@ public class JwtService {
 	public String authenticate(String header) {
 		if (isNull(header) || !header.startsWith(BEARER_PREFIX)) {
 			log.error("Authorization Header Error: [{}]", header);
+
 			throw new UnauthorizedException(AUTHORIZATION_HEADER_ERROR);
 		}
 
 		String token = header.substring(BEARER_PREFIX.length());
 
 		try {
-			Claims claims = validateToken(token);
+			Claims claims = Jwts.parser().verifyWith(getSignKey())
+				.build()
+				.parseSignedClaims(token)
+				.getPayload();
 			String memberId = claims.getSubject();
 
 			log.info("토큰 인증 성공 - memberId: {}", memberId);
@@ -69,25 +75,13 @@ public class JwtService {
 			return memberId;
 		} catch (MalformedJwtException e) {
 			log.error("잘못된 형식의 토큰: {}", e.getMessage());
+
 			throw new UnauthorizedException(MALFORMED_TOKEN);
 		} catch (ExpiredJwtException e) {
 			log.error("만료된 토큰: {}", e.getMessage());
+
 			throw new UnauthorizedException(TOKEN_HAS_EXPIRED);
 		}
-	}
-
-	private Claims validateToken(String token) {
-		return Jwts.parser()
-			.verifyWith(getSignKey())
-			.build()
-			.parseSignedClaims(token)
-			.getPayload();
-	}
-
-	private SecretKey getSignKey() {
-		byte[] keyBytes = Decoders.BASE64.decode(tokenSecret);
-
-		return Keys.hmacShaKeyFor(keyBytes);
 	}
 
 	public TokenInfo createAndSaveToken(Long memberId, String role) {
@@ -101,7 +95,8 @@ public class JwtService {
 
 		String refreshToken = createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE, role);
 
-		redisTemplate.opsForValue().set(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken);
+		redisTemplate.opsForValue()
+			.set(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken, Duration.ofMillis(refreshTokenDuration));
 
 		return new TokenInfo(accessToken, refreshToken);
 	}
@@ -116,6 +111,50 @@ public class JwtService {
 		}
 	}
 
+	public Long validateRefreshToken(String refreshToken) {
+		try {
+			Claims claims = Jwts.parser().verifyWith(getSignKey())
+				.build()
+				.parseSignedClaims(refreshToken)
+				.getPayload();
+
+			String tokenType = claims.get("type", String.class);
+
+			if (!REFRESH_TOKEN_TYPE.equals(tokenType)) {
+				log.error("Refresh Token이 아닌 토큰 사용 시도: {}", tokenType);
+
+				throw new UnauthorizedException(MALFORMED_TOKEN);
+			}
+
+			Long memberId = Long.valueOf(claims.getSubject());
+			String storedToken = redisTemplate.opsForValue().get(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
+
+			if (storedToken == null) {
+				log.error("Redis에 저장된 Refresh Token이 없음 - memberId: {}", memberId);
+
+				throw new UnauthorizedException(TOKEN_NOT_FOUND);
+			}
+
+			if (!storedToken.equals(refreshToken)) {
+				log.error("Refresh Token 불일치 - memberId: {}", memberId);
+
+				throw new UnauthorizedException(MALFORMED_TOKEN);
+			}
+
+			log.info("Refresh Token 검증 성공 - memberId: {}", memberId);
+
+			return memberId;
+		} catch (MalformedJwtException e) {
+			log.error("잘못된 형식의 Refresh Token: {}", e.getMessage());
+
+			throw new UnauthorizedException(MALFORMED_TOKEN);
+		} catch (ExpiredJwtException e) {
+			log.error("만료된 Refresh Token: {}", e.getMessage());
+
+			throw new UnauthorizedException(TOKEN_HAS_EXPIRED);
+		}
+	}
+
 	public String createToken(Long memberId, long duration, String tokenType, String role) {
 		Date now = new Date();
 		Date expireDate = new Date(now.getTime() + duration);
@@ -127,7 +166,14 @@ public class JwtService {
 			.expiration(expireDate)
 			.claim("type", tokenType)
 			.claim("role", role)
+			.id(randomUUID().toString())
 			.signWith(getSignKey())
 			.compact();
+	}
+
+	private SecretKey getSignKey() {
+		byte[] keyBytes = Decoders.BASE64.decode(tokenSecret);
+
+		return Keys.hmacShaKeyFor(keyBytes);
 	}
 }

@@ -36,6 +36,7 @@ public class SecurityConfig {
 		"/health",
 		"/login/**",
 		"/api/auth/login",
+		"/api/auth/reissue",
 		"/api/auth/test/token",
 		"/api/members/sign-up",
 		"/api/members/connect"

@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.AbstractContainerBaseTest;
-import com.dalcoomi.annotation.WithMockCustomUser;
 import com.dalcoomi.auth.dto.request.LoginRequest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.fixture.MemberFixture;
@@ -71,6 +71,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 	@AfterEach
 	void tearDown() {
 		SecurityContextHolder.clearContext();
+		Assertions.assertNotNull(redisTemplate.getConnectionFactory());
+		redisTemplate.getConnectionFactory().getConnection().serverCommands().flushAll();
 	}
 
 	@Test
@@ -272,43 +274,98 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 토큰 재발급 성공")
-	@WithMockCustomUser()
 	void reissue_token_success() throws Exception {
 		// given
-		Long memberId = 1L;
-		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-		String dummyRefreshToken = "dummy-refresh-token";
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
 
-		redisTemplate.opsForValue().set(key, dummyRefreshToken);
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnection = socialConnectionRepository.save(socialConnection);
+
+		LoginRequest loginRequest = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
+			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType());
+		String loginJson = objectMapper.writeValueAsString(loginRequest);
+		String loginResponse = mockMvc.perform(post("/api/auth/login")
+				.contentType(APPLICATION_JSON)
+				.content(loginJson))
+			.andExpect(status().isOk())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+
+		String oldToken = objectMapper.readTree(loginResponse).get("refreshToken").asText();
 
 		// when & then
-		mockMvc.perform(post("/api/auth/reissue")
+		String reissueResponse = mockMvc.perform(post("/api/auth/reissue")
+				.header("Refresh-Token", oldToken)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.accessToken").exists())
 			.andExpect(jsonPath("$.refreshToken").exists())
-			.andDo(print());
+			.andDo(print())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+
+		String newToken = objectMapper.readTree(reissueResponse).get("refreshToken").asText();
+
+		// Token Rotation 검증: 새 토큰과 기존 토큰이 달라야 함
+		assertThat(newToken).isNotEqualTo(oldToken);
+
+		// Redis에도 새 토큰이 저장되어 있어야 함
+		String storedToken = redisTemplate.opsForValue().get(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
+		assertThat(storedToken).isEqualTo(newToken);
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 토큰 재발급 실패")
-	@WithMockCustomUser()
+	@DisplayName("통합 테스트 - Redis에 토큰이 없을 경우 토큰 재발급 실패")
 	void reissue_token_fail() throws Exception {
 		// given
-		Long memberId = 1L;
-		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
 
-		redisTemplate.delete(key);
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnection = socialConnectionRepository.save(socialConnection);
+
+		LoginRequest loginRequest = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
+			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType());
+		String loginJson = objectMapper.writeValueAsString(loginRequest);
+		String loginResponse = mockMvc.perform(post("/api/auth/login")
+				.contentType(APPLICATION_JSON)
+				.content(loginJson))
+			.andExpect(status().isOk())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+
+		String refreshToken = objectMapper.readTree(loginResponse).get("refreshToken").asText();
+
+		redisTemplate.delete(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
 
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
+				.header("Refresh-Token", refreshToken)
 				.contentType(APPLICATION_JSON))
-			.andExpect(status().isNotFound())
+			.andExpect(status().isUnauthorized())
 			.andExpect(result -> {
 				String content = result.getResponse().getContentAsString();
 
 				assertThat(content).contains(TOKEN_NOT_FOUND.getMessage());
 			})
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 잘못된 토큰 형식으로 토큰 재발급 실패")
+	void reissue_token_fail_malformed_token() throws Exception {
+		// given
+		String invalidToken = "invalid.token.format";
+
+		// when & then
+		mockMvc.perform(post("/api/auth/reissue")
+				.header("Refresh-Token", invalidToken)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isUnauthorized())
 			.andDo(print());
 	}
 
