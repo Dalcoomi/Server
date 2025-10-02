@@ -5,6 +5,7 @@ import static org.springframework.http.HttpStatus.OK;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.auth.application.AuthService;
+import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.dto.LoginInfo;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.auth.dto.request.LoginRequest;
@@ -30,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final AuthService authService;
+	private final JwtService jwtService;
 	private final MemberService memberService;
 
 	@PostMapping("/login")
@@ -55,7 +58,8 @@ public class AuthController {
 
 	@PostMapping("/reissue")
 	@ResponseStatus(OK)
-	public ReissueTokenResponse reissueToken(@AuthMember Long memberId) {
+	public ReissueTokenResponse reissueToken(@RequestHeader("Refresh-Token") String refreshToken) {
+		Long memberId = jwtService.validateRefreshToken(refreshToken);
 		TokenInfo tokenInfo = authService.reissueToken(memberId);
 
 		memberService.updateLastLoginTime(memberId);
