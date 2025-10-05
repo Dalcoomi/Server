@@ -145,8 +145,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.refreshToken").exists())
 			.andDo(print());
 
-		String savedRefreshToken = redisTemplate.opsForValue().get(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
-		assertThat(savedRefreshToken).isNotNull();
+		Boolean hasSavedToken = redisTemplate.hasKey(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
+		assertThat(hasSavedToken).isTrue();
 
 		Member updatedMember = memberRepository.findById(member.getId());
 		assertThat(updatedMember.getLastLoginAt()).isNotNull();
@@ -213,8 +213,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			.andDo(print());
 
 		// 로그인 성공 확인
-		String savedRefreshToken = redisTemplate.opsForValue().get(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
-		assertThat(savedRefreshToken).isNotNull();
+		Boolean hasSavedToken = redisTemplate.hasKey(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
+		assertThat(hasSavedToken).isTrue();
 
 		List<SocialConnection> saveSocialConnections = socialConnectionRepository.findBySocialEmailOrSocialId(
 			socialConnection.getSocialEmail(), socialConnection.getSocialId());
@@ -239,24 +239,29 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType());
 		String loginJson = objectMapper.writeValueAsString(loginRequest);
 
-		mockMvc.perform(post("/api/auth/login")
+		String loginResponse = mockMvc.perform(post("/api/auth/login")
 				.contentType(APPLICATION_JSON)
 				.content(loginJson))
-			.andExpect(status().isOk());
+			.andExpect(status().isOk())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+
+		String refreshToken = objectMapper.readTree(loginResponse).get("refreshToken").asText();
 
 		// 인증 설정
 		setAuthentication(member.getId());
 
 		// when & then
 		mockMvc.perform(post("/api/auth/logout")
+				.header("Refresh-Token", refreshToken)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andDo(print());
 
-		String savedRefreshTokenAfterLogout = redisTemplate.opsForValue()
-			.get(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
-
-		assertThat(savedRefreshTokenAfterLogout).isNull();
+		Boolean isMember = redisTemplate.opsForSet()
+			.isMember(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken);
+		assertThat(isMember).isFalse();
 	}
 
 	@Test
@@ -269,8 +274,11 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
+		String fakeRefreshToken = "fake.refresh.token";
+
 		// when & then
 		mockMvc.perform(post("/api/auth/logout")
+				.header("Refresh-Token", fakeRefreshToken)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isNotFound())
 			.andDo(print());
@@ -316,9 +324,13 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		// Token Rotation 검증: 새 토큰과 기존 토큰이 달라야 함
 		assertThat(newToken).isNotEqualTo(oldToken);
 
-		// Redis에도 새 토큰이 저장되어 있어야 함
-		String storedToken = redisTemplate.opsForValue().get(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
-		assertThat(storedToken).isEqualTo(newToken);
+		// Redis에 새 토큰이 저장되어 있고, 기존 토큰은 삭제되어야 함
+		Boolean hasNewToken = redisTemplate.opsForSet()
+			.isMember(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, newToken);
+		Boolean hasOldToken = redisTemplate.opsForSet()
+			.isMember(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, oldToken);
+		assertThat(hasNewToken).isTrue();
+		assertThat(hasOldToken).isFalse();
 	}
 
 	@Test
@@ -376,7 +388,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 	@Test
 	@DisplayName("통합 테스트 - 다른 Refresh Token으로 재발급 시도 시 실패")
 	void reissue_token_fail_with_different_user_token() throws Exception {
-		// given - 첫 번째 사용자
+		// given
 		Member member1 = MemberFixture.getMember1();
 		member1 = memberRepository.save(member1);
 
@@ -384,7 +396,6 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		socialConnection1 = socialConnectionRepository.save(socialConnection1);
 
 		String fakeRefreshToken = jwtService.createToken(member1.getId(), 259200000L, "REFRESH", "MEMBER");
-		redisTemplate.opsForValue().set(member1.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, fakeRefreshToken);
 
 		LoginRequest loginRequest1 = new LoginRequest(socialConnection1.getSocialEmail(),
 			socialConnection1.getSocialId(),
@@ -404,7 +415,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			.andExpect(result -> {
 				String content = result.getResponse().getContentAsString();
 
-				assertThat(content).contains("잘못된 형식의 토큰입니다.");
+				assertThat(content).contains("토큰이 존재하지 않습니다.");
 			})
 			.andDo(print());
 	}
@@ -420,7 +431,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		String expiredToken = jwtService.createToken(member.getId(), -1L, "REFRESH", "MEMBER");
 
 		// Redis에는 저장 (실제로는 만료되어도 Redis에는 남아있을 수 있음)
-		redisTemplate.opsForValue().set(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, expiredToken);
+		redisTemplate.opsForSet().add(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, expiredToken);
 
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
