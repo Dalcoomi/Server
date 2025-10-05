@@ -95,18 +95,27 @@ public class JwtService {
 
 		String refreshToken = createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE, role);
 
-		redisTemplate.opsForValue()
-			.set(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken, Duration.ofMillis(refreshTokenDuration));
+		redisTemplate.opsForSet()
+			.add(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken);
+		redisTemplate.expire(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, Duration.ofMillis(refreshTokenDuration));
 
 		return new TokenInfo(accessToken, refreshToken);
 	}
 
-	public void deleteRefreshToken(Long memberId) {
-		boolean existsRefreshToken = requireNonNull(redisTemplate.hasKey(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX));
+	public void deleteRefreshToken(Long memberId, String refreshToken) {
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Long removed = redisTemplate.opsForSet().remove(key, refreshToken);
 
-		if (existsRefreshToken) {
-			redisTemplate.delete(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
-		} else {
+		if (removed == null || removed == 0) {
+			throw new NotFoundException(TOKEN_NOT_FOUND);
+		}
+	}
+
+	public void deleteAllRefreshTokens(Long memberId) {
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		boolean deleted = requireNonNull(redisTemplate.delete(key));
+
+		if (!deleted) {
 			throw new NotFoundException(TOKEN_NOT_FOUND);
 		}
 	}
@@ -127,18 +136,13 @@ public class JwtService {
 			}
 
 			Long memberId = Long.valueOf(claims.getSubject());
-			String storedToken = redisTemplate.opsForValue().get(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX);
+			String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+			Boolean isMember = redisTemplate.opsForSet().isMember(key, refreshToken);
 
-			if (storedToken == null) {
-				log.error("Redis에 저장된 Refresh Token이 없음 - memberId: {}", memberId);
+			if (isMember == null || !isMember) {
+				log.error("Redis에 저장된 Refresh Token이 없거나 불일치 - memberId: {}", memberId);
 
 				throw new UnauthorizedException(TOKEN_NOT_FOUND);
-			}
-
-			if (!storedToken.equals(refreshToken)) {
-				log.error("Refresh Token 불일치 - memberId: {}", memberId);
-
-				throw new UnauthorizedException(MALFORMED_TOKEN);
 			}
 
 			log.info("Refresh Token 검증 성공 - memberId: {}", memberId);

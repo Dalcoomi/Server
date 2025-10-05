@@ -88,12 +88,12 @@ public class AuthService {
 			.build();
 	}
 
-	public void logout(Long memberId) {
-		jwtService.deleteRefreshToken(memberId);
+	public void logout(Long memberId, String refreshToken) {
+		jwtService.deleteRefreshToken(memberId, refreshToken);
 	}
 
-	public TokenInfo reissueToken(Long memberId) {
-		jwtService.deleteRefreshToken(memberId);
+	public TokenInfo reissueToken(Long memberId, String oldRefreshToken) {
+		jwtService.deleteRefreshToken(memberId, oldRefreshToken);
 
 		return jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
 	}
@@ -103,7 +103,7 @@ public class AuthService {
 		memberRepository.findById(memberId);
 
 		try {
-			jwtService.deleteRefreshToken(memberId);
+			jwtService.deleteAllRefreshTokens(memberId);
 
 			log.info("기존 리프레시 토큰 제거 완료 - memberId: {}", memberId);
 		} catch (NotFoundException e) {

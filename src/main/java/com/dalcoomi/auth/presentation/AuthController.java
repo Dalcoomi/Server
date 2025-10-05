@@ -52,15 +52,15 @@ public class AuthController {
 
 	@PostMapping("/logout")
 	@ResponseStatus(OK)
-	public void logout(@AuthMember Long memberId) {
-		authService.logout(memberId);
+	public void logout(@AuthMember Long memberId, @RequestHeader("Refresh-Token") String refreshToken) {
+		authService.logout(memberId, refreshToken);
 	}
 
 	@PostMapping("/reissue")
 	@ResponseStatus(OK)
 	public ReissueTokenResponse reissueToken(@RequestHeader("Refresh-Token") String refreshToken) {
 		Long memberId = jwtService.validateRefreshToken(refreshToken);
-		TokenInfo tokenInfo = authService.reissueToken(memberId);
+		TokenInfo tokenInfo = authService.reissueToken(memberId, refreshToken);
 
 		memberService.updateLastLoginTime(memberId);
 
