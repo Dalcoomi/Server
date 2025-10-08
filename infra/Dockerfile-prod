@@ -3,19 +3,9 @@ FROM eclipse-temurin:21-jre
 ARG SPRING_ACTIVE_PROFILE
 ENV SPRING_ACTIVE_PROFILE=${SPRING_ACTIVE_PROFILE}
 
-WORKDIR /app
-
-COPY build/libs/*.jar app.jar
+COPY build/libs/Dalcoomi-0.0.1-SNAPSHOT.jar Dalcoomi.jar
 COPY src/main/resources/config/agent.java/ agent.java
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", \
-    "-javaagent:agent.java/scouter.agent.jar", \
-    "-Dscouter.config=agent.java/conf/scouter.conf", \
-    "-Duser.timezone=Asia/Seoul", \
-    "-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector", \
-    "-Dspring.profiles.active=${SPRING_ACTIVE_PROFILE}", \
-    "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-javaagent:agent.java/scouter.agent.jar", "-Dscouter.config=agent.java/conf/scouter.conf", "-Duser.timezone=Asia/Seoul", "-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector", "-Dspring.profiles.active=${SPRING_ACTIVE_PROFILE}", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "/Dalcoomi.jar"]
