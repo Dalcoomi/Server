@@ -463,6 +463,35 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			.andDo(print());
 	}
 
+	@Test
+	@DisplayName("통합 테스트 - 로그인 시 소셜 리프레시 토큰이 변경되면 업데이트 성공")
+	void update_social_refresh_token_when_changed_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection socialConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(socialConnection);
+
+		String newRefreshToken = "new-refresh-token";
+		LoginRequest request = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
+			newRefreshToken, socialConnection.getSocialType());
+
+		// when
+		String json = objectMapper.writeValueAsString(request);
+		mockMvc.perform(post("/api/auth/login")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		// then
+		List<SocialConnection> connections = socialConnectionRepository.findBySocialEmailOrSocialId(
+			socialConnection.getSocialEmail(), socialConnection.getSocialId());
+		SocialConnection updatedConnection = connections.getFirst();
+		assertThat(updatedConnection.getSocialRefreshToken()).isEqualTo(newRefreshToken);
+	}
+
 	private void setAuthentication(Long memberId) {
 		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
 			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));
