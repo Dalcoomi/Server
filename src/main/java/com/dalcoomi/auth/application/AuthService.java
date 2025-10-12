@@ -57,11 +57,13 @@ public class AuthService {
 				TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE);
 
 				if (!socialConnection.getSocialEmail().equals(socialInfo.socialEmail())) {
-					if (!socialConnection.getSocialRefreshToken().equals(socialInfo.socialRefreshToken())) {
-						socialConnection.updateSocialRefreshToken(socialInfo.socialRefreshToken());
-					}
-
 					socialConnection.updateSocialEmail(socialInfo.socialEmail());
+
+					socialConnectionRepository.save(socialConnection);
+				}
+
+				if (!socialConnection.getSocialRefreshToken().equals(socialInfo.socialRefreshToken())) {
+					socialConnection.updateSocialRefreshToken(socialInfo.socialRefreshToken());
 
 					socialConnectionRepository.save(socialConnection);
 				}
