@@ -122,6 +122,28 @@ public class MemberService {
 		socialConnectionRepository.save(socialConnection);
 	}
 
+	@Transactional
+	public void socialLink(Long memberId, SocialInfo socialInfo) {
+		boolean existsSocialConnection = socialConnectionRepository.existsMemberBySocialIdAndSocialType(
+			socialInfo.socialId(), socialInfo.socialType());
+
+		if (existsSocialConnection) {
+			throw new ConflictException(MEMBER_CONFLICT);
+		}
+
+		Member member = memberRepository.findById(memberId);
+
+		SocialConnection socialConnection = SocialConnection.builder()
+			.member(member)
+			.socialEmail(socialInfo.socialEmail())
+			.socialId(socialInfo.socialId())
+			.socialRefreshToken(socialInfo.socialRefreshToken())
+			.socialType(socialInfo.socialType())
+			.build();
+
+		socialConnectionRepository.save(socialConnection);
+	}
+
 	@Transactional(readOnly = true)
 	public MemberInfo get(Long memberId) {
 		Member member = memberRepository.findById(memberId);
