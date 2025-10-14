@@ -89,6 +89,19 @@ public class MemberController {
 		memberService.connect(socialInfo);
 	}
 
+	@PostMapping("/social-link")
+	@ResponseStatus(OK)
+	public void socialLink(@AuthMember Long memberId, @RequestBody @Valid ConnectRequest request) {
+		SocialInfo socialInfo = SocialInfo.builder()
+			.socialEmail(request.socialEmail())
+			.socialId(request.socialId())
+			.socialRefreshToken(request.socialRefreshToken())
+			.socialType(request.socialType())
+			.build();
+
+		memberService.socialLink(memberId, socialInfo);
+	}
+
 	@GetMapping
 	@ResponseStatus(OK)
 	public GetMemberResponse get(@AuthMember Long memberId) {
