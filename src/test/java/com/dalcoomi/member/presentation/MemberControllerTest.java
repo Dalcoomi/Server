@@ -170,7 +170,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	}
 
 	@Test
-	@DisplayName("통합 테스트 - 소셜 계정 통합 성공")
+	@DisplayName("통합 테스트 - 비회원 소셜 계정 통합 성공")
 	void connect_social_account_success() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
@@ -204,8 +204,45 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 	}
 
 	@Test
+	@DisplayName("통합 테스트 - 회원 소셜 계정 통합 성공")
+	void social_link_social_account_success() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		SocialConnection existingConnection = SocialConnectionFixture.getSocialConnection1(member);
+		socialConnectionRepository.save(existingConnection);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		ConnectRequest request = new ConnectRequest(
+			member.getEmail(),
+			"naver-social-id-123",
+			"test-token2",
+			NAVER
+		);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/members/social-link")
+				.contentType(APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		List<SocialConnection> socialConnections = socialConnectionRepository.findByMemberId(member.getId());
+		assertThat(socialConnections).hasSize(2);
+
+		boolean hasNaverConnection = socialConnections.stream()
+			.anyMatch(sc -> sc.getSocialType() == NAVER && sc.getSocialId().equals("naver-social-id-123"));
+		assertThat(hasNaverConnection).isTrue();
+	}
+
+	@Test
 	@DisplayName("통합 테스트 - 이미 존재하는 소셜 계정으로 통합 시도 시 실패")
-	void connect_already_existing_social_account_fail() throws Exception {
+	void social_link_already_existing_social_account_fail() throws Exception {
 		// given
 		Member member1 = MemberFixture.getMember1();
 		member1 = memberRepository.save(member1);
@@ -215,6 +252,9 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 		SocialConnection existingNaverConnection = SocialConnectionFixture.getSocialConnection2(member2);
 		socialConnectionRepository.save(existingNaverConnection);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
 
 		// member1이 이미 존재하는 네이버 계정으로 통합 시도
 		ConnectRequest request = new ConnectRequest(
@@ -227,7 +267,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(post("/api/members/connect")
+		mockMvc.perform(post("/api/members/social-link")
 				.contentType(APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isConflict())

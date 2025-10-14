@@ -19,6 +19,7 @@ import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.member.domain.SocialConnection;
+import com.dalcoomi.member.domain.SocialType;
 import com.dalcoomi.member.dto.SocialInfo;
 
 import lombok.RequiredArgsConstructor;
@@ -52,17 +53,22 @@ public class AuthService {
 		}
 
 		for (SocialConnection socialConnection : socialConnections) {
-			if (socialConnection.getSocialId().equals(socialInfo.socialId())
-				&& socialConnection.getSocialType() == socialInfo.socialType()) {
+			String currentSocialId = socialConnection.getSocialId();
+			String currentSocialEmail = socialConnection.getSocialEmail();
+			String currentSocialRefreshToken = socialConnection.getSocialRefreshToken();
+			SocialType currentSocialType = socialConnection.getSocialType();
+
+			if (currentSocialId.equals(socialInfo.socialId()) && currentSocialType == socialInfo.socialType()) {
 				TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE);
 
-				if (!socialConnection.getSocialEmail().equals(socialInfo.socialEmail())) {
+				if (!currentSocialEmail.equals(socialInfo.socialEmail())) {
 					socialConnection.updateSocialEmail(socialInfo.socialEmail());
 
 					socialConnectionRepository.save(socialConnection);
 				}
 
-				if (!socialConnection.getSocialRefreshToken().equals(socialInfo.socialRefreshToken())) {
+				if (currentSocialRefreshToken == null || !currentSocialRefreshToken.equals(
+					socialInfo.socialRefreshToken())) {
 					socialConnection.updateSocialRefreshToken(socialInfo.socialRefreshToken());
 
 					socialConnectionRepository.save(socialConnection);
@@ -76,7 +82,7 @@ public class AuthService {
 
 				return LoginInfo.builder()
 					.sameSocial(true)
-					.existingSocialType(socialConnection.getSocialType())
+					.existingSocialType(currentSocialType)
 					.accessToken(tokenInfo.accessToken())
 					.refreshToken(tokenInfo.refreshToken())
 					.build();
