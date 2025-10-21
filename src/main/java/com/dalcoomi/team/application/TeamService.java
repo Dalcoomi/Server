@@ -4,6 +4,7 @@ import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_LEADER;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_ENOUGH_MAX_COUNT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
 import static com.dalcoomi.team.constant.TeamConstants.MAX_TEAM_LIMIT;
@@ -121,9 +122,14 @@ public class TeamService {
 	@Transactional
 	public void update(Long memberId, Team team) {
 		Team currentTeam = teamRepository.findById(team.getId());
+		int currentTeamMemberCount = teamMemberRepository.countByTeamId(currentTeam.getId());
 
 		if (!currentTeam.getLeader().getId().equals(memberId)) {
 			throw new BadRequestException(TEAM_INVALID_LEADER);
+		}
+
+		if (currentTeamMemberCount > team.getMemberLimit()) {
+			throw new BadRequestException(TEAM_MEMBER_NOT_ENOUGH_MAX_COUNT);
 		}
 
 		currentTeam.updateTitle(team.getTitle());

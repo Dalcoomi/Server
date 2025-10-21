@@ -4,6 +4,7 @@ import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_LEADER;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_ENOUGH_MAX_COUNT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -751,6 +752,48 @@ class TeamControllerTest {
 				.content(json)
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 현재 그룹 인원보다 작은 최대 인원으로 수정 시 실패")
+	void update_team_member_limit_less_than_current_count_fail() throws Exception {
+		// given
+		Member leader = MemberFixture.getMember1();
+		leader = memberRepository.save(leader);
+
+		Team team = TeamFixture.getTeam1(leader);
+		team = teamRepository.save(team);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		Member member3 = MemberFixture.getMember3();
+		member3 = memberRepository.save(member3);
+
+		TeamMember leaderTeamMember = TeamMember.of(team, leader);
+		teamMemberRepository.save(leaderTeamMember);
+
+		TeamMember teamMember2 = TeamMember.of(team, member2);
+		teamMemberRepository.save(teamMember2);
+
+		TeamMember teamMember3 = TeamMember.of(team, member3);
+		teamMemberRepository.save(teamMember3);
+
+		// 인증 설정
+		setAuthentication(leader.getId());
+
+		// 현재 3명이 있는데 최대 인원을 2명으로 수정 시도
+		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 2, "수정된 목표");
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/teams")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value(TEAM_MEMBER_NOT_ENOUGH_MAX_COUNT.getMessage()))
 			.andDo(print());
 	}
 

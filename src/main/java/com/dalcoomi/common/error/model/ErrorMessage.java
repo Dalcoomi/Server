@@ -83,6 +83,7 @@ public enum ErrorMessage {
 	TEAM_COUNT_EXCEEDED("최대 3개 그룹까지만 참가할 수 있습니다."),
 
 	TEAM_MEMBER_ALREADY_EXISTS("이미 해당 그룹에 가입된 회원입니다."),
+	TEAM_MEMBER_NOT_ENOUGH_MAX_COUNT("최대 그룹 인원이 현재 그룹 인원보다 작습니다."),
 	TEAM_MEMBER_COUNT_EXCEEDED("그룹 인원 제한을 초과했습니다."),
 	TEAM_MEMBER_NOT_FOUND("해당 그룹 멤버를 찾을 수 없습니다.");
 
