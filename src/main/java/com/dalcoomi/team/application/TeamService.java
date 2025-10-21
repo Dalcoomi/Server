@@ -1,6 +1,7 @@
 package com.dalcoomi.team.application;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_LEADER;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND;
@@ -16,6 +17,7 @@ import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.common.error.exception.BadRequestException;
 import com.dalcoomi.common.error.exception.ConflictException;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.MemberRepository;
@@ -114,6 +116,21 @@ public class TeamService {
 		List<Member> members = teamMembers.stream().map(TeamMember::getMember).toList();
 
 		return TeamInfo.of(team, members);
+	}
+
+	@Transactional
+	public void update(Long memberId, Team team) {
+		Team currentTeam = teamRepository.findById(team.getId());
+
+		if (!currentTeam.getLeader().getId().equals(memberId)) {
+			throw new BadRequestException(TEAM_INVALID_LEADER);
+		}
+
+		currentTeam.updateTitle(team.getTitle());
+		currentTeam.updateMemberLimit(team.getMemberLimit());
+		currentTeam.updatePurpose(team.getPurpose());
+
+		teamRepository.save(currentTeam);
 	}
 
 	@Transactional

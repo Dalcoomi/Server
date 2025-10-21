@@ -1,6 +1,7 @@
 package com.dalcoomi.team.presentation;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_LEADER;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_NOT_FOUND;
@@ -10,6 +11,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -97,7 +99,7 @@ class TeamControllerTest {
 		Integer memberLimit = 2;
 		String purpose = "에엥";
 
-		TeamRequest request = new TeamRequest(title, memberLimit, purpose);
+		TeamRequest request = new TeamRequest(null, title, memberLimit, purpose);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -133,7 +135,7 @@ class TeamControllerTest {
 		Integer memberLimit = 12;
 		String purpose = "에엥";
 
-		TeamRequest request = new TeamRequest(title, memberLimit, purpose);
+		TeamRequest request = new TeamRequest(null, title, memberLimit, purpose);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -180,7 +182,7 @@ class TeamControllerTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		TeamRequest request = new TeamRequest("새 팀", 3, "새 목표");
+		TeamRequest request = new TeamRequest(null, "새 팀", 3, "새 목표");
 		String json = objectMapper.writeValueAsString(request);
 
 		// when & then
@@ -569,6 +571,187 @@ class TeamControllerTest {
 
 		List<Transaction> teamTransactions = transactionRepository.findTransactions(criteria);
 		assertThat(teamTransactions).isEmpty();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 수정 성공")
+	void update_team_success() throws Exception {
+		// given
+		Member leader = MemberFixture.getMember1();
+		leader = memberRepository.save(leader);
+
+		Team team = TeamFixture.getTeam1(leader);
+		team = teamRepository.save(team);
+
+		TeamMember leaderTeamMember = TeamMember.of(team, leader);
+		teamMemberRepository.save(leaderTeamMember);
+
+		// 인증 설정
+		setAuthentication(leader.getId());
+
+		String updatedTitle = "수정된 그룹명";
+		Integer updatedMemberLimit = 5;
+		String updatedPurpose = "수정된 목표";
+
+		TeamRequest request = new TeamRequest(team.getId(), updatedTitle, updatedMemberLimit, updatedPurpose);
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/teams")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		Team updatedTeam = teamRepository.findById(team.getId());
+		assertThat(updatedTeam.getTitle()).isEqualTo(updatedTitle);
+		assertThat(updatedTeam.getMemberLimit()).isEqualTo(updatedMemberLimit);
+		assertThat(updatedTeam.getPurpose()).isEqualTo(updatedPurpose);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 리더가 아닌 멤버가 그룹 수정 시도 시 실패")
+	void update_team_not_leader_fail() throws Exception {
+		// given
+		Member leader = MemberFixture.getMember1();
+		leader = memberRepository.save(leader);
+
+		Team team = TeamFixture.getTeam1(leader);
+		team = teamRepository.save(team);
+
+		Member normalMember = MemberFixture.getMember2();
+		normalMember = memberRepository.save(normalMember);
+
+		TeamMember leaderTeamMember = TeamMember.of(team, leader);
+		teamMemberRepository.save(leaderTeamMember);
+
+		TeamMember normalTeamMember = TeamMember.of(team, normalMember);
+		teamMemberRepository.save(normalTeamMember);
+
+		// 인증 설정 (일반 멤버로)
+		setAuthentication(normalMember.getId());
+
+		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 5, "수정된 목표");
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/teams")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value(TEAM_INVALID_LEADER.getMessage()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 존재하지 않는 팀 수정 시 실패")
+	void update_team_not_found_fail() throws Exception {
+		// given
+		Member member = MemberFixture.getMember1();
+		member = memberRepository.save(member);
+
+		// 인증 설정
+		setAuthentication(member.getId());
+
+		Long nonExistentTeamId = 999L;
+		TeamRequest request = new TeamRequest(nonExistentTeamId, "수정된 그룹명", 5, "수정된 목표");
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/teams")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.message").value(TEAM_NOT_FOUND.getMessage()))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹 인원 제한 10명 초과 시 그룹 수정 실패")
+	void update_team_limit_exceeded_fail() throws Exception {
+		// given
+		Member leader = MemberFixture.getMember1();
+		leader = memberRepository.save(leader);
+
+		Team team = TeamFixture.getTeam1(leader);
+		team = teamRepository.save(team);
+
+		TeamMember leaderTeamMember = TeamMember.of(team, leader);
+		teamMemberRepository.save(leaderTeamMember);
+
+		// 인증 설정
+		setAuthentication(leader.getId());
+
+		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 12, "수정된 목표");
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/teams")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹명 null일 경우 수정 실패")
+	void update_team_title_null_fail() throws Exception {
+		// given
+		Member leader = MemberFixture.getMember1();
+		leader = memberRepository.save(leader);
+
+		Team team = TeamFixture.getTeam1(leader);
+		team = teamRepository.save(team);
+
+		TeamMember leaderTeamMember = TeamMember.of(team, leader);
+		teamMemberRepository.save(leaderTeamMember);
+
+		// 인증 설정
+		setAuthentication(leader.getId());
+
+		TeamRequest request = new TeamRequest(team.getId(), null, 5, "수정된 목표");
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/teams")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 그룹명 20자 초과 시 수정 실패")
+	void update_team_title_length_exceeded_fail() throws Exception {
+		// given
+		Member leader = MemberFixture.getMember1();
+		leader = memberRepository.save(leader);
+
+		Team team = TeamFixture.getTeam1(leader);
+		team = teamRepository.save(team);
+
+		TeamMember leaderTeamMember = TeamMember.of(team, leader);
+		teamMemberRepository.save(leaderTeamMember);
+
+		// 인증 설정
+		setAuthentication(leader.getId());
+
+		String tooLongTitle = "a".repeat(21);
+		TeamRequest request = new TeamRequest(team.getId(), tooLongTitle, 5, "수정된 목표");
+
+		// when & then
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/teams")
+				.content(json)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andDo(print());
 	}
 
 	private void setAuthentication(Long memberId) {
