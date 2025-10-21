@@ -5,6 +5,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,6 +66,14 @@ public class TeamController {
 		TeamInfo teamInfo = teamService.get(teamId, memberId);
 
 		return GetTeamResponse.from(teamInfo);
+	}
+
+	@PatchMapping
+	@ResponseStatus(OK)
+	public void update(@AuthMember Long memberId, @RequestBody @Valid TeamRequest request) {
+		Team team = Team.from(request);
+
+		teamService.update(memberId, team);
 	}
 
 	@DeleteMapping("/leave")
