@@ -201,7 +201,7 @@ public class TransactionService {
 
 			return objectMapper.readValue(response, AiReceiptResponse.class);
 		} catch (Exception e) {
-			log.error("데이터 매핑 오류", e);
+			log.error("AI 서버 오류", e);
 
 			throw new DalcoomiException("영수증 처리 중 오류가 발생했습니다.", e);
 		}
