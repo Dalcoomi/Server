@@ -2,9 +2,11 @@ package com.dalcoomi.team.domain;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_MEMBER_LIMIT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_PURPOSE;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_TITLE;
 import static com.dalcoomi.team.constant.TeamConstants.INVITATION_CODE_LENGTH;
 import static com.dalcoomi.team.constant.TeamConstants.MAX_MEMBER_LIMIT;
 import static com.dalcoomi.team.constant.TeamConstants.PURPOSE_LENGTH;
+import static com.dalcoomi.team.constant.TeamConstants.TITLE_LENGTH;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static java.lang.String.format;
 
@@ -20,17 +22,17 @@ import lombok.Getter;
 public class Team {
 
 	private final Long id;
-	private final String title;
-	private final Integer memberLimit;
-	private final String purpose;
 	private Member leader;
+	private String title;
 	private String invitationCode;
+	private Integer memberLimit;
+	private String purpose;
 
 	@Builder
 	public Team(Long id, Member leader, String title, String invitationCode, Integer memberLimit, String purpose) {
 		this.id = id;
 		this.leader = leader;
-		this.title = title;
+		this.title = validateTitle(title);
 		this.invitationCode = invitationCode;
 		this.memberLimit = validateMemberLimit(memberLimit);
 		this.purpose = validatePurpose(purpose);
@@ -38,6 +40,7 @@ public class Team {
 
 	public static Team from(TeamRequest request) {
 		return Team.builder()
+			.id(request.teamId())
 			.title(request.title())
 			.memberLimit(request.memberLimit())
 			.purpose(request.purpose())
@@ -62,6 +65,26 @@ public class Team {
 
 	public void updateInvitationCode(String invitationCode) {
 		this.invitationCode = invitationCode;
+	}
+
+	public void updateTitle(String title) {
+		this.title = validateTitle(title);
+	}
+
+	public void updateMemberLimit(Integer memberLimit) {
+		this.memberLimit = validateMemberLimit(memberLimit);
+	}
+
+	public void updatePurpose(String purpose) {
+		this.purpose = validatePurpose(purpose);
+	}
+
+	private String validateTitle(String title) {
+		if (!isBlank(title) && title.length() > TITLE_LENGTH) {
+			throw new IllegalArgumentException(TEAM_INVALID_TITLE.getMessage());
+		}
+
+		return title;
 	}
 
 	private Integer validateMemberLimit(Integer memberLimit) {
