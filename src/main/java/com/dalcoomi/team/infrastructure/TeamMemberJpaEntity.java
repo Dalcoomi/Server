@@ -40,11 +40,15 @@ public class TeamMemberJpaEntity extends BaseTimeEntity {
 	@JoinColumn(name = "member_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
 	private MemberJpaEntity member;
 
+	@Column(name = "display_order", nullable = false)
+	private Integer displayOrder;
+
 	@Builder
-	public TeamMemberJpaEntity(Long id, TeamJpaEntity team, MemberJpaEntity member) {
+	public TeamMemberJpaEntity(Long id, TeamJpaEntity team, MemberJpaEntity member, Integer displayOrder) {
 		this.id = id;
 		this.team = team;
 		this.member = member;
+		this.displayOrder = displayOrder;
 	}
 
 	public static TeamMemberJpaEntity from(TeamMember teamMember) {
@@ -52,6 +56,7 @@ public class TeamMemberJpaEntity extends BaseTimeEntity {
 			.id(teamMember.getId())
 			.team(TeamJpaEntity.from(teamMember.getTeam()))
 			.member(MemberJpaEntity.from(teamMember.getMember()))
+			.displayOrder(teamMember.getDisplayOrder())
 			.build();
 	}
 
@@ -60,6 +65,7 @@ public class TeamMemberJpaEntity extends BaseTimeEntity {
 			.id(this.id)
 			.team(this.team.toModel())
 			.member(this.member.toModel())
+			.displayOrder(this.displayOrder)
 			.build();
 	}
 }

@@ -797,6 +797,175 @@ class TeamControllerTest {
 			.andDo(print());
 	}
 
+	@Test
+	@DisplayName("통합 테스트 - 그룹 순서 변경 성공")
+	void update_display_order_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team1 = TeamFixture.getTeam1(member1);
+		team1 = teamRepository.save(team1);
+
+		TeamMember teamMember1 = TeamMember.of(team1, member1);
+		teamMemberRepository.save(teamMember1);
+
+		Team team2 = TeamFixture.getTeam2(member1);
+		team2 = teamRepository.save(team2);
+
+		TeamMember teamMember2 = TeamMember.of(team2, member1);
+		teamMemberRepository.save(teamMember2);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		Long team1Id = team1.getId();
+		Long team2Id = team2.getId();
+
+		// 순서 변경 요청 (team1: 1, team2: 0 으로 변경)
+		String requestBody = String.format("""
+			{
+				"orders": [
+					{"teamId": %d, "displayOrder": 1},
+					{"teamId": %d, "displayOrder": 0}
+				]
+			}
+			""", team1Id, team2Id);
+
+		// when & then
+		mockMvc.perform(patch("/api/teams/order")
+				.content(requestBody)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andDo(print());
+
+		// 순서가 변경되었는지 확인
+		List<TeamMember> updatedTeamMembers = teamMemberRepository.find(null, member1.getId());
+		TeamMember updatedTeamMember1 = updatedTeamMembers.stream()
+			.filter(tm -> tm.getTeam().getId().equals(team1Id))
+			.findFirst()
+			.orElseThrow();
+		TeamMember updatedTeamMember2 = updatedTeamMembers.stream()
+			.filter(tm -> tm.getTeam().getId().equals(team2Id))
+			.findFirst()
+			.orElseThrow();
+
+		assertThat(updatedTeamMember1.getDisplayOrder()).isEqualTo(1);
+		assertThat(updatedTeamMember2.getDisplayOrder()).isZero();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - displayOrder 중복이면 그룹 순서 변경 실패")
+	void update_duplicated_display_order_fail() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team1 = TeamFixture.getTeam1(member1);
+		team1 = teamRepository.save(team1);
+
+		TeamMember teamMember1 = TeamMember.of(team1, member1);
+		teamMemberRepository.save(teamMember1);
+
+		Team team2 = TeamFixture.getTeam2(member1);
+		team2 = teamRepository.save(team2);
+
+		TeamMember teamMember2 = TeamMember.of(team2, member1);
+		teamMemberRepository.save(teamMember2);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		// 순서 중복 요청 (둘 다 displayOrder: 0)
+		String requestBody = String.format("""
+			{
+				"orders": [
+					{"teamId": %d, "displayOrder": 0},
+					{"teamId": %d, "displayOrder": 0}
+				]
+			}
+			""", team1.getId(), team2.getId());
+
+		// when & then
+		mockMvc.perform(patch("/api/teams/order")
+				.content(requestBody)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("그룹 순서 값이 중복되었습니다."))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 속하지 않은 그룹 포함하면 그룹 순서 변경 실패")
+	void update_not_member_display_order_fail() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		Team team1 = TeamFixture.getTeam1(member1);
+		team1 = teamRepository.save(team1);
+
+		TeamMember teamMember1 = TeamMember.of(team1, member1);
+		teamMemberRepository.save(teamMember1);
+
+		// member2가 속한 그룹
+		Team team2 = TeamFixture.getTeam2(member2);
+		team2 = teamRepository.save(team2);
+
+		TeamMember teamMember2 = TeamMember.of(team2, member2);
+		teamMemberRepository.save(teamMember2);
+
+		// 인증 설정 (member1로 로그인)
+		setAuthentication(member1.getId());
+
+		// member1이 속하지 않은 team2를 포함한 요청
+		String requestBody = String.format("""
+			{
+				"orders": [
+					{"teamId": %d, "displayOrder": 0},
+					{"teamId": %d, "displayOrder": 1}
+				]
+			}
+			""", team1.getId(), team2.getId());
+
+		// when & then
+		mockMvc.perform(patch("/api/teams/order")
+				.content(requestBody)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.message").value("해당 그룹 멤버를 찾을 수 없습니다."))
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 빈 리스트는 그룹 순서 변경 실패")
+	void update_empty_list_display_order_fail() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		// 빈 리스트 요청
+		String requestBody = """
+			{
+				"orders": []
+			}
+			""";
+
+		// when & then
+		mockMvc.perform(patch("/api/teams/order")
+				.content(requestBody)
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("순서 정보는 필수입니다."))
+			.andDo(print());
+	}
+
 	private void setAuthentication(Long memberId) {
 		CustomUserDetails memberUserDetails = new CustomUserDetails(memberId, memberId.toString(),
 			authoritiesMapper.mapAuthorities(List.of(new SimpleGrantedAuthority("ROLE_USER"))));

@@ -1,6 +1,7 @@
 package com.dalcoomi.team.application;
 
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_COUNT_EXCEEDED;
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_DISPLAY_ORDER_DUPLICATED;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_LEADER;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_ALREADY_EXISTS;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_COUNT_EXCEEDED;
@@ -11,7 +12,9 @@ import static com.dalcoomi.team.constant.TeamConstants.MAX_TEAM_LIMIT;
 import static com.dalcoomi.team.domain.Team.generateInvitationCode;
 import static java.util.stream.Collectors.toSet;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -89,14 +92,27 @@ public class TeamService {
 	public TeamsInfo get(Long memberId) {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 
-		List<Team> teams = teamMembers.stream().map(TeamMember::getTeam).toList().reversed();
+		// displayOrder 기준으로 정렬, displayOrder가 같으면 id 역순 정렬
+		List<TeamMember> sortedTeamMembers = teamMembers.stream()
+			.sorted((tm1, tm2) -> {
+				int orderCompare = Integer.compare(tm1.getDisplayOrder(), tm2.getDisplayOrder());
 
+				if (orderCompare != 0) {
+					return orderCompare;
+				}
+
+				return Long.compare(tm2.getId(), tm1.getId());
+			})
+			.toList();
+
+		List<Team> teams = sortedTeamMembers.stream().map(TeamMember::getTeam).toList();
+		List<Integer> displayOrders = sortedTeamMembers.stream().map(TeamMember::getDisplayOrder).toList();
 		List<Long> teamIds = teams.stream().map(Team::getId).toList();
-
 		List<Integer> memberCounts = teams.stream()
-			.map(team -> teamMemberRepository.countByTeamIds(teamIds).get(team.getId())).toList();
+			.map(team -> teamMemberRepository.countByTeamIds(teamIds).get(team.getId()))
+			.toList();
 
-		return TeamsInfo.of(teams, memberCounts);
+		return TeamsInfo.of(teams, memberCounts, displayOrders);
 	}
 
 	@Transactional(readOnly = true)
@@ -113,7 +129,6 @@ public class TeamService {
 			.orElseThrow(() -> new NotFoundException(TEAM_MEMBER_NOT_FOUND));
 
 		Team team = requestingMember.getTeam();
-
 		List<Member> members = teamMembers.stream().map(TeamMember::getMember).toList();
 
 		return TeamInfo.of(team, members);
@@ -137,6 +152,40 @@ public class TeamService {
 		currentTeam.updatePurpose(team.getPurpose());
 
 		teamRepository.save(currentTeam);
+	}
+
+	@Transactional
+	public void updateDisplayOrder(Long memberId, Map<Long, Integer> teamIdsAndDisplayOrders) {
+		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
+		Set<Long> memberTeamIds = teamMembers.stream()
+			.map(tm -> tm.getTeam().getId())
+			.collect(toSet());
+		Set<Long> requestedTeamIds = teamIdsAndDisplayOrders.keySet();
+		long distinctCount = teamIdsAndDisplayOrders.values().stream().distinct().count();
+
+		// 요청한 teamId가 모두 사용자가 속한 그룹인지 검증
+		if (!memberTeamIds.containsAll(requestedTeamIds)) {
+			throw new NotFoundException(TEAM_MEMBER_NOT_FOUND);
+		}
+
+		// displayOrder 중복 검증
+		if (distinctCount != teamIdsAndDisplayOrders.size()) {
+			throw new BadRequestException(TEAM_DISPLAY_ORDER_DUPLICATED);
+		}
+
+		List<TeamMember> updatedTeamMembers = new ArrayList<>();
+
+		for (TeamMember teamMember : teamMembers) {
+			Long teamId = teamMember.getTeam().getId();
+
+			if (teamIdsAndDisplayOrders.containsKey(teamId)) {
+				teamMember.updateDisplayOrder(teamIdsAndDisplayOrders.get(teamId));
+			}
+
+			updatedTeamMembers.add(teamMember);
+		}
+
+		teamMemberRepository.saveAll(updatedTeamMembers);
 	}
 
 	@Transactional

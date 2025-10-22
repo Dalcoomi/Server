@@ -12,9 +12,9 @@ public record TeamsInfo(
 	List<TeamWithCount> teamsWithCounts
 ) {
 
-	public static TeamsInfo of(List<Team> teams, List<Integer> memberCounts) {
+	public static TeamsInfo of(List<Team> teams, List<Integer> memberCounts, List<Integer> displayOrders) {
 		List<TeamWithCount> teamsWithCounts = IntStream.range(0, teams.size())
-			.mapToObj(i -> TeamWithCount.of(teams.get(i), memberCounts.get(i)))
+			.mapToObj(i -> TeamWithCount.of(teams.get(i), memberCounts.get(i), displayOrders.get(i)))
 			.toList();
 
 		return TeamsInfo.builder()
@@ -25,13 +25,15 @@ public record TeamsInfo(
 	@Builder
 	public record TeamWithCount(
 		Team team,
-		Integer memberCount
+		Integer memberCount,
+		Integer displayOrder
 	) {
 
-		public static TeamWithCount of(Team team, Integer memberCount) {
+		public static TeamWithCount of(Team team, Integer memberCount, Integer displayOrder) {
 			return TeamWithCount.builder()
 				.team(team)
 				.memberCount(memberCount)
+				.displayOrder(displayOrder)
 				.build();
 		}
 	}
