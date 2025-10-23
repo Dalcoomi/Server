@@ -1,7 +1,10 @@
 package com.dalcoomi.team.presentation;
 
+import static java.util.stream.Collectors.toMap;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
+
+import java.util.Map;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +26,7 @@ import com.dalcoomi.team.dto.TeamInfo;
 import com.dalcoomi.team.dto.TeamsInfo;
 import com.dalcoomi.team.dto.request.LeaveTeamRequest;
 import com.dalcoomi.team.dto.request.TeamRequest;
+import com.dalcoomi.team.dto.request.UpdateTeamOrderRequest;
 import com.dalcoomi.team.dto.response.GetMyTeamsResponse;
 import com.dalcoomi.team.dto.response.GetTeamResponse;
 
@@ -62,8 +66,8 @@ public class TeamController {
 
 	@GetMapping("/{teamId}")
 	@ResponseStatus(OK)
-	public GetTeamResponse get(@AuthMember Long memberId, @PathVariable("teamId") Long teamId) {
-		TeamInfo teamInfo = teamService.get(teamId, memberId);
+	public GetTeamResponse getTeamInfo(@AuthMember Long memberId, @PathVariable("teamId") Long teamId) {
+		TeamInfo teamInfo = teamService.getTeamInfo(teamId, memberId);
 
 		return GetTeamResponse.from(teamInfo);
 	}
@@ -74,6 +78,18 @@ public class TeamController {
 		Team team = Team.from(request);
 
 		teamService.update(memberId, team);
+	}
+
+	@PatchMapping("/order")
+	@ResponseStatus(OK)
+	public void updateDisplayOrder(@AuthMember Long memberId, @RequestBody @Valid UpdateTeamOrderRequest request) {
+		Map<Long, Integer> teamIdsAndDisplayOrders = request.orders().stream()
+			.collect(toMap(
+				UpdateTeamOrderRequest.TeamOrderItem::teamId,
+				UpdateTeamOrderRequest.TeamOrderItem::displayOrder
+			));
+
+		teamService.updateDisplayOrder(memberId, teamIdsAndDisplayOrders);
 	}
 
 	@DeleteMapping("/leave")
