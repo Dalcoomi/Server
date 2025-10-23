@@ -66,8 +66,8 @@ public class TeamController {
 
 	@GetMapping("/{teamId}")
 	@ResponseStatus(OK)
-	public GetTeamResponse get(@AuthMember Long memberId, @PathVariable("teamId") Long teamId) {
-		TeamInfo teamInfo = teamService.get(teamId, memberId);
+	public GetTeamResponse getTeamInfo(@AuthMember Long memberId, @PathVariable("teamId") Long teamId) {
+		TeamInfo teamInfo = teamService.getTeamInfo(teamId, memberId);
 
 		return GetTeamResponse.from(teamInfo);
 	}

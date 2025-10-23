@@ -363,6 +363,129 @@ class TeamControllerTest {
 	}
 
 	@Test
+	@DisplayName("통합 테스트 - displayOrder가 null인 그룹은 마지막에 정렬 성공")
+	void get_my_teams_with_null_display_order_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team1 = TeamFixture.getTeam1(member1);
+		team1 = teamRepository.save(team1);
+
+		TeamMember teamMember1 = TeamMember.builder()
+			.team(team1)
+			.member(member1)
+			.displayOrder(null)
+			.build();
+		teamMemberRepository.save(teamMember1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		Team team2 = TeamFixture.getTeam2(member2);
+		team2 = teamRepository.save(team2);
+
+		TeamMember teamMember2 = TeamMember.builder()
+			.team(team2)
+			.member(member1)
+			.displayOrder(1)
+			.build();
+		teamMemberRepository.save(teamMember2);
+
+		Member member3 = MemberFixture.getMember3();
+		member3 = memberRepository.save(member3);
+
+		Team team3 = TeamFixture.getTeam3(member3);
+		team3 = teamRepository.save(team3);
+
+		TeamMember teamMember3 = TeamMember.builder()
+			.team(team3)
+			.member(member1)
+			.displayOrder(2)
+			.build();
+		teamMemberRepository.save(teamMember3);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		// when & then
+		mockMvc.perform(get("/api/teams")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.groups").isArray())
+			.andExpect(jsonPath("$.groups").value(hasSize(3)))
+			.andExpect(jsonPath("$.groups[0].teamId").value(team2.getId()))
+			.andExpect(jsonPath("$.groups[0].displayOrder").value(1))
+			.andExpect(jsonPath("$.groups[1].teamId").value(team3.getId()))
+			.andExpect(jsonPath("$.groups[1].displayOrder").value(2))
+			.andExpect(jsonPath("$.groups[2].teamId").value(team1.getId()))
+			.andExpect(jsonPath("$.groups[2].displayOrder").isEmpty())
+			.andDo(print());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - displayOrder가 모두 null인 경우 TeamMember ID 역순 정렬 성공")
+	void get_my_teams_with_all_null_display_order_sorted_by_id_desc_success() throws Exception {
+		// given
+		Member member1 = MemberFixture.getMember1();
+		member1 = memberRepository.save(member1);
+
+		Team team1 = TeamFixture.getTeam1(member1);
+		team1 = teamRepository.save(team1);
+
+		TeamMember teamMember1 = TeamMember.builder()
+			.team(team1)
+			.member(member1)
+			.displayOrder(null)
+			.build();
+		teamMemberRepository.save(teamMember1);
+
+		Member member2 = MemberFixture.getMember2();
+		member2 = memberRepository.save(member2);
+
+		Team team2 = TeamFixture.getTeam2(member2);
+		team2 = teamRepository.save(team2);
+
+		TeamMember teamMember2 = TeamMember.builder()
+			.team(team2)
+			.member(member1)
+			.displayOrder(null)
+			.build();
+		teamMemberRepository.save(teamMember2);
+
+		Member member3 = MemberFixture.getMember3();
+		member3 = memberRepository.save(member3);
+
+		Team team3 = TeamFixture.getTeam3(member3);
+		team3 = teamRepository.save(team3);
+
+		TeamMember teamMember3 = TeamMember.builder()
+			.team(team3)
+			.member(member1)
+			.displayOrder(null)
+			.build();
+		teamMemberRepository.save(teamMember3);
+
+		// 인증 설정
+		setAuthentication(member1.getId());
+
+		// when & then
+		// displayOrder가 모두 null이면 TeamMember ID 역순으로 정렬 (큰 ID가 먼저)
+		mockMvc.perform(get("/api/teams")
+				.contentType(APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.groups").isArray())
+			.andExpect(jsonPath("$.groups").value(hasSize(3)))
+			.andExpect(jsonPath("$.groups[0].teamId").value(team3.getId()))
+			.andExpect(jsonPath("$.groups[0].displayOrder").isEmpty())
+			.andExpect(jsonPath("$.groups[1].teamId").value(team2.getId()))
+			.andExpect(jsonPath("$.groups[1].displayOrder").isEmpty())
+			.andExpect(jsonPath("$.groups[2].teamId").value(team1.getId()))
+			.andExpect(jsonPath("$.groups[2].displayOrder").isEmpty())
+			.andDo(print());
+	}
+
+	@Test
 	@DisplayName("통합 테스트 - 특정 팀 조회 성공")
 	void get_team_success() throws Exception {
 		// given
