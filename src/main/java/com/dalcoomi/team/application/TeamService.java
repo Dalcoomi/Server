@@ -13,7 +13,6 @@ import static com.dalcoomi.team.domain.Team.generateInvitationCode;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,10 +92,17 @@ public class TeamService {
 	public TeamsInfo get(Long memberId) {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 
-		// displayOrder 기준으로 정렬 (null은 마지막), displayOrder가 같으면 id 역순 정렬
+		// displayOrder 기준으로 정렬, displayOrder가 같으면 id 역순 정렬
 		List<TeamMember> sortedTeamMembers = teamMembers.stream()
-			.sorted(Comparator.comparing(TeamMember::getDisplayOrder, Comparator.nullsLast(Comparator.naturalOrder()))
-				.thenComparing(TeamMember::getId, Comparator.reverseOrder()))
+			.sorted((tm1, tm2) -> {
+				int orderCompare = Integer.compare(tm1.getDisplayOrder(), tm2.getDisplayOrder());
+
+				if (orderCompare != 0) {
+					return orderCompare;
+				}
+
+				return Long.compare(tm2.getId(), tm1.getId());
+			})
 			.toList();
 
 		List<Team> teams = sortedTeamMembers.stream().map(TeamMember::getTeam).toList();
