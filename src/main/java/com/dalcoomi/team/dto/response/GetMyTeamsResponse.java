@@ -14,7 +14,10 @@ public record GetMyTeamsResponse(
 
 	public static GetMyTeamsResponse from(TeamsInfo teamsInfo) {
 		List<GetMyTeamsResponseItem> groups = teamsInfo.teamsWithCounts().stream()
-			.map(teamWithCount -> GetMyTeamsResponseItem.of(teamWithCount.team(), teamWithCount.memberCount()))
+			.map(teamWithCount -> GetMyTeamsResponseItem.of(
+				teamWithCount.team(),
+				teamWithCount.memberCount(),
+				teamWithCount.displayOrder()))
 			.toList();
 
 		return GetMyTeamsResponse.builder()
@@ -27,15 +30,17 @@ public record GetMyTeamsResponse(
 		Long teamId,
 		String title,
 		Integer memberCount,
-		Integer memberLimit
+		Integer memberLimit,
+		Integer displayOrder
 	) {
 
-		public static GetMyTeamsResponseItem of(Team team, Integer memberCount) {
+		public static GetMyTeamsResponseItem of(Team team, Integer memberCount, Integer displayOrder) {
 			return GetMyTeamsResponseItem.builder()
 				.teamId(team.getId())
 				.title(team.getTitle())
 				.memberCount(memberCount)
 				.memberLimit(team.getMemberLimit())
+				.displayOrder(displayOrder)
 				.build();
 		}
 	}
