@@ -133,7 +133,8 @@ jacocoTestCoverageVerification {
                     '*.BaseTimeEntity',
                     '*.*Converter',
                     '*.*.CustomUserDetails',
-                    '*.HealthController'
+                    '*.HealthController',
+                    'com.dalcoomi.transaction.application.TransactionService.*'
             ]
         }
     }

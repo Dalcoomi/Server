@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -179,9 +180,20 @@ public class TransactionService {
 
 	public AiReceiptResponse analyseReceipt(MultipartFile receipt, List<String> categoryNames) {
 		try {
-			MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
+			log.info("영수증 분석 요청: filename={}, size={} bytes", receipt.getOriginalFilename(), receipt.getSize());
 
-			parts.add("receipt", receipt.getResource());
+			byte[] receiptBytes = receipt.getBytes();
+			String originalFilename = receipt.getOriginalFilename();
+
+			ByteArrayResource receiptResource = new ByteArrayResource(receiptBytes) {
+				@Override
+				public String getFilename() {
+					return originalFilename;
+				}
+			};
+
+			MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
+			parts.add("receipt", receiptResource);
 			parts.add("categories", objectMapper.writeValueAsString(categoryNames));
 
 			String response = webClient.post()
@@ -197,11 +209,11 @@ public class TransactionService {
 				.bodyToMono(String.class)
 				.block();
 
-			log.info("AI 서버 응답: {}", response);
+			log.info("영수증 분석 완료: {}", response);
 
 			return objectMapper.readValue(response, AiReceiptResponse.class);
 		} catch (Exception e) {
-			log.error("AI 서버 오류", e);
+			log.error("영수증 분석 실패: filename={}", receipt.getOriginalFilename(), e);
 
 			throw new DalcoomiException("영수증 처리 중 오류가 발생했습니다.", e);
 		}
