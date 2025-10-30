@@ -2,12 +2,21 @@ package com.dalcoomi.auth.application;
 
 import static com.dalcoomi.auth.constant.TokenConstants.ACCESS_TOKEN_TYPE;
 import static com.dalcoomi.auth.constant.TokenConstants.MEMBER_ROLE;
+import static com.dalcoomi.auth.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+import static com.dalcoomi.auth.constant.TokenConstants.REFRESH_TOKEN_TYPE;
+import static com.dalcoomi.auth.domain.DeviceType.MOBILE;
+import static com.dalcoomi.auth.domain.DeviceType.WEB;
 import static com.dalcoomi.common.error.model.ErrorMessage.MALFORMED_TOKEN;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_HAS_EXPIRED;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_NOT_FOUND;
+import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
+import java.util.Set;
+
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +28,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.auth.domain.DeviceType;
+import com.dalcoomi.auth.dto.RefreshTokenInfo;
+import com.dalcoomi.auth.dto.TokenInfo;
+import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.common.error.exception.UnauthorizedException;
 
 @Transactional
@@ -44,6 +57,12 @@ class JwtServiceTest {
 
 	@Value("${jwt.refresh.duration}")
 	private long refreshTokenDuration;
+
+	@AfterEach
+	void tearDown() {
+		assertThat(redisTemplate.getConnectionFactory()).isNotNull();
+		requireNonNull(redisTemplate.getConnectionFactory()).getConnection().serverCommands().flushAll();
+	}
 
 	@Test
 	@DisplayName("통합 테스트 - 실제 토큰 생성 및 인증 성공")
@@ -88,5 +107,146 @@ class JwtServiceTest {
 		Assertions.assertThatThrownBy(() -> jwtService.authenticate(expiredToken))
 			.isInstanceOf(UnauthorizedException.class)
 			.hasMessage(TOKEN_HAS_EXPIRED.getMessage());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 디바이스 정보와 함께 토큰 생성 및 저장 성공")
+	void create_and_save_token_with_device_type_success() {
+		// given
+		Long memberId = 100L;
+		DeviceType deviceType = WEB;
+
+		// when
+		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, deviceType);
+
+		// then
+		assertThat(tokenInfo.accessToken()).isNotNull();
+		assertThat(tokenInfo.refreshToken()).isNotNull();
+
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+
+		assertThat(tokenInfoJsons).isNotNull();
+		assertThat(requireNonNull(tokenInfoJsons)).hasSize(1);
+
+		String tokenInfoJson = tokenInfoJsons.iterator().next();
+		RefreshTokenInfo savedTokenInfo = RefreshTokenInfo.fromJson(tokenInfoJson);
+
+		assertThat(savedTokenInfo.getToken()).isEqualTo(tokenInfo.refreshToken());
+		assertThat(savedTokenInfo.getDeviceType()).isEqualTo(deviceType);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 다중 디바이스 로그인 시 여러 토큰 저장 성공")
+	void create_and_save_multiple_tokens_for_different_devices_success() {
+		// given
+		Long memberId = 101L;
+
+		// when
+		TokenInfo webTokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, WEB);
+		TokenInfo mobileTokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, MOBILE);
+
+		// then
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+
+		assertThat(tokenInfoJsons).isNotNull();
+		assertThat(requireNonNull(tokenInfoJsons)).hasSize(2);
+
+		boolean hasWebToken = tokenInfoJsons.stream()
+			.map(RefreshTokenInfo::fromJson)
+			.anyMatch(info -> info.getToken().equals(webTokenInfo.refreshToken())
+				&& info.getDeviceType() == WEB);
+
+		boolean hasMobileToken = tokenInfoJsons.stream()
+			.map(RefreshTokenInfo::fromJson)
+			.anyMatch(info -> info.getToken().equals(mobileTokenInfo.refreshToken())
+				&& info.getDeviceType() == MOBILE);
+
+		assertThat(hasWebToken).isTrue();
+		assertThat(hasMobileToken).isTrue();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - Refresh Token 검증 성공")
+	void validate_refresh_token_success() {
+		// given
+		Long memberId = 102L;
+		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, WEB);
+
+		// when
+		Long validatedMemberId = jwtService.validateRefreshToken(tokenInfo.refreshToken());
+
+		// then
+		assertThat(validatedMemberId).isEqualTo(memberId);
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - Redis에 없는 Refresh Token 검증 시 예외 발생")
+	void validate_refresh_token_not_in_redis_throws_exception() {
+		// given
+		Long memberId = 103L;
+		String refreshToken = jwtService.createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE, MEMBER_ROLE);
+
+		// when & then
+		assertThatThrownBy(() -> jwtService.validateRefreshToken(refreshToken))
+			.isInstanceOf(UnauthorizedException.class)
+			.hasMessage(TOKEN_NOT_FOUND.getMessage());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - Refresh Token 삭제 성공")
+	void delete_refresh_token_success() {
+		// given
+		Long memberId = 104L;
+		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, WEB);
+
+		// when
+		jwtService.deleteRefreshToken(memberId, tokenInfo.refreshToken());
+
+		// then
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+
+		assertThat(tokenInfoJsons).isNotNull();
+		assertThat(requireNonNull(tokenInfoJsons)).isEmpty();
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 존재하지 않는 Refresh Token 삭제 시 예외 발생")
+	void delete_non_existent_refresh_token_throws_exception() {
+		// given
+		Long memberId = 105L;
+		String fakeRefreshToken = "fake.refresh.token";
+
+		// when & then
+		assertThatThrownBy(() -> jwtService.deleteRefreshToken(memberId, fakeRefreshToken))
+			.isInstanceOf(NotFoundException.class)
+			.hasMessage(TOKEN_NOT_FOUND.getMessage());
+	}
+
+	@Test
+	@DisplayName("통합 테스트 - 다중 디바이스 중 하나의 토큰만 삭제 성공")
+	void delete_one_refresh_token_among_multiple_devices_success() {
+		// given
+		Long memberId = 106L;
+		TokenInfo webTokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, WEB);
+		TokenInfo mobileTokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, MOBILE);
+
+		// when
+		jwtService.deleteRefreshToken(memberId, webTokenInfo.refreshToken());
+
+		// then
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+
+		assertThat(tokenInfoJsons).isNotNull();
+		assertThat(requireNonNull(tokenInfoJsons)).hasSize(1);
+
+		RefreshTokenInfo remainingTokenInfo = RefreshTokenInfo.fromJson(
+			tokenInfoJsons.iterator().next());
+
+		assertThat(remainingTokenInfo.getToken()).isEqualTo(mobileTokenInfo.refreshToken());
+		assertThat(remainingTokenInfo.getDeviceType()).isEqualTo(MOBILE);
 	}
 }

@@ -45,7 +45,7 @@ public class AuthController {
 			.socialType(request.socialType())
 			.build();
 
-		LoginInfo loginInfo = authService.login(socialInfo);
+		LoginInfo loginInfo = authService.login(socialInfo, request.deviceType());
 
 		return LoginResponse.from(loginInfo);
 	}
@@ -58,9 +58,11 @@ public class AuthController {
 
 	@PostMapping("/reissue")
 	@ResponseStatus(OK)
-	public ReissueTokenResponse reissueToken(@RequestHeader("Refresh-Token") String refreshToken) {
+	public ReissueTokenResponse reissueToken(
+		@RequestHeader("Refresh-Token") String refreshToken,
+		@RequestHeader("Device-Type") com.dalcoomi.auth.domain.DeviceType deviceType) {
 		Long memberId = jwtService.validateRefreshToken(refreshToken);
-		TokenInfo tokenInfo = authService.reissueToken(memberId, refreshToken);
+		TokenInfo tokenInfo = authService.reissueToken(memberId, refreshToken, deviceType);
 
 		memberService.updateLastLoginTime(memberId);
 

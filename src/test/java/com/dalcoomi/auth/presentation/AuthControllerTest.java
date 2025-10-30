@@ -1,6 +1,7 @@
 package com.dalcoomi.auth.presentation;
 
 import static com.dalcoomi.auth.constant.TokenConstants.REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+import static com.dalcoomi.auth.domain.DeviceType.WEB;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_DORMANT_ACCOUNT;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_NOT_FOUND;
 import static com.dalcoomi.common.error.model.ErrorMessage.TOKEN_NOT_FOUND;
@@ -15,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -36,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.application.JwtService;
+import com.dalcoomi.auth.dto.RefreshTokenInfo;
 import com.dalcoomi.auth.dto.request.LoginRequest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.fixture.MemberFixture;
@@ -83,7 +86,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 	@DisplayName("통합 테스트 - 신규 회원 로그인 실패")
 	void member_not_found_login_fail() throws Exception {
 		// given
-		LoginRequest request = new LoginRequest("test@naver.com", "123", "test-token", KAKAO);
+		LoginRequest request = new LoginRequest("test@naver.com", "123",
+			"test-token", KAKAO, WEB);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -107,7 +111,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		LoginRequest request = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			socialConnection.getSocialEmail(), socialConnection.getSocialType());
+			socialConnection.getSocialEmail(), socialConnection.getSocialType(), WEB);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -131,7 +135,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		LoginRequest request = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType());
+			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType(),
+			WEB);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -167,7 +172,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			kakaoConnection.getSocialEmail(),
 			"different-social-id",
 			"test-token",
-			NAVER
+			NAVER,
+			WEB
 		);
 
 		// when & then
@@ -197,7 +203,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			"different@email.com",
 			socialConnection.getSocialId(),
 			socialConnection.getSocialRefreshToken(),
-			socialConnection.getSocialType()
+			socialConnection.getSocialType(),
+			WEB
 		);
 
 		// when & then
@@ -236,7 +243,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 
 		// 로그인하여 refresh token을 Redis에 저장
 		LoginRequest loginRequest = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType());
+			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType(),
+			WEB);
 		String loginJson = objectMapper.writeValueAsString(loginRequest);
 
 		String loginResponse = mockMvc.perform(post("/api/auth/login")
@@ -259,9 +267,14 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 			.andExpect(status().isOk())
 			.andDo(print());
 
-		Boolean isMember = redisTemplate.opsForSet()
-			.isMember(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken);
-		assertThat(isMember).isFalse();
+		String key = member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+
+		boolean tokenExists = tokenInfoJsons != null && tokenInfoJsons.stream()
+			.map(RefreshTokenInfo::fromJson)
+			.anyMatch(info -> info.getToken().equals(refreshToken));
+
+		assertThat(tokenExists).isFalse();
 	}
 
 	@Test
@@ -295,7 +308,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		LoginRequest loginRequest = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType());
+			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType(),
+			WEB);
 		String loginJson = objectMapper.writeValueAsString(loginRequest);
 		String loginResponse = mockMvc.perform(post("/api/auth/login")
 				.contentType(APPLICATION_JSON)
@@ -310,6 +324,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		String reissueResponse = mockMvc.perform(post("/api/auth/reissue")
 				.header("Refresh-Token", oldToken)
+				.header("Device-Type", "WEB")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.accessToken").exists())
@@ -325,10 +340,19 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		assertThat(newToken).isNotEqualTo(oldToken);
 
 		// Redis에 새 토큰이 저장되어 있고, 기존 토큰은 삭제되어야 함
-		Boolean hasNewToken = redisTemplate.opsForSet()
-			.isMember(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, newToken);
-		Boolean hasOldToken = redisTemplate.opsForSet()
-			.isMember(member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX, oldToken);
+		String key = member.getId() + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
+		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+
+		assertThat(tokenInfoJsons).isNotNull();
+
+		boolean hasNewToken = tokenInfoJsons.stream()
+			.map(RefreshTokenInfo::fromJson)
+			.anyMatch(info -> info.getToken().equals(newToken));
+
+		boolean hasOldToken = tokenInfoJsons.stream()
+			.map(RefreshTokenInfo::fromJson)
+			.anyMatch(info -> info.getToken().equals(oldToken));
+
 		assertThat(hasNewToken).isTrue();
 		assertThat(hasOldToken).isFalse();
 	}
@@ -344,7 +368,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		socialConnection = socialConnectionRepository.save(socialConnection);
 
 		LoginRequest loginRequest = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType());
+			socialConnection.getSocialRefreshToken(), socialConnection.getSocialType(),
+			WEB);
 		String loginJson = objectMapper.writeValueAsString(loginRequest);
 		String loginResponse = mockMvc.perform(post("/api/auth/login")
 				.contentType(APPLICATION_JSON)
@@ -361,6 +386,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
 				.header("Refresh-Token", refreshToken)
+				.header("Device-Type", "WEB")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isUnauthorized())
 			.andExpect(result -> {
@@ -380,6 +406,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
 				.header("Refresh-Token", invalidToken)
+				.header("Device-Type", "WEB")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isUnauthorized())
 			.andDo(print());
@@ -399,7 +426,8 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 
 		LoginRequest loginRequest1 = new LoginRequest(socialConnection1.getSocialEmail(),
 			socialConnection1.getSocialId(),
-			socialConnection1.getSocialRefreshToken(), socialConnection1.getSocialType());
+			socialConnection1.getSocialRefreshToken(), socialConnection1.getSocialType(),
+			WEB);
 		String loginJson1 = objectMapper.writeValueAsString(loginRequest1);
 
 		mockMvc.perform(post("/api/auth/login")
@@ -410,6 +438,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
 				.header("Refresh-Token", fakeRefreshToken)
+				.header("Device-Type", "WEB")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isUnauthorized())
 			.andExpect(result -> {
@@ -436,6 +465,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 		// when & then
 		mockMvc.perform(post("/api/auth/reissue")
 				.header("Refresh-Token", expiredToken)
+				.header("Device-Type", "WEB")
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isUnauthorized())
 			.andExpect(result -> {
@@ -475,7 +505,7 @@ class AuthControllerTest extends AbstractContainerBaseTest {
 
 		String newRefreshToken = "new-refresh-token";
 		LoginRequest request = new LoginRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
-			newRefreshToken, socialConnection.getSocialType());
+			newRefreshToken, socialConnection.getSocialType(), WEB);
 
 		// when
 		String json = objectMapper.writeValueAsString(request);

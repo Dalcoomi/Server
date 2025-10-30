@@ -1,5 +1,6 @@
 package com.dalcoomi.auth.dto.request;
 
+import com.dalcoomi.auth.domain.DeviceType;
 import com.dalcoomi.member.domain.SocialType;
 
 import jakarta.validation.constraints.Email;
@@ -18,7 +19,10 @@ public record LoginRequest(
 	String socialRefreshToken,
 
 	@NotNull(message = "소셜 타입은 필수입니다.")
-	SocialType socialType
+	SocialType socialType,
+
+	@NotNull(message = "디바이스 타입은 필수입니다.")
+	DeviceType deviceType
 ) {
 
 }

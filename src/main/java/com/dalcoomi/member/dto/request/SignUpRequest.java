@@ -2,6 +2,7 @@ package com.dalcoomi.member.dto.request;
 
 import java.time.LocalDate;
 
+import com.dalcoomi.auth.domain.DeviceType;
 import com.dalcoomi.member.domain.SocialType;
 
 import jakarta.validation.constraints.Email;
@@ -43,7 +44,10 @@ public record SignUpRequest(
 	@NotNull(message = "개인 정보 수집 동의 여부는 필수입니다.")
 	Boolean collectionAgreement,
 
-	Boolean aiLearningAgreement
+	Boolean aiLearningAgreement,
+
+	@NotNull(message = "디바이스 타입은 필수입니다.")
+	DeviceType deviceType
 ) {
 
 }

@@ -1,5 +1,6 @@
 package com.dalcoomi.member.presentation;
 
+import static com.dalcoomi.auth.domain.DeviceType.WEB;
 import static com.dalcoomi.common.error.model.ErrorMessage.MEMBER_CONFLICT;
 import static com.dalcoomi.member.domain.SocialType.KAKAO;
 import static com.dalcoomi.member.domain.SocialType.NAVER;
@@ -106,7 +107,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean collectionAgreement = true;
 
 		SignUpRequest request = new SignUpRequest(socialEmail, socialId, "test-token", KAKAO, socialEmail, name,
-			birthday, gender, serviceAgreement, collectionAgreement, true);
+			birthday, gender, serviceAgreement, collectionAgreement, true, WEB);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -133,7 +134,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 		boolean collectionAgreement = true;
 
 		SignUpRequest request = new SignUpRequest(socialEmail, socialId, "test-token", KAKAO, socialEmail, name,
-			birthday, gender, serviceAgreement, collectionAgreement, true);
+			birthday, gender, serviceAgreement, collectionAgreement, true, WEB);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -157,7 +158,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 		SignUpRequest request = new SignUpRequest(socialConnection.getSocialEmail(), socialConnection.getSocialId(),
 			socialConnection.getSocialRefreshToken(), KAKAO, socialConnection.getSocialEmail(), "다른이름",
-			LocalDate.of(1995, 5, 5), "여성", true, true, true);
+			LocalDate.of(1995, 5, 5), "여성", true, true, true, WEB);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
