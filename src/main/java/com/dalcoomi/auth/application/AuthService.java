@@ -35,7 +35,7 @@ public class AuthService {
 	private final SocialConnectionRepository socialConnectionRepository;
 
 	@Transactional
-	public LoginInfo login(SocialInfo socialInfo) {
+	public LoginInfo login(SocialInfo socialInfo, com.dalcoomi.auth.domain.DeviceType deviceType) {
 		List<SocialConnection> socialConnections = socialConnectionRepository.findBySocialEmailOrSocialId(
 			socialInfo.socialEmail(), socialInfo.socialId());
 
@@ -59,7 +59,7 @@ public class AuthService {
 			SocialType currentSocialType = socialConnection.getSocialType();
 
 			if (currentSocialId.equals(socialInfo.socialId()) && currentSocialType == socialInfo.socialType()) {
-				TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE);
+				TokenInfo tokenInfo = jwtService.createAndSaveToken(member.getId(), MEMBER_ROLE, deviceType);
 
 				if (!currentSocialEmail.equals(socialInfo.socialEmail())) {
 					socialConnection.updateSocialEmail(socialInfo.socialEmail());
@@ -100,10 +100,11 @@ public class AuthService {
 		jwtService.deleteRefreshToken(memberId, refreshToken);
 	}
 
-	public TokenInfo reissueToken(Long memberId, String oldRefreshToken) {
+	public TokenInfo reissueToken(Long memberId, String oldRefreshToken,
+		com.dalcoomi.auth.domain.DeviceType deviceType) {
 		jwtService.deleteRefreshToken(memberId, oldRefreshToken);
 
-		return jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
+		return jwtService.createAndSaveToken(memberId, MEMBER_ROLE, deviceType);
 	}
 
 	@Transactional(readOnly = true)
@@ -118,6 +119,6 @@ public class AuthService {
 			log.info("기존 리프레시 토큰 없음 - memberId: {}", memberId);
 		}
 
-		return jwtService.createAndSaveToken(memberId, TEST_ROLE);
+		return jwtService.createAndSaveToken(memberId, TEST_ROLE, com.dalcoomi.auth.domain.DeviceType.WEB);
 	}
 }

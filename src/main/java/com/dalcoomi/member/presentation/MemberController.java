@@ -71,7 +71,7 @@ public class MemberController {
 
 		Long memberId = memberService.signUp(memberInfo);
 
-		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE);
+		TokenInfo tokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, request.deviceType());
 
 		return SignUpResponse.from(tokenInfo);
 	}

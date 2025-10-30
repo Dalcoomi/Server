@@ -15,6 +15,7 @@ import static java.util.UUID.randomUUID;
 
 import java.time.Duration;
 import java.util.Date;
+import java.util.Set;
 
 import javax.crypto.SecretKey;
 
@@ -22,6 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import com.dalcoomi.auth.domain.DeviceType;
+import com.dalcoomi.auth.dto.RefreshTokenInfo;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.common.error.exception.UnauthorizedException;
@@ -84,7 +87,7 @@ public class JwtService {
 		}
 	}
 
-	public TokenInfo createAndSaveToken(Long memberId, String role) {
+	public TokenInfo createAndSaveToken(Long memberId, String role, DeviceType deviceType) {
 		String accessToken;
 
 		if (role.equals(TEST_ROLE)) {
@@ -95,18 +98,37 @@ public class JwtService {
 
 		String refreshToken = createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE, role);
 
-		redisTemplate.opsForSet()
-			.add(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, refreshToken);
+		RefreshTokenInfo tokenInfo = RefreshTokenInfo.of(refreshToken, deviceType);
+		redisTemplate.opsForSet().add(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, tokenInfo.toJson());
 		redisTemplate.expire(memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX, Duration.ofMillis(refreshTokenDuration));
+
+		log.info("Refresh Token 저장 완료 - memberId: {}, deviceType: {}", memberId, deviceType);
 
 		return new TokenInfo(accessToken, refreshToken);
 	}
 
 	public void deleteRefreshToken(Long memberId, String refreshToken) {
 		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-		Long removed = redisTemplate.opsForSet().remove(key, refreshToken);
+		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
 
-		if (removed == null || removed == 0) {
+		if (tokenInfoJsons == null || tokenInfoJsons.isEmpty()) {
+			throw new NotFoundException(TOKEN_NOT_FOUND);
+		}
+
+		boolean removed = false;
+
+		for (String tokenInfoJson : tokenInfoJsons) {
+			RefreshTokenInfo tokenInfo = RefreshTokenInfo.fromJson(tokenInfoJson);
+
+			if (tokenInfo.getToken().equals(refreshToken)) {
+				redisTemplate.opsForSet().remove(key, tokenInfoJson);
+				removed = true;
+
+				break;
+			}
+		}
+
+		if (!removed) {
 			throw new NotFoundException(TOKEN_NOT_FOUND);
 		}
 	}
@@ -137,10 +159,28 @@ public class JwtService {
 
 			Long memberId = Long.valueOf(claims.getSubject());
 			String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-			Boolean isMember = redisTemplate.opsForSet().isMember(key, refreshToken);
+			Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
 
-			if (isMember == null || !isMember) {
-				log.error("Redis에 저장된 Refresh Token이 없거나 불일치 - memberId: {}", memberId);
+			if (tokenInfoJsons == null || tokenInfoJsons.isEmpty()) {
+				log.error("Redis에 저장된 Refresh Token이 없음 - memberId: {}", memberId);
+
+				throw new UnauthorizedException(TOKEN_NOT_FOUND);
+			}
+
+			boolean isValid = false;
+
+			for (String tokenInfoJson : tokenInfoJsons) {
+				RefreshTokenInfo tokenInfo = RefreshTokenInfo.fromJson(tokenInfoJson);
+
+				if (tokenInfo.getToken().equals(refreshToken)) {
+					isValid = true;
+
+					break;
+				}
+			}
+
+			if (!isValid) {
+				log.error("Redis에 저장된 Refresh Token과 불일치 - memberId: {}", memberId);
 
 				throw new UnauthorizedException(TOKEN_NOT_FOUND);
 			}
