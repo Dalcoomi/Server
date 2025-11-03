@@ -13,8 +13,6 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-import java.util.Set;
-
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -123,13 +121,11 @@ class JwtServiceTest {
 		assertThat(tokenInfo.accessToken()).isNotNull();
 		assertThat(tokenInfo.refreshToken()).isNotNull();
 
-		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX + ":" + deviceType.name();
+		String tokenInfoJson = redisTemplate.opsForValue().get(key);
 
-		assertThat(tokenInfoJsons).isNotNull();
-		assertThat(requireNonNull(tokenInfoJsons)).hasSize(1);
+		assertThat(tokenInfoJson).isNotNull();
 
-		String tokenInfoJson = tokenInfoJsons.iterator().next();
 		RefreshTokenInfo savedTokenInfo = RefreshTokenInfo.fromJson(tokenInfoJson);
 
 		assertThat(savedTokenInfo.getToken()).isEqualTo(tokenInfo.refreshToken());
@@ -147,24 +143,23 @@ class JwtServiceTest {
 		TokenInfo mobileTokenInfo = jwtService.createAndSaveToken(memberId, MEMBER_ROLE, MOBILE);
 
 		// then
-		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+		String webKey = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX + ":" + WEB.name();
+		String mobileKey = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX + ":" + MOBILE.name();
 
-		assertThat(tokenInfoJsons).isNotNull();
-		assertThat(requireNonNull(tokenInfoJsons)).hasSize(2);
+		String webTokenInfoJson = redisTemplate.opsForValue().get(webKey);
+		String mobileTokenInfoJson = redisTemplate.opsForValue().get(mobileKey);
 
-		boolean hasWebToken = tokenInfoJsons.stream()
-			.map(RefreshTokenInfo::fromJson)
-			.anyMatch(info -> info.getToken().equals(webTokenInfo.refreshToken())
-				&& info.getDeviceType() == WEB);
+		assertThat(webTokenInfoJson).isNotNull();
+		assertThat(mobileTokenInfoJson).isNotNull();
 
-		boolean hasMobileToken = tokenInfoJsons.stream()
-			.map(RefreshTokenInfo::fromJson)
-			.anyMatch(info -> info.getToken().equals(mobileTokenInfo.refreshToken())
-				&& info.getDeviceType() == MOBILE);
+		RefreshTokenInfo savedWebTokenInfo = RefreshTokenInfo.fromJson(webTokenInfoJson);
+		RefreshTokenInfo savedMobileTokenInfo = RefreshTokenInfo.fromJson(mobileTokenInfoJson);
 
-		assertThat(hasWebToken).isTrue();
-		assertThat(hasMobileToken).isTrue();
+		assertThat(savedWebTokenInfo.getToken()).isEqualTo(webTokenInfo.refreshToken());
+		assertThat(savedWebTokenInfo.getDeviceType()).isEqualTo(WEB);
+
+		assertThat(savedMobileTokenInfo.getToken()).isEqualTo(mobileTokenInfo.refreshToken());
+		assertThat(savedMobileTokenInfo.getDeviceType()).isEqualTo(MOBILE);
 	}
 
 	@Test
@@ -205,11 +200,10 @@ class JwtServiceTest {
 		jwtService.deleteRefreshToken(memberId, tokenInfo.refreshToken());
 
 		// then
-		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX + ":" + WEB.name();
+		String tokenInfoJson = redisTemplate.opsForValue().get(key);
 
-		assertThat(tokenInfoJsons).isNotNull();
-		assertThat(requireNonNull(tokenInfoJsons)).isEmpty();
+		assertThat(tokenInfoJson).isNull();
 	}
 
 	@Test
@@ -237,14 +231,16 @@ class JwtServiceTest {
 		jwtService.deleteRefreshToken(memberId, webTokenInfo.refreshToken());
 
 		// then
-		String key = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX;
-		Set<String> tokenInfoJsons = redisTemplate.opsForSet().members(key);
+		String webKey = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX + ":" + WEB.name();
+		String mobileKey = memberId + REFRESH_TOKEN_REDIS_KEY_SUFFIX + ":" + MOBILE.name();
 
-		assertThat(tokenInfoJsons).isNotNull();
-		assertThat(requireNonNull(tokenInfoJsons)).hasSize(1);
+		String webTokenInfoJson = redisTemplate.opsForValue().get(webKey);
+		String mobileTokenInfoJson = redisTemplate.opsForValue().get(mobileKey);
 
-		RefreshTokenInfo remainingTokenInfo = RefreshTokenInfo.fromJson(
-			tokenInfoJsons.iterator().next());
+		assertThat(webTokenInfoJson).isNull();
+		assertThat(mobileTokenInfoJson).isNotNull();
+
+		RefreshTokenInfo remainingTokenInfo = RefreshTokenInfo.fromJson(mobileTokenInfoJson);
 
 		assertThat(remainingTokenInfo.getToken()).isEqualTo(mobileTokenInfo.refreshToken());
 		assertThat(remainingTokenInfo.getDeviceType()).isEqualTo(MOBILE);
