@@ -11,10 +11,10 @@ public class TeamMember {
 	private final Long id;
 	private final Team team;
 	private final Member member;
-	private int displayOrder;
+	private Integer displayOrder;
 
 	@Builder
-	public TeamMember(Long id, Team team, Member member, int displayOrder) {
+	public TeamMember(Long id, Team team, Member member, Integer displayOrder) {
 		this.id = id;
 		this.team = team;
 		this.member = member;
@@ -29,7 +29,7 @@ public class TeamMember {
 			.build();
 	}
 
-	public void updateDisplayOrder(int displayOrder) {
+	public void updateDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
 	}
 }
