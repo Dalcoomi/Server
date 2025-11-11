@@ -79,7 +79,7 @@ class JwtServiceTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 잘못된 형식의 토큰으로 인증 시 예외 발생")
-	void malformed_token_throws_unauthorized_exception() {
+	void malformed_token_throws_unauthorized_exception_fail() {
 		// given
 		String authHeader = "Bearer invalid.token.format";
 
@@ -91,7 +91,7 @@ class JwtServiceTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 만료된 토큰으로 인증 시 예외 발생")
-	void expired_token_throws_unauthorized_exception() {
+	void expired_token_throws_unauthorized_exception_fail() {
 		// given
 		JwtService expiredTokenService = new JwtService(redisTemplate);
 		ReflectionTestUtils.setField(expiredTokenService, "tokenSecret", tokenSecret);
@@ -178,7 +178,7 @@ class JwtServiceTest {
 
 	@Test
 	@DisplayName("통합 테스트 - Redis에 없는 Refresh Token 검증 시 예외 발생")
-	void validate_refresh_token_not_in_redis_throws_exception() {
+	void validate_refresh_token_not_in_redis_throws_exception_fail() {
 		// given
 		Long memberId = 103L;
 		String refreshToken = jwtService.createToken(memberId, refreshTokenDuration, REFRESH_TOKEN_TYPE, MEMBER_ROLE);
@@ -208,7 +208,7 @@ class JwtServiceTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 존재하지 않는 Refresh Token 삭제 시 예외 발생")
-	void delete_non_existent_refresh_token_throws_exception() {
+	void delete_non_existent_refresh_token_throws_exception_fail() {
 		// given
 		Long memberId = 105L;
 		String fakeRefreshToken = "fake.refresh.token";
