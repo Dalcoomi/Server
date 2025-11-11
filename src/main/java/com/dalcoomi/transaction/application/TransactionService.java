@@ -6,21 +6,16 @@ import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_MEMBER_NOT_FOUND
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_CREATOR_INCONSISTENCY;
 import static com.dalcoomi.common.error.model.ErrorMessage.TRANSACTION_TEAM_INCONSISTENCY;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.http.MediaType.MULTIPART_FORM_DATA;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.dalcoomi.category.application.repository.CategoryRepository;
@@ -37,7 +32,6 @@ import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
 import com.dalcoomi.transaction.dto.request.SendReceiptTransactions;
-import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -178,50 +172,7 @@ public class TransactionService {
 		transactionRepository.save(transaction);
 	}
 
-	public AiReceiptResponse analyseReceipt(MultipartFile receipt, List<String> categoryNames) {
-		try {
-			log.info("영수증 분석 요청: filename={}, size={} bytes", receipt.getOriginalFilename(), receipt.getSize());
-
-			byte[] receiptBytes = receipt.getBytes();
-			String originalFilename = receipt.getOriginalFilename();
-
-			ByteArrayResource receiptResource = new ByteArrayResource(receiptBytes) {
-				@Override
-				public String getFilename() {
-					return originalFilename;
-				}
-			};
-
-			MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-			parts.add("receipt", receiptResource);
-			parts.add("categories", objectMapper.writeValueAsString(categoryNames));
-
-			String response = webClient.post()
-				.uri(aiServerUrl + "/receipt")
-				.contentType(MULTIPART_FORM_DATA)
-				.bodyValue(parts)
-				.retrieve()
-				.onStatus(HttpStatusCode::isError, clientResponse -> {
-					log.error("AI 서버 요청 실패: status={}", clientResponse.statusCode());
-
-					return Mono.error(new RuntimeException("AI 서버 처리 중 오류가 발생했습니다."));
-				})
-				.bodyToMono(String.class)
-				.block();
-
-			log.info("영수증 분석 완료: {}", response);
-
-			return objectMapper.readValue(response, AiReceiptResponse.class);
-		} catch (Exception e) {
-			log.error("영수증 분석 실패: filename={}", receipt.getOriginalFilename(), e);
-
-			throw new DalcoomiException("영수증 처리 중 오류가 발생했습니다.", e);
-		}
-	}
-
 	public void sendToAiServer(String taskId, List<Transaction> transactions) {
-		String updatedTaskId = incrementTaskId(taskId);
-
 		List<ReceiptInfo> transactionData = transactions.stream()
 			.map(transaction -> ReceiptInfo.builder()
 				.date(transaction.getTransactionDate().toLocalDate())
@@ -232,7 +183,7 @@ public class TransactionService {
 			.toList();
 
 		SendReceiptTransactions request = SendReceiptTransactions.builder()
-			.taskId(updatedTaskId)
+			.taskId(taskId)
 			.transactions(transactionData)
 			.build();
 
@@ -250,9 +201,9 @@ public class TransactionService {
 				.bodyToMono(String.class)
 				.block();
 
-			log.info("AI 서버 전송 성공: taskId={}, response={}", updatedTaskId, response);
+			log.info("AI 서버 전송 성공: taskId={}, response={}", taskId, response);
 		} catch (Exception e) {
-			log.error("AI 서버 전송 중 오류 발생: taskId={}", updatedTaskId, e);
+			log.error("AI 서버 전송 중 오류 발생: taskId={}", taskId, e);
 
 			throw new DalcoomiException("AI 서버 전송 중 오류가 발생했습니다.", e);
 		}
@@ -281,26 +232,6 @@ public class TransactionService {
 	private void validateTransactionCreator(Transaction transaction, Long memberId) {
 		if (!transaction.getCreator().getId().equals(memberId)) {
 			throw new BadRequestException(TRANSACTION_CREATOR_INCONSISTENCY);
-		}
-	}
-
-	private String incrementTaskId(String taskId) {
-		int lastDashIndex = taskId.lastIndexOf('-');
-
-		if (lastDashIndex == -1) {
-			throw new IllegalArgumentException("잘못된 taskId 형식입니다: " + taskId);
-		}
-
-		String prefix = taskId.substring(0, lastDashIndex + 1);
-		String numberPart = taskId.substring(lastDashIndex + 1);
-
-		try {
-			int currentNumber = Integer.parseInt(numberPart);
-			int nextNumber = currentNumber + 1;
-
-			return prefix + nextNumber;
-		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException("taskId의 숫자 부분을 파싱할 수 없습니다: " + taskId, e);
 		}
 	}
 }
