@@ -142,6 +142,7 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(receiptStreamProducer.publishReceiptTask(eq(memberId), isNull(), any(MultipartFile.class)))
 			.willAnswer(invocation -> {
+				Thread.sleep(500);
 				return taskId;
 			});
 
@@ -231,7 +232,8 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(transactionService.create(eq(member.getId()), any(List.class), any(List.class)))
 			.willAnswer(invocation -> {
-				return List.of(); // 빈 리스트 반환
+				Thread.sleep(500);
+				return List.of();
 			});
 
 		// 인증 설정
@@ -360,7 +362,10 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(receiptStreamProducer.publishReceiptTask(eq(memberId), eq(teamId), any(MultipartFile.class)))
-			.willAnswer(invocation -> taskId);
+			.willAnswer(invocation -> {
+				Thread.sleep(500);
+				return taskId;
+			});
 
 		// 동일한 영수증 파일 생성
 		MockMultipartFile receipt = new MockMultipartFile(
