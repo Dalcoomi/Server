@@ -40,7 +40,7 @@ public class TeamMemberJpaEntity extends BaseTimeEntity {
 	@JoinColumn(name = "member_id", nullable = false, foreignKey = @ForeignKey(NO_CONSTRAINT))
 	private MemberJpaEntity member;
 
-	@Column(name = "display_order", nullable = false)
+	@Column(name = "display_order", nullable = true)
 	private Integer displayOrder;
 
 	@Builder

@@ -5,6 +5,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import com.dalcoomi.auth.application.JwtService;
 import com.dalcoomi.auth.filter.JwtAuthenticationFilter;
 import com.dalcoomi.common.error.model.ErrorResponse;
+import com.dalcoomi.common.filter.ReceiptCallbackApiKeyFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -31,19 +33,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private static final String[] ALLOWED_URIS = {
-		"/",
-		"/health",
-		"/login/**",
-		"/api/auth/login",
-		"/api/auth/reissue",
-		"/api/auth/test/token",
-		"/api/members/sign-up",
-		"/api/members/connect"
-	};
-
 	private final ObjectMapper objectMapper;
 	private final JwtService jwtService;
+	private final ReceiptCallbackApiKeyFilter receiptCallbackApiKeyFilter;
+
+	@Value("${security.allow-uris}")
+	private String[] allowedUris;
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -56,8 +51,9 @@ public class SecurityConfig {
 			.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
 			.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(STATELESS))
 			.authorizeHttpRequests(request ->
-				request.requestMatchers(ALLOWED_URIS).permitAll().anyRequest().authenticated())
-			.addFilterAfter(jwtAuthenticationFilter(), LogoutFilter.class)
+				request.requestMatchers(allowedUris).permitAll().anyRequest().authenticated())
+			.addFilterAfter(receiptCallbackApiKeyFilter, LogoutFilter.class)
+			.addFilterAfter(jwtAuthenticationFilter(), receiptCallbackApiKeyFilter.getClass())
 			.exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
 				log.error("(유효하지 않는 URL) 시큐리티 필터 에러: {}", authException.getMessage(), authException);
 
@@ -71,6 +67,6 @@ public class SecurityConfig {
 
 	@Bean
 	public JwtAuthenticationFilter jwtAuthenticationFilter() {
-		return new JwtAuthenticationFilter(Arrays.asList(ALLOWED_URIS), jwtService, objectMapper);
+		return new JwtAuthenticationFilter(Arrays.asList(allowedUris), jwtService, objectMapper);
 	}
 }

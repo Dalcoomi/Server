@@ -107,7 +107,7 @@ class JwtAuthenticationFilterTest {
 
 	@Test
 	@DisplayName("필터 체인 진행 중 ServletException 예외 발생")
-	void handle_servlet_exception_error() throws ServletException, IOException {
+	void handle_servlet_exception_error_fail() throws ServletException, IOException {
 		// given
 		String memberId = "123";
 		String accessToken = "test.access.token";

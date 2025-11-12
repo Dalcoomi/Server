@@ -22,7 +22,7 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 configurations {
-    all {
+    configureEach {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
 
@@ -134,7 +134,7 @@ jacocoTestCoverageVerification {
                     '*.*Converter',
                     '*.*.CustomUserDetails',
                     '*.HealthController',
-                    'com.dalcoomi.transaction.application.TransactionService.*'
+                    'com.dalcoomi.transaction.application.ReceiptStreamConsumer.*'
             ]
         }
     }

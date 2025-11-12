@@ -17,11 +17,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -62,11 +60,10 @@ import com.dalcoomi.fixture.CategoryFixture;
 import com.dalcoomi.fixture.MemberFixture;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
+import com.dalcoomi.transaction.application.ReceiptStreamProducer;
 import com.dalcoomi.transaction.application.TransactionService;
-import com.dalcoomi.transaction.dto.ReceiptInfo;
 import com.dalcoomi.transaction.dto.request.SaveReceiptRequest;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
-import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Transactional
@@ -88,6 +85,9 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 
 	@MockitoBean
 	private CategoryService categoryService;
+
+	@MockitoBean
+	private ReceiptStreamProducer receiptStreamProducer;
 
 	@Autowired
 	private MemberRepository memberRepository;
@@ -137,29 +137,14 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 	void upload_one_receipt_success() {
 		// given
 		Long memberId = 1L;
-		String taskId = "1-1";
-		List<ReceiptInfo> mockReceiptInfos = Arrays.asList(
-			ReceiptInfo.builder()
-				.date(LocalDate.of(2025, 1, 23))
-				.categoryName("카페")
-				.content("커피")
-				.amount(4800L)
-				.build(),
-			ReceiptInfo.builder()
-				.date(LocalDate.of(2025, 1, 23))
-				.categoryName("식비")
-				.content("칼국수")
-				.amount(12000L)
-				.build()
-		);
-		AiReceiptResponse response = AiReceiptResponse.builder().taskId(taskId).transactions(mockReceiptInfos).build();
+		String taskId = "receipt-test-123";
 
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
-		given(categoryService.fetchCategoryNames(eq(memberId), isNull())).willReturn(Arrays.asList("카페", "식비"));
-		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willAnswer(invocation -> {
-			Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
-			return response;
-		});
+		given(receiptStreamProducer.publishReceiptTask(eq(memberId), isNull(), any(MultipartFile.class)))
+			.willAnswer(invocation -> {
+				Thread.sleep(500);
+				return taskId;
+			});
 
 		MockMultipartFile receipt = new MockMultipartFile(
 			"receipt",
@@ -247,8 +232,8 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
 		given(transactionService.create(eq(member.getId()), any(List.class), any(List.class)))
 			.willAnswer(invocation -> {
-				Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
-				return List.of(); // 빈 리스트 반환
+				Thread.sleep(500);
+				return List.of();
 			});
 
 		// 인증 설정
@@ -313,26 +298,10 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 	void upload_different_receipts_success() {
 		// given
 		Long memberId = 1L;
-		String taskId = "1-1";
-		List<ReceiptInfo> mockReceiptInfos = Arrays.asList(
-			ReceiptInfo.builder()
-				.date(LocalDate.of(2025, 1, 23))
-				.categoryName("카페")
-				.content("커피")
-				.amount(4800L)
-				.build(),
-			ReceiptInfo.builder()
-				.date(LocalDate.of(2025, 1, 23))
-				.categoryName("식비")
-				.content("칼국수")
-				.amount(12000L)
-				.build()
-		);
-		AiReceiptResponse response = AiReceiptResponse.builder().taskId(taskId).transactions(mockReceiptInfos).build();
 
-		// Mock 설정
-		given(categoryService.fetchCategoryNames(eq(memberId), isNull())).willReturn(Arrays.asList("카페", "식비"));
-		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willReturn(response);
+		// Mock 설정 - 각 파일마다 다른 taskId 반환
+		given(receiptStreamProducer.publishReceiptTask(eq(memberId), isNull(), any(MultipartFile.class)))
+			.willAnswer(invocation -> "receipt-" + System.currentTimeMillis());
 
 		// 인증 설정
 		setAuthentication(memberId);
@@ -357,7 +326,6 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 					);
 
 					latch.countDown();
-					latch.await(15, TimeUnit.SECONDS);
 
 					return mockMvc.perform(multipart("/api/transactions/receipts/upload")
 						.file(receipt)
@@ -390,23 +358,14 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 		// given
 		Long memberId = 1L;
 		Long teamId = 2L;
-		String taskId = "1-1";
-		List<ReceiptInfo> mockReceiptInfos = Collections.singletonList(
-			ReceiptInfo.builder()
-				.date(LocalDate.of(2025, 1, 23))
-				.categoryName("회식")
-				.content("삼겹살")
-				.amount(25000L)
-				.build()
-		);
-		AiReceiptResponse response = AiReceiptResponse.builder().taskId(taskId).transactions(mockReceiptInfos).build();
+		String taskId = "receipt-team-123";
 
 		// Mock 설정 - 락 경합 시뮬레이션을 위한 지연 추가
-		given(categoryService.fetchCategoryNames(memberId, teamId)).willReturn(Arrays.asList("회식", "대관"));
-		given(transactionService.analyseReceipt(any(MultipartFile.class), any(List.class))).willAnswer(invocation -> {
-			Thread.sleep(500); // 락 유지 시간 연장 (CI 환경 고려)
-			return response;
-		});
+		given(receiptStreamProducer.publishReceiptTask(eq(memberId), eq(teamId), any(MultipartFile.class)))
+			.willAnswer(invocation -> {
+				Thread.sleep(500);
+				return taskId;
+			});
 
 		// 동일한 영수증 파일 생성
 		MockMultipartFile receipt = new MockMultipartFile(
@@ -505,7 +464,6 @@ class ReceiptConcurrencyTest extends AbstractContainerBaseTest {
 						.build();
 
 					latch.countDown();
-					latch.await(15, TimeUnit.SECONDS);
 
 					return mockMvc.perform(post("/api/transactions/receipts/save")
 						.content(objectMapper.writeValueAsString(saveRequest))

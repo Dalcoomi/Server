@@ -20,7 +20,7 @@ class JwtMockServiceTest {
 
 	@Test
 	@DisplayName("null 헤더로 인증 시 예외 발생")
-	void null_header_throws_unauthorized_exception() {
+	void null_header_throws_unauthorized_exception_fail() {
 		// given
 		given(jwtService.authenticate(null)).willThrow(new UnauthorizedException(AUTHORIZATION_HEADER_ERROR));
 
@@ -32,7 +32,7 @@ class JwtMockServiceTest {
 
 	@Test
 	@DisplayName("잘못된 형식의 헤더로 인증 시 예외 발생")
-	void invalid_header_format_throws_unauthorized_exception() {
+	void invalid_header_format_throws_unauthorized_exception_fail() {
 		// given
 		String header = "Invalid header";
 

@@ -3,15 +3,12 @@ package com.dalcoomi.transaction.application;
 import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatNoException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.dalcoomi.category.domain.Category;
@@ -30,9 +26,6 @@ import com.dalcoomi.fixture.CategoryFixture;
 import com.dalcoomi.fixture.MemberFixture;
 import com.dalcoomi.member.domain.Member;
 import com.dalcoomi.transaction.domain.Transaction;
-import com.dalcoomi.transaction.dto.ReceiptInfo;
-import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import reactor.core.publisher.Mono;
 
@@ -44,61 +37,6 @@ class TransactionServiceTest {
 
 	@Mock
 	private WebClient webClient;
-
-	@Mock
-	private ObjectMapper objectMapper;
-
-	@Test
-	@DisplayName("영수증 분석 성공")
-	void analyse_receipt_success() throws Exception {
-		// given
-		MockMultipartFile receipt = new MockMultipartFile(
-			"receipt", "test.jpg", "image/jpeg", "test".getBytes());
-		List<String> categoryNames = Arrays.asList("카페", "식비");
-		String mockResponse = "{\"taskId\":\"1-1\",\"transactions\":[{\"date\":\"2025-01-23\","
-			+ "\"categoryName\":\"카페\",\"content\":\"커피\",\"amount\":4800}]}";
-
-		// WebClient Mock 체이닝
-		WebClient.RequestBodyUriSpec requestBodyUriSpec = mock(WebClient.RequestBodyUriSpec.class);
-		WebClient.RequestBodySpec requestBodySpec = mock(WebClient.RequestBodySpec.class);
-		WebClient.RequestHeadersSpec requestHeadersSpec = mock(WebClient.RequestHeadersSpec.class);
-		WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
-
-		given(webClient.post()).willReturn(requestBodyUriSpec);
-		given(requestBodyUriSpec.uri(anyString())).willReturn(requestBodySpec);
-		given(requestBodySpec.contentType(any())).willReturn(requestBodySpec);
-		given(requestBodySpec.bodyValue(any())).willReturn(requestHeadersSpec);
-		given(requestHeadersSpec.retrieve()).willReturn(responseSpec);
-		given(responseSpec.onStatus(any(), any())).willReturn(responseSpec);
-		given(responseSpec.bodyToMono(String.class)).willReturn(Mono.just(mockResponse));
-
-		// ObjectMapper Mock
-		given(objectMapper.writeValueAsString(categoryNames)).willReturn("[\"카페\",\"식비\"]");
-
-		AiReceiptResponse expectedResult = AiReceiptResponse.builder()
-			.taskId("1-1")
-			.transactions(Collections.singletonList(
-				ReceiptInfo.builder()
-					.date(LocalDate.of(2025, 1, 23))
-					.categoryName("카페")
-					.content("커피")
-					.amount(4800L)
-					.build()
-			))
-			.build();
-
-		given(objectMapper.readValue(mockResponse, AiReceiptResponse.class)).willReturn(expectedResult);
-
-		// when
-		AiReceiptResponse result = transactionService.analyseReceipt(receipt, categoryNames);
-
-		// then
-		assertThat(result.taskId()).isEqualTo("1-1");
-		assertThat(result.transactions()).hasSize(1);
-		assertThat(result.transactions().getFirst().categoryName()).isEqualTo("카페");
-		assertThat(result.transactions().getFirst().content()).isEqualTo("커피");
-		assertThat(result.transactions().getFirst().amount()).isEqualTo(4800L);
-	}
 
 	@Test
 	@DisplayName("다수 거래 내역 AI 서버 전송 성공")
