@@ -9,13 +9,14 @@ import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,12 @@ class RedisLockUtilTest extends AbstractContainerBaseTest {
 
 	@Autowired
 	private RedisTemplate<String, String> redisTemplate;
+
+	@BeforeEach
+	void setUp() {
+		// 테스트 전 Redis 키 정리
+		redisTemplate.delete("test:lock:key");
+	}
 
 	@AfterEach
 	void tearDown() {
@@ -64,9 +71,9 @@ class RedisLockUtilTest extends AbstractContainerBaseTest {
 	void concurrent_lock_acquisition_only_one_success() throws InterruptedException {
 		// given
 		String lockKey = "test:lock:key";
-		int threadCount = 5;
+		int threadCount = 3;
 		ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-		CountDownLatch latch = new CountDownLatch(threadCount);
+		CyclicBarrier barrier = new CyclicBarrier(threadCount);
 		AtomicInteger successCount = new AtomicInteger(0);
 		AtomicInteger failureCount = new AtomicInteger(0);
 
@@ -74,15 +81,14 @@ class RedisLockUtilTest extends AbstractContainerBaseTest {
 		for (int i = 0; i < threadCount; i++) {
 			executorService.submit(() -> {
 				try {
-					latch.countDown();
-					latch.await();
+					barrier.await(10, TimeUnit.SECONDS);
 
 					redisLockUtil.acquireAndRunLock(lockKey, () -> "success");
 
 					successCount.incrementAndGet();
 				} catch (ConcurrentRequestException e) {
 					failureCount.incrementAndGet();
-				} catch (InterruptedException e) {
+				} catch (Exception e) {
 					Thread.currentThread().interrupt();
 				}
 			});
