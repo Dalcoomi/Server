@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,6 +75,7 @@ class RedisLockUtilTest extends AbstractContainerBaseTest {
 		int threadCount = 3;
 		ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 		CyclicBarrier barrier = new CyclicBarrier(threadCount);
+		CountDownLatch latch = new CountDownLatch(1);
 		AtomicInteger successCount = new AtomicInteger(0);
 		AtomicInteger failureCount = new AtomicInteger(0);
 
@@ -83,10 +85,27 @@ class RedisLockUtilTest extends AbstractContainerBaseTest {
 				try {
 					barrier.await(10, TimeUnit.SECONDS);
 
-					redisLockUtil.acquireAndRunLock(lockKey, () -> "success");
+					redisLockUtil.acquireAndRunLock(lockKey, () -> {
+						// 다른 스레드들이 락 획득을 시도할 수 있도록 신호를 보냄
+						latch.countDown();
+						try {
+							// 락을 충분히 오래 유지하여 다른 스레드들이 실패하도록 보장
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							Thread.currentThread().interrupt();
+						}
+
+						return "success";
+					});
 
 					successCount.incrementAndGet();
 				} catch (ConcurrentRequestException e) {
+					// 첫 번째 스레드가 락을 획득할 때까지 대기
+					try {
+						latch.await(10, TimeUnit.SECONDS);
+					} catch (InterruptedException ex) {
+						Thread.currentThread().interrupt();
+					}
 					failureCount.incrementAndGet();
 				} catch (Exception e) {
 					Thread.currentThread().interrupt();
