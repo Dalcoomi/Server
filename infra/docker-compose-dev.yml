@@ -1,4 +1,22 @@
 services:
+  scouter-collector:
+    image: scouterapm/scouter-collector:latest
+    container_name: dalcoomi-scouter-collector-dev
+    restart: unless-stopped
+    ports:
+      - "6100:6100"
+      - "6180:6180"
+    volumes:
+      - scouter_data:/home/scouter-collector/logs
+    networks:
+      - dalcoomi-dev-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
   dalcoomi:
     image: ghcr.io/${GHCR_USERNAME}/${GHCR_REPOSITORY}:dev-latest
     container_name: dalcoomi-spring-dev
@@ -13,6 +31,7 @@ services:
       - ../logs/spring:/logs
     depends_on:
       - redis
+      - scouter-collector
     networks:
       - dalcoomi-dev-network
 
@@ -38,6 +57,8 @@ services:
 
 volumes:
   redis_data:
+    driver: local
+  scouter_data:
     driver: local
 
 networks:
