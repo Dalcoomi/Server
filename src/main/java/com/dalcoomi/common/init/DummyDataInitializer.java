@@ -32,11 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 성능 테스트를 위한 더미 데이터 자동 생성
  * 애플리케이션 시작 시 자동으로 10만 건의 거래 내역을 생성합니다.
- * local 프로파일에서만 동작합니다.
+ * local, dev 프로파일에서만 동작합니다.
  */
 @Slf4j
 @Component
-@Profile("local")
+@Profile({"local", "dev"})
 @RequiredArgsConstructor
 public class DummyDataInitializer implements ApplicationRunner {
 
