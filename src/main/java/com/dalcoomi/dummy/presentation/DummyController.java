@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class DummyController {
 
 	private final DummyService dummyService;
-	
+
 	@PostMapping
 	public DummyDataResponse generateDummyData(@RequestParam(defaultValue = "member") String type,
 		@RequestParam(defaultValue = "1") int count) {
