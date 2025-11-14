@@ -56,7 +56,8 @@ sonar {
         property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
         property "sonar.exclusions", "**/*Application*.java, **/*Config*.java, **/*GlobalExceptionHandler.java, " +
                 "**/Q*.java, **/DynamicQuery.java, **/*Exception.java, **/*Adapter.java, **/*Filter.java, " +
-                "**/BaseTimeEntity.java, **/*Converter.java, **/*RepositoryImpl.java, **/HealthController.java"
+                "**/BaseTimeEntity.java, **/*Converter.java, **/*RepositoryImpl.java, **/HealthController.java" +
+                "**/*Warmup.java, **/Dummy*.java"
         property "sonar.java.coveragePlugin", "jacoco"
     }
 }
@@ -134,7 +135,9 @@ jacocoTestCoverageVerification {
                     '*.*Converter',
                     '*.*.CustomUserDetails',
                     '*.HealthController',
-                    'com.dalcoomi.transaction.application.ReceiptStreamConsumer.*'
+                    'com.dalcoomi.transaction.application.ReceiptStreamConsumer.*',
+                    '*.*Warmup',
+                    '*.Dummy*'
             ]
         }
     }

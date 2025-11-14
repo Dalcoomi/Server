@@ -33,8 +33,8 @@ class DataMigrationBatchServiceTest extends AbstractContainerBaseTest {
 	@Test
 	@DisplayName("평문 회원 데이터 암호화 마이그레이션 성공")
 	void migrate_plain_text_data_member_data_encrypted_success() {
-		// given - 평문 데이터를 직접 DB에 삽입
-		Long memberId = 999L;
+		// given
+		Long memberId = 99999999L;
 		String plainEmail = "test@example.com";
 		String plainName = "testuser";
 		String plainGender = "M";
@@ -73,13 +73,12 @@ class DataMigrationBatchServiceTest extends AbstractContainerBaseTest {
 	@Test
 	@DisplayName("평문 소셜 연결 데이터 암호화 마이그레이션 성공")
 	void migratePlainTextData_social_connection_data_encrypted_success() {
-		// given - 평문 데이터를 직접 DB에 삽입
-		Long memberId = 998L;
-		Long socialConnectionId = 997L;
+		// given
+		Long memberId = 99999998L;
+		Long socialConnectionId = 99999997L;
 		String plainSocialEmail = "social@example.com";
 		String plainSocialId = "social123";
 
-		// 멤버 삽입
 		entityManager.createNativeQuery("""
 				INSERT INTO member (id, email, email_hash, name, name_hash, nickname, birthday, birthday_hash,
 				gender, gender_hash, profile_image_url, service_agreement, collection_agreement,
@@ -98,7 +97,6 @@ class DataMigrationBatchServiceTest extends AbstractContainerBaseTest {
 			.setParameter(10, false)
 			.executeUpdate();
 
-		// 소셜 연결 삽입
 		entityManager.createNativeQuery("""
 				INSERT INTO social_connection (id, member_id, social_type, social_id, social_id_hash,
 				social_email, social_email_hash, social_refresh_token ,created_at, updated_at)
@@ -127,13 +125,12 @@ class DataMigrationBatchServiceTest extends AbstractContainerBaseTest {
 	@Test
 	@DisplayName("평문 거래 내역 데이터 암호화 마이그레이션 성공")
 	void migratePlainTextData_transaction_data_encrypted_success() {
-		// given - 평문 데이터를 직접 DB에 삽입
-		Long memberId = 996L;
-		Long categoryId = 995L;
-		Long transactionId = 994L;
+		// given
+		Long memberId = 99999996L;
+		Long categoryId = 99999995L;
+		Long transactionId = 99999994L;
 		String plainContent = "test transaction";
 
-		// 멤버 삽입
 		entityManager.createNativeQuery("""
 				INSERT INTO member (id, email, email_hash, name, name_hash, nickname, birthday, birthday_hash,
 				gender, gender_hash,profile_image_url, service_agreement, collection_agreement,
@@ -152,7 +149,6 @@ class DataMigrationBatchServiceTest extends AbstractContainerBaseTest {
 			.setParameter(10, false)
 			.executeUpdate();
 
-		// 카테고리 삽입
 		entityManager.createNativeQuery("""
 				INSERT INTO category (id, creator_id, name, icon_url, is_active, owner_type, transaction_type,
 				created_at, updated_at)
@@ -167,7 +163,6 @@ class DataMigrationBatchServiceTest extends AbstractContainerBaseTest {
 			.setParameter(7, "EXPENSE")
 			.executeUpdate();
 
-		// 거래 내역 삽입
 		entityManager.createNativeQuery("""
 				INSERT INTO transaction (id, creator_id, category_id, transaction_type, amount, content,
 				transaction_date, created_at, updated_at)
