@@ -1,5 +1,8 @@
 package com.dalcoomi.common.init;
 
+import static com.dalcoomi.transaction.domain.TransactionType.EXPENSE;
+import static com.dalcoomi.transaction.domain.TransactionType.INCOME;
+
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,7 +42,7 @@ public class DummyDataInitializer implements ApplicationRunner {
 
 	private static final int TOTAL_COUNT = 100_000;
 	private static final int BATCH_SIZE = 1000;
-	private static final int MEMBER_COUNT = 100; // 100명의 회원 생성
+	private static final int MEMBER_COUNT = 10; // 10명의 회원 생성
 
 	private final TransactionRepository transactionRepository;
 	private final MemberRepository memberRepository;
@@ -48,8 +51,8 @@ public class DummyDataInitializer implements ApplicationRunner {
 	@Override
 	@Transactional
 	public void run(ApplicationArguments args) {
-		// 이미 더미 데이터가 있으면 스킵
-		if (true) {
+		// 이미 더미 데이터가 있으면 스킵 (유저1 닉네임 존재 여부로 판단)
+		if (isDummyDataExists()) {
 			log.info("더미 데이터가 이미 존재합니다. 생성을 건너뜁니다.");
 			return;
 		}
@@ -108,15 +111,23 @@ public class DummyDataInitializer implements ApplicationRunner {
 		}
 	}
 
+	/**
+	 * 더미 데이터 존재 여부 확인
+	 * "유저1" 닉네임을 가진 유저가 있으면 더미 데이터가 이미 생성된 것으로 판단
+	 */
+	private boolean isDummyDataExists() {
+		return memberRepository.existsByNickname("유저1");
+	}
+
 	private Member createDummyMember(int index) {
 		Member member = Member.builder()
 			.email(String.format("test-user-%d@dalcoomi.com", index))
 			.name("테스트" + index)
+			.collectionAgreement(true)
 			.nickname("유저" + index)
-			.birthday(LocalDate.of(1990, 1, 1).plusDays(index))
+			.birthday(LocalDate.of(2000, 1, 1).plusDays(index))
 			.profileImageUrl("https://dalcoomi.com/default.jpg")
 			.serviceAgreement(true)
-			.collectionAgreement(true)
 			.build();
 
 		return memberRepository.save(member);
@@ -129,7 +140,7 @@ public class DummyDataInitializer implements ApplicationRunner {
 			.name("카테고리" + (index % 10)) // 카테고리는 10개만 순환
 			.iconUrl("https://dalcoomi.com/icons/test.png")
 			.isActive(true)
-			.transactionType(TransactionType.EXPENSE)
+			.transactionType(EXPENSE)
 			.ownerType(OwnerType.MEMBER)
 			.build();
 
@@ -147,9 +158,7 @@ public class DummyDataInitializer implements ApplicationRunner {
 			.minusMinutes(ThreadLocalRandom.current().nextInt(0, 60));
 
 		// 랜덤 타입 (70% EXPENSE, 30% INCOME)
-		TransactionType type = random.nextDouble() > 0.3
-			? TransactionType.EXPENSE
-			: TransactionType.INCOME;
+		TransactionType type = random.nextDouble() > 0.3 ? EXPENSE : INCOME;
 
 		return Transaction.builder()
 			.creator(member)
