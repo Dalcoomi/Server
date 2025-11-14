@@ -1,4 +1,4 @@
-package com.dalcoomi.common.warmup;
+package com.dalcoomi.dummy.warmup;
 
 import java.time.LocalDate;
 
