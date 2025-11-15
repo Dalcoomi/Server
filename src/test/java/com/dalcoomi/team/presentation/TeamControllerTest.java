@@ -520,7 +520,7 @@ class TeamControllerTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 마지막 멤버가 팀을 떠나면 팀 삭제 성공")
-	void leave_team_last_member_team_deleted() throws Exception {
+	void leave_team_last_member_team_deleted_success() throws Exception {
 		// given
 		Member lastMember = MemberFixture.getMember1();
 		lastMember = memberRepository.save(lastMember);

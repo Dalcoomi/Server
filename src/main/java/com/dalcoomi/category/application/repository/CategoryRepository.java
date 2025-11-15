@@ -18,4 +18,8 @@ public interface CategoryRepository {
 	List<Category> findMyCategories(Long creatorId, TransactionType transactionType);
 
 	List<Category> findTeamCategories(Long teamId, TransactionType transactionType);
+
+	List<Category> findAdminCategories(TransactionType transactionType);
+
+	boolean existsByName(String name);
 }

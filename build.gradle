@@ -22,7 +22,7 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 configurations {
-    all {
+    configureEach {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
 
@@ -56,7 +56,8 @@ sonar {
         property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
         property "sonar.exclusions", "**/*Application*.java, **/*Config*.java, **/*GlobalExceptionHandler.java, " +
                 "**/Q*.java, **/DynamicQuery.java, **/*Exception.java, **/*Adapter.java, **/*Filter.java, " +
-                "**/BaseTimeEntity.java, **/*Converter.java, **/*RepositoryImpl.java, **/HealthController.java"
+                "**/BaseTimeEntity.java, **/*Converter.java, **/*RepositoryImpl.java, **/HealthController.java" +
+                "**/*Warmup.java, **/Dummy*.java"
         property "sonar.java.coveragePlugin", "jacoco"
     }
 }
@@ -134,7 +135,9 @@ jacocoTestCoverageVerification {
                     '*.*Converter',
                     '*.*.CustomUserDetails',
                     '*.HealthController',
-                    'com.dalcoomi.transaction.application.TransactionService.*'
+                    'com.dalcoomi.transaction.application.ReceiptStreamConsumer.*',
+                    '*.*Warmup',
+                    '*.Dummy*'
             ]
         }
     }

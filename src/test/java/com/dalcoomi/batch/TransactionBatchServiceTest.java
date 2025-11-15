@@ -84,7 +84,7 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("5년 미만 경과한 익명화된 거래 내역은 삭제하지 않음")
-	void delete_expired_anonymized_data_not_expired_transactions_not_deleted() {
+	void delete_expired_anonymized_data_not_expired_transactions_not_deleted_success() {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);
@@ -113,7 +113,7 @@ class TransactionBatchServiceTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("비익명화 거래 내역이나 그룹 거래 내역은 삭제하지 않음")
-	void delete_expired_anonymized_data_non_anonymized_or_team_transactions_not_deleted() {
+	void delete_expired_anonymized_data_non_anonymized_or_team_transactions_not_deleted_success() {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);

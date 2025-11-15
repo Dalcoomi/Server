@@ -1080,7 +1080,7 @@ class MemberControllerTest extends AbstractContainerBaseTest {
 
 	@Test
 	@DisplayName("통합 테스트 - 존재하지 않는 소셜 타입으로 리프레시 토큰 조회 시 실패")
-	void get_social_refresh_token_not_found() throws Exception {
+	void get_social_refresh_token_not_found_fail() throws Exception {
 		// given
 		Member member = MemberFixture.getMember1();
 		member = memberRepository.save(member);

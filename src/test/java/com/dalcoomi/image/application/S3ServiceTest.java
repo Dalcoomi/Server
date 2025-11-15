@@ -169,7 +169,7 @@ class S3ServiceTest {
 
 	@Test
 	@DisplayName("지원하지 않는 이미지 형식으로 업로드 실패")
-	void upload_profile_image_unsupported_format_error() throws IOException {
+	void upload_profile_image_unsupported_format_error_fail() throws IOException {
 		// given
 		Member member = MemberFixture.getMember1();
 		AvatarInfo avatarInfo = AvatarInfo.builder().member(member).defaultImage(false).build();

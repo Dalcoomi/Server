@@ -66,4 +66,4 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --info --stacktrace
         continue-on-error: true
-        timeout-minutes: 1
+        timeout-minutes: 2

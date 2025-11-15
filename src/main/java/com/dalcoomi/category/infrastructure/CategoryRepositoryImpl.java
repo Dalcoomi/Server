@@ -86,4 +86,25 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
 		return categories.stream().map(CategoryJpaEntity::toModel).toList();
 	}
+
+	@Override
+	public List<Category> findAdminCategories(TransactionType transactionType) {
+		List<CategoryJpaEntity> categories = jpaQueryFactory
+			.select(categoryJpaEntity)
+			.from(categoryJpaEntity)
+			.where(
+				categoryJpaEntity.transactionType.eq(transactionType),
+				categoryJpaEntity.ownerType.eq(ADMIN),
+				categoryJpaEntity.deletedAt.isNull()
+			)
+			.orderBy(categoryJpaEntity.id.asc())
+			.fetch();
+
+		return categories.stream().map(CategoryJpaEntity::toModel).toList();
+	}
+
+	@Override
+	public boolean existsByName(String name) {
+		return categoryJpaRepository.existsByName(name);
+	}
 }

@@ -1,4 +1,4 @@
-package com.dalcoomi.common.presentation;
+package com.dalcoomi;
 
 import static org.springframework.http.HttpStatus.OK;
 

@@ -77,8 +77,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	public List<Transaction> findTransactions(TransactionSearchCriteria criteria) {
 		return jpaQueryFactory
 			.selectFrom(transactionJpaEntity)
-			.join(transactionJpaEntity.creator, memberJpaEntity)
-			.join(transactionJpaEntity.category, categoryJpaEntity)
+			.join(transactionJpaEntity.creator, memberJpaEntity).fetchJoin()
+			.join(transactionJpaEntity.category, categoryJpaEntity).fetchJoin()
 			.where(
 				generateEqOrIsNull(criteria.teamId(), transactionJpaEntity.teamId::eq,
 					transactionJpaEntity.teamId.isNull()),

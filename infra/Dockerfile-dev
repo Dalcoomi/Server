@@ -5,11 +5,13 @@ ENV SPRING_ACTIVE_PROFILE=${SPRING_ACTIVE_PROFILE}
 
 WORKDIR /app
 COPY build/libs/*.jar app.jar
+COPY src/main/resources/config/agent.java/ agent.java
 
 EXPOSE 8080
 
-# JVM 메모리 최적화 추가
 ENTRYPOINT ["java", \
+    "-javaagent:/app/agent.java/scouter.agent.jar", \
+    "-Dscouter.config=/app/agent.java/conf/scouter-dev.conf", \
     "-Duser.timezone=Asia/Seoul", \
     "-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector", \
     "-Dspring.profiles.active=${SPRING_ACTIVE_PROFILE}", \

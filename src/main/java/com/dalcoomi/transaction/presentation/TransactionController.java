@@ -1,11 +1,13 @@
 package com.dalcoomi.transaction.presentation;
 
+import static com.dalcoomi.transaction.constant.ReceiptStreamConstants.PROCESSING_KEY;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,35 +23,38 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dalcoomi.auth.annotation.AuthMember;
-import com.dalcoomi.category.application.CategoryService;
 import com.dalcoomi.common.util.lock.ReceiptLockKeyGenerator;
 import com.dalcoomi.common.util.lock.RedisLockUtil;
+import com.dalcoomi.transaction.application.ReceiptStreamProducer;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.domain.event.TransactionCreatedEvent;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.dalcoomi.transaction.dto.TransactionsInfo;
+import com.dalcoomi.transaction.dto.request.ReceiptCallbackRequest;
 import com.dalcoomi.transaction.dto.request.SaveReceiptRequest;
 import com.dalcoomi.transaction.dto.request.TransactionRequest;
-import com.dalcoomi.transaction.dto.response.AiReceiptResponse;
+import com.dalcoomi.transaction.dto.response.AsyncReceiptResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionResponse;
 import com.dalcoomi.transaction.dto.response.GetTransactionsResponse;
-import com.dalcoomi.transaction.dto.response.UploadReceiptResponse;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
 public class TransactionController {
 
 	private final TransactionService transactionService;
-	private final CategoryService categoryService;
 	private final ApplicationEventPublisher applicationEventPublisher;
 	private final RedisLockUtil redisLockUtil;
 	private final ReceiptLockKeyGenerator receiptLockKeyGenerator;
+	private final ReceiptStreamProducer receiptStreamProducer;
+	private final StringRedisTemplate stringRedisTemplate;
 
 	@PostMapping
 	@ResponseStatus(CREATED)
@@ -61,16 +66,26 @@ public class TransactionController {
 
 	@PostMapping("/receipts/upload")
 	@ResponseStatus(OK)
-	public UploadReceiptResponse uploadReceipt(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
+	public AsyncReceiptResponse uploadReceipt(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
 		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") MultipartFile receipt) {
 		String lockKey = receiptLockKeyGenerator.generateUploadLockKey(memberId, teamId, receipt);
 
 		return redisLockUtil.acquireAndRunLock(lockKey, () -> {
-			List<String> categoryNames = categoryService.fetchCategoryNames(memberId, teamId);
-			AiReceiptResponse aiResponse = transactionService.analyseReceipt(receipt, categoryNames);
+			String taskId = receiptStreamProducer.publishReceiptTask(memberId, teamId, receipt);
 
-			return UploadReceiptResponse.from(aiResponse);
+			return AsyncReceiptResponse.from(taskId);
 		});
+	}
+
+	@PostMapping("/receipts/callback")
+	@ResponseStatus(OK)
+	public void receiptCallback(@RequestBody @Valid ReceiptCallbackRequest request) {
+		log.info("AI 서버로부터 영수증 처리 성공 콜백 받음: taskId={}, transactionCount={}", request.taskId(),
+			request.transactions() != null ? request.transactions().size() : 0);
+
+		// 처리 완료 플래그 제거 (다음 영수증 처리 가능)
+		stringRedisTemplate.delete(PROCESSING_KEY);
+		log.info("영수증 처리 완료, 다음 영수증 처리 가능: taskId={}", request.taskId());
 	}
 
 	@PostMapping("/receipts/save")
@@ -85,8 +100,7 @@ public class TransactionController {
 			List<Transaction> savedTransactions = transactionService.create(memberId, categoryIds, transactions);
 
 			applicationEventPublisher.publishEvent(
-				new TransactionCreatedEvent(this, request.taskId(), savedTransactions)
-			);
+				new TransactionCreatedEvent(this, request.taskId(), savedTransactions));
 
 			return null;
 		});
