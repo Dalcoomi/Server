@@ -9,12 +9,12 @@ COPY src/main/resources/config/agent.java/ agent.java
 
 EXPOSE 8080
 
-ENTRYPOINT ["java",
-"-javaagent:/app/agent.java/scouter.agent.jar",
-"-Dscouter.config=/app/agent.java/conf/scouter.conf",
-"-Duser.timezone=Asia/Seoul",
-"-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector",
-"-Dspring.profiles.active=${SPRING_ACTIVE_PROFILE}",
-"-XX:+UseContainerSupport",
-"-XX:MaxRAMPercentage=75.0",
-"-jar", "/app/Dalcoomi.jar"]
+ENTRYPOINT ["java", \
+    "-javaagent:/app/agent.java/scouter.agent.jar", \
+    "-Dscouter.config=/app/agent.java/conf/scouter.conf", \
+    "-Duser.timezone=Asia/Seoul", \
+    "-DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector", \
+    "-Dspring.profiles.active=${SPRING_ACTIVE_PROFILE}", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-jar", "/app/app.jar"]
