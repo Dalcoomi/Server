@@ -15,6 +15,10 @@ public class ReceiptImageValidator implements ConstraintValidator<ValidReceiptIm
 
 	@Override
 	public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {
+		if (file == null || file.isEmpty()) {
+			return true;
+		}
+
 		String filename = file.getOriginalFilename();
 
 		if (filename == null) {
