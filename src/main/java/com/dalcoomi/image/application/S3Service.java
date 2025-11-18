@@ -46,7 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class S3Service {
 
-	protected static final List<String> SUPPORTED_FORMATS = Arrays.asList("jpg", "jpeg", "png", "svg");
+	protected static final List<String> SUPPORTED_FORMATS = Arrays.asList("jpg", "jpeg", "png");
 
 	private final S3Adapter s3Adapter;
 
@@ -140,10 +140,6 @@ public class S3Service {
 	}
 
 	private byte[] processImage(MultipartFile image, String extension) throws IOException {
-		if ("svg".equals(extension)) {
-			return image.getBytes();
-		}
-
 		// 원본 이미지 읽기
 		BufferedImage originalImage = ImageIO.read(image.getInputStream());
 
