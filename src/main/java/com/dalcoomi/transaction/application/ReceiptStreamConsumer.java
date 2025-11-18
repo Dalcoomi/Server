@@ -109,11 +109,16 @@ public class ReceiptStreamConsumer implements StreamListener<String, MapRecord<S
 				.contentType(MULTIPART_FORM_DATA)
 				.bodyValue(parts)
 				.retrieve()
-				.onStatus(HttpStatusCode::isError, clientResponse -> {
-					log.error("AI 서버 요청 실패: status={}", clientResponse.statusCode());
+				.onStatus(HttpStatusCode::isError, clientResponse ->
+					clientResponse.bodyToMono(String.class)
+						.defaultIfEmpty("응답 본문 없음")
+						.flatMap(errorBody -> {
+							log.error("AI 서버 요청 실패: status={}, body={}", clientResponse.statusCode(), errorBody);
 
-					return Mono.error(new RuntimeException("AI 서버 처리 중 오류가 발생했습니다."));
-				})
+							return Mono.error(new RuntimeException(
+								"AI 서버 처리 중 오류가 발생했습니다. 상태코드: " + clientResponse.statusCode()));
+						})
+				)
 				.bodyToMono(String.class)
 				.timeout(Duration.ofSeconds(90))
 				.block();
