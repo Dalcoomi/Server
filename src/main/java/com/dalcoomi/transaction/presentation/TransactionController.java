@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.common.util.lock.ReceiptLockKeyGenerator;
 import com.dalcoomi.common.util.lock.RedisLockUtil;
+import com.dalcoomi.common.validator.ValidReceiptImage;
 import com.dalcoomi.transaction.application.ReceiptStreamProducer;
 import com.dalcoomi.transaction.application.TransactionService;
 import com.dalcoomi.transaction.domain.Transaction;
@@ -67,7 +68,7 @@ public class TransactionController {
 	@PostMapping("/receipts/upload")
 	@ResponseStatus(OK)
 	public AsyncReceiptResponse uploadReceipt(@AuthMember Long memberId, @RequestParam("teamId") @Nullable Long teamId,
-		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") MultipartFile receipt) {
+		@RequestPart("receipt") @NotNull(message = "영수증 파일이 필요합니다.") @ValidReceiptImage MultipartFile receipt) {
 		String lockKey = receiptLockKeyGenerator.generateUploadLockKey(memberId, teamId, receipt);
 
 		return redisLockUtil.acquireAndRunLock(lockKey, () -> {
