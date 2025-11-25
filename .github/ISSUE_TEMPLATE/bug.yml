@@ -1,6 +1,6 @@
 name: "🐞 Bug"
 description: "버그가 발생했어요."
-title: "OO 버그 해결하기"
+title: "OO 버그 수정하기"
 assignees: "fakerdeft"
 labels: "🐞 bugfix"
 type: "Bug"

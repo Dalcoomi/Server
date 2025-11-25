@@ -9,7 +9,7 @@ body:
     attributes:
       label: ✅ Tasks
       description: 해야 하는 일에 대한 Tasks를 작성해주세요.
-      placeholder: 체크 박스 형태로 적어주세요!
+      placeholder: 리스트 형태로 적어주세요!
     validations:
       required: true
   - type: textarea

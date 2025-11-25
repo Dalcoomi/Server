@@ -135,8 +135,10 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
 	@Override
 	public void deleteAll(List<Transaction> transactions) {
-		List<TransactionJpaEntity> entities = transactions.stream().map(TransactionJpaEntity::from).toList();
+		List<Long> ids = transactions.stream()
+			.map(Transaction::getId)
+			.toList();
 
-		transactionJpaRepository.deleteAll(entities);
+		transactionJpaRepository.deleteAllById(ids);
 	}
 }
