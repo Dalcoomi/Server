@@ -10,8 +10,10 @@ import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
@@ -289,11 +291,15 @@ public class MemberService {
 			.filter(transaction -> transaction.getTeamId() == null)
 			.toList();
 
-		// 참여 중인 그룹 처리
-		processTeamWithdrawal(memberId, withdrawalInfo);
+		// 참여 중인 그룹 처리 (삭제된 팀 ID 반환)
+		Set<Long> deletedTeamIds = processTeamWithdrawal(memberId, withdrawalInfo);
 
-		// 그룹 거래 내역 익명화
-		anonymizeTeamTransactions(teamTransactions);
+		// 그룹 거래 내역 익명화 (삭제되지 않은 팀의 거래만)
+		List<Transaction> remainingTeamTransactions = teamTransactions.stream()
+			.filter(transaction -> !deletedTeamIds.contains(transaction.getTeamId()))
+			.toList();
+
+		anonymizeTeamTransactions(remainingTeamTransactions);
 
 		// 탈퇴 방식에 따른 개인 데이터 처리
 		if (withdrawalInfo.softDelete()) {
@@ -341,15 +347,16 @@ public class MemberService {
 		return false;
 	}
 
-	private void processTeamWithdrawal(Long memberId, WithdrawalInfo withdrawalInfo) {
+	private Set<Long> processTeamWithdrawal(Long memberId, WithdrawalInfo withdrawalInfo) {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
+		Set<Long> deletedTeamIds = new HashSet<>();
 
 		for (TeamMember teamMember : teamMembers) {
 			Team team = teamMember.getTeam();
 			Long teamId = team.getId();
 
 			if (!team.getLeader().getId().equals(memberId)) {
-				return;
+				return deletedTeamIds;
 			}
 
 			String nextLeaderNickname = withdrawalInfo.teamToNextLeaderMap().get(team.getId());
@@ -367,8 +374,11 @@ public class MemberService {
 			if (teamMemberRepository.countByTeamId(teamId) == 0) {
 				teamRepository.deleteById(teamId);
 				transactionRepository.deleteByTeamId(teamId);
+				deletedTeamIds.add(teamId);
 			}
 		}
+
+		return deletedTeamIds;
 	}
 
 	private void anonymizeTeamTransactions(List<Transaction> teamTransactions) {

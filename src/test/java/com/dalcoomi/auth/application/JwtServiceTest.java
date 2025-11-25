@@ -26,6 +26,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.domain.DeviceType;
 import com.dalcoomi.auth.dto.RefreshTokenInfo;
 import com.dalcoomi.auth.dto.TokenInfo;
@@ -36,7 +37,7 @@ import com.dalcoomi.common.error.exception.UnauthorizedException;
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class JwtServiceTest {
+class JwtServiceTest extends AbstractContainerBaseTest {
 
 	@Autowired
 	private JwtService jwtService;
