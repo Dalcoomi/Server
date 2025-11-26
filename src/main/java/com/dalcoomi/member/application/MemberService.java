@@ -349,22 +349,31 @@ public class MemberService {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 		Set<Long> deletedTeamIds = new HashSet<>();
 
+		System.out.println("=== processTeamWithdrawal START ===");
+		System.out.println("Team members count: " + teamMembers.size());
+
 		for (TeamMember teamMember : teamMembers) {
 			Team team = teamMember.getTeam();
 			Long teamId = team.getId();
 
+			System.out.println("Processing team ID: " + teamId + ", Leader ID: " + team.getLeader().getId());
+
 			if (!team.getLeader().getId().equals(memberId)) {
+				System.out.println("Member is not leader, returning early");
 				return deletedTeamIds;
 			}
 
 			String nextLeaderNickname = withdrawalInfo.teamToNextLeaderMap().get(team.getId());
 
 			if (nextLeaderNickname != null) {
+				System.out.println("Updating leader to: " + nextLeaderNickname);
 				Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
 
 				team.updateLeader(nextLeader);
 
+				System.out.println("Calling teamRepository.save... Team ID: " + team.getId());
 				teamRepository.save(team);
+				System.out.println("Team saved successfully");
 			}
 
 			teamMemberRepository.deleteByTeamIdAndMemberId(teamId, memberId);
@@ -376,15 +385,24 @@ public class MemberService {
 			}
 		}
 
+		System.out.println("=== processTeamWithdrawal END ===");
 		return deletedTeamIds;
 	}
 
 	private void anonymizeTeamTransactions(List<Transaction> teamTransactions) {
+		System.out.println("=== anonymizeTeamTransactions START ===");
+		System.out.println("Team transactions count: " + teamTransactions.size());
+
 		for (Transaction transaction : teamTransactions) {
+			System.out.println("Before anonymize - Transaction ID: " + transaction.getId()
+				+ ", Creator: " + (transaction.getCreator() != null ? transaction.getCreator().getId() : "null"));
 			transaction.anonymize();
+			System.out.println("After anonymize - Creator: " + (transaction.getCreator() != null ? transaction.getCreator().getId() : "null"));
 		}
 
+		System.out.println("Calling transactionRepository.saveAll...");
 		transactionRepository.saveAll(teamTransactions);
+		System.out.println("=== anonymizeTeamTransactions END ===");
 	}
 
 	private void processSoftWithdrawal(Member member, List<Transaction> personalTransactions,

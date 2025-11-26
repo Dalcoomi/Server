@@ -54,7 +54,13 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	private TransactionJpaEntity convertToJpaEntity(Transaction transaction) {
+		System.out.println("=== convertToJpaEntity START ===");
+		System.out.println("Transaction ID: " + transaction.getId());
+		System.out.println("Creator: " + (transaction.getCreator() != null ? transaction.getCreator().getId() : "null"));
+		System.out.println("Category ID: " + transaction.getCategory().getId());
+
 		if (transaction.getId() != null) {
+			System.out.println("Existing entity - using getReference()");
 			// 기존 엔티티 업데이트: 연관 엔티티를 getReference()로 설정
 			MemberJpaEntity creatorReference = transaction.getCreator() != null
 				? entityManager.getReference(MemberJpaEntity.class, transaction.getCreator().getId())
@@ -62,6 +68,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
 			CategoryJpaEntity categoryReference = entityManager.getReference(CategoryJpaEntity.class,
 				transaction.getCategory().getId());
+
+			System.out.println("Created references - Creator: " + creatorReference + ", Category: " + categoryReference);
 
 			return TransactionJpaEntity.builder()
 				.id(transaction.getId())
@@ -76,6 +84,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 				.dataRetentionConsent(transaction.getDataRetentionConsent())
 				.build();
 		} else {
+			System.out.println("New entity - using from()");
 			// 새로운 엔티티 생성
 			return TransactionJpaEntity.from(transaction);
 		}
