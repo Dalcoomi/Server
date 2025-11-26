@@ -36,6 +36,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.AbstractContainerBaseTest;
 import com.dalcoomi.auth.filter.CustomUserDetails;
 import com.dalcoomi.category.application.repository.CategoryRepository;
 import com.dalcoomi.category.domain.Category;
@@ -61,7 +62,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @TestPropertySource("classpath:application-test.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class TeamControllerTest {
+class TeamControllerTest extends AbstractContainerBaseTest {
 
 	private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 

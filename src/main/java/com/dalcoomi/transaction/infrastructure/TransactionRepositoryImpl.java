@@ -66,9 +66,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 			.from(transactionJpaEntity)
 			.fetchOne();
 
-		List<Transaction> transactions = content.stream()
-			.map(TransactionJpaEntity::toModel)
-			.toList();
+		List<Transaction> transactions = content.stream().map(TransactionJpaEntity::toModel).toList();
 
 		return new PageImpl<>(transactions, pageable, requireNonNull(total));
 	}
@@ -77,8 +75,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	public List<Transaction> findTransactions(TransactionSearchCriteria criteria) {
 		return jpaQueryFactory
 			.selectFrom(transactionJpaEntity)
-			.join(transactionJpaEntity.creator, memberJpaEntity).fetchJoin()
-			.join(transactionJpaEntity.category, categoryJpaEntity).fetchJoin()
+			.join(transactionJpaEntity.creator, memberJpaEntity)
+			.join(transactionJpaEntity.category, categoryJpaEntity)
 			.where(
 				generateEqOrIsNull(criteria.teamId(), transactionJpaEntity.teamId::eq,
 					transactionJpaEntity.teamId.isNull()),
