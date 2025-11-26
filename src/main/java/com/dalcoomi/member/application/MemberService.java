@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -50,6 +52,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberService {
 
+	private static final Logger log = LoggerFactory.getLogger(MemberService.class);
 	private final MemberRepository memberRepository;
 	private final SocialConnectionRepository socialConnectionRepository;
 	private final TeamMemberRepository teamMemberRepository;
@@ -349,31 +352,31 @@ public class MemberService {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
 		Set<Long> deletedTeamIds = new HashSet<>();
 
-		System.out.println("=== processTeamWithdrawal START ===");
-		System.out.println("Team members count: " + teamMembers.size());
+		log.info("=== processTeamWithdrawal START ===");
+		log.info("Team members count: {}", teamMembers.size());
 
 		for (TeamMember teamMember : teamMembers) {
 			Team team = teamMember.getTeam();
 			Long teamId = team.getId();
 
-			System.out.println("Processing team ID: " + teamId + ", Leader ID: " + team.getLeader().getId());
+			log.info("Processing team ID: {}, Leader ID: {}", teamId, team.getLeader().getId());
 
 			if (!team.getLeader().getId().equals(memberId)) {
-				System.out.println("Member is not leader, returning early");
+				log.info("Member is not leader, returning early");
 				return deletedTeamIds;
 			}
 
 			String nextLeaderNickname = withdrawalInfo.teamToNextLeaderMap().get(team.getId());
 
 			if (nextLeaderNickname != null) {
-				System.out.println("Updating leader to: " + nextLeaderNickname);
+				log.info("Updating leader to: {}", nextLeaderNickname);
 				Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
 
 				team.updateLeader(nextLeader);
 
-				System.out.println("Calling teamRepository.save... Team ID: " + team.getId());
+				log.info("Calling teamRepository.save... Team ID: {}", team.getId());
 				teamRepository.save(team);
-				System.out.println("Team saved successfully");
+				log.info("Team saved successfully");
 			}
 
 			teamMemberRepository.deleteByTeamIdAndMemberId(teamId, memberId);
@@ -385,24 +388,25 @@ public class MemberService {
 			}
 		}
 
-		System.out.println("=== processTeamWithdrawal END ===");
+		log.info("=== processTeamWithdrawal END ===");
 		return deletedTeamIds;
 	}
 
 	private void anonymizeTeamTransactions(List<Transaction> teamTransactions) {
-		System.out.println("=== anonymizeTeamTransactions START ===");
-		System.out.println("Team transactions count: " + teamTransactions.size());
+		log.info("=== anonymizeTeamTransactions START ===");
+		log.info("Team transactions count: {}", teamTransactions.size());
 
 		for (Transaction transaction : teamTransactions) {
-			System.out.println("Before anonymize - Transaction ID: " + transaction.getId()
-				+ ", Creator: " + (transaction.getCreator() != null ? transaction.getCreator().getId() : "null"));
+			log.info("Before anonymize - Transaction ID: {}, Creator: {}", transaction.getId(),
+				transaction.getCreator() != null ? transaction.getCreator().getId() : "null");
 			transaction.anonymize();
-			System.out.println("After anonymize - Creator: " + (transaction.getCreator() != null ? transaction.getCreator().getId() : "null"));
+			log.info("After anonymize - Creator: {}",
+				transaction.getCreator() != null ? transaction.getCreator().getId() : "null");
 		}
 
-		System.out.println("Calling transactionRepository.saveAll...");
+		log.info("Calling transactionRepository.saveAll...");
 		transactionRepository.saveAll(teamTransactions);
-		System.out.println("=== anonymizeTeamTransactions END ===");
+		log.info("=== anonymizeTeamTransactions END ===");
 	}
 
 	private void processSoftWithdrawal(Member member, List<Transaction> personalTransactions,

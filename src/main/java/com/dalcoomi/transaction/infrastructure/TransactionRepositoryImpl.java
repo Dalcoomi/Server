@@ -11,6 +11,8 @@ import static java.util.Objects.requireNonNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,8 @@ import lombok.RequiredArgsConstructor;
 @Repository
 @RequiredArgsConstructor
 public class TransactionRepositoryImpl implements TransactionRepository {
+
+	private static final Logger log = LoggerFactory.getLogger(TransactionRepositoryImpl.class);
 
 	private final TransactionJpaRepository transactionJpaRepository;
 	private final JPAQueryFactory jpaQueryFactory;
@@ -54,13 +58,13 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	}
 
 	private TransactionJpaEntity convertToJpaEntity(Transaction transaction) {
-		System.out.println("=== convertToJpaEntity START ===");
-		System.out.println("Transaction ID: " + transaction.getId());
-		System.out.println("Creator: " + (transaction.getCreator() != null ? transaction.getCreator().getId() : "null"));
-		System.out.println("Category ID: " + transaction.getCategory().getId());
+		log.info("=== convertToJpaEntity START ===");
+		log.info("Transaction ID: {}", transaction.getId());
+		log.info("Creator: {}", transaction.getCreator() != null ? transaction.getCreator().getId() : "null");
+		log.info("Category ID: {}", transaction.getCategory().getId());
 
 		if (transaction.getId() != null) {
-			System.out.println("Existing entity - using getReference()");
+			log.info("Existing entity - using getReference()");
 			// 기존 엔티티 업데이트: 연관 엔티티를 getReference()로 설정
 			MemberJpaEntity creatorReference = transaction.getCreator() != null
 				? entityManager.getReference(MemberJpaEntity.class, transaction.getCreator().getId())
@@ -69,7 +73,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 			CategoryJpaEntity categoryReference = entityManager.getReference(CategoryJpaEntity.class,
 				transaction.getCategory().getId());
 
-			System.out.println("Created references - Creator: " + creatorReference + ", Category: " + categoryReference);
+			log.info("Created references - Creator: {}, Category: {}", creatorReference, categoryReference);
 
 			return TransactionJpaEntity.builder()
 				.id(transaction.getId())
@@ -84,7 +88,7 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 				.dataRetentionConsent(transaction.getDataRetentionConsent())
 				.build();
 		} else {
-			System.out.println("New entity - using from()");
+			log.info("New entity - using from()");
 			// 새로운 엔티티 생성
 			return TransactionJpaEntity.from(transaction);
 		}

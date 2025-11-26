@@ -5,6 +5,8 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import com.dalcoomi.common.error.exception.NotFoundException;
@@ -19,17 +21,25 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TeamRepositoryImpl implements TeamRepository {
 
+	private static final Logger log = LoggerFactory.getLogger(TeamRepositoryImpl.class);
+
 	private final TeamJpaRepository teamJpaRepository;
 	private final EntityManager entityManager;
 
 	@Override
 	public Team save(Team team) {
+		log.info("=== TeamRepositoryImpl.save START ===");
+		log.info("Team ID: {}, Leader ID: {}", team.getId(), team.getLeader().getId());
+
 		TeamJpaEntity teamJpaEntity;
 
 		if (team.getId() != null) {
+			log.info("Existing team - using getReference()");
 			// 기존 엔티티 업데이트: leader를 getReference()로 설정하여 프록시 사용
 			MemberJpaEntity leaderReference = entityManager.getReference(MemberJpaEntity.class,
 				team.getLeader().getId());
+
+			log.info("Created leader reference: {}", leaderReference);
 
 			teamJpaEntity = TeamJpaEntity.builder()
 				.id(team.getId())
@@ -40,11 +50,15 @@ public class TeamRepositoryImpl implements TeamRepository {
 				.purpose(team.getPurpose())
 				.build();
 		} else {
+			log.info("New team - using from()");
 			// 새로운 엔티티 생성
 			teamJpaEntity = TeamJpaEntity.from(team);
 		}
 
-		return teamJpaRepository.save(teamJpaEntity).toModel();
+		log.info("Calling teamJpaRepository.save...");
+		Team savedTeam = teamJpaRepository.save(teamJpaEntity).toModel();
+		log.info("=== TeamRepositoryImpl.save END ===");
+		return savedTeam;
 	}
 
 	@Override
