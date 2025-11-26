@@ -280,9 +280,7 @@ public class MemberService {
 		Member member = memberRepository.findById(memberId);
 		String profileImageUrl = member.getProfileImageUrl();
 
-		TransactionSearchCriteria criteria = TransactionSearchCriteria.builder()
-			.memberId(memberId)
-			.build();
+		TransactionSearchCriteria criteria = TransactionSearchCriteria.builder().memberId(memberId).build();
 		List<Transaction> allTransactions = transactionRepository.findTransactions(criteria).stream().toList();
 		List<Transaction> teamTransactions = allTransactions.stream()
 			.filter(transaction -> transaction.getTeamId() != null)
