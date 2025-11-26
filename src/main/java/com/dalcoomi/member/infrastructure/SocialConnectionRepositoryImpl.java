@@ -163,10 +163,10 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 
 	@Override
 	public void deleteAll(List<SocialConnection> socialConnections) {
-		List<Long> ids = socialConnections.stream()
-			.map(SocialConnection::getId)
+		List<SocialConnectionJpaEntity> entities = socialConnections.stream()
+			.map(SocialConnectionJpaEntity::from)
 			.toList();
 
-		socialConnectionJpaRepository.deleteAllById(ids);
+		socialConnectionJpaRepository.deleteAll(entities);
 	}
 }

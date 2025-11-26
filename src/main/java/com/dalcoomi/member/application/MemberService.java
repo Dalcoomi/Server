@@ -10,13 +10,9 @@ import static com.dalcoomi.image.constant.ImageConstants.DEFAULT_PROFILE_IMAGE_4
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -52,7 +48,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberService {
 
-	private static final Logger log = LoggerFactory.getLogger(MemberService.class);
 	private final MemberRepository memberRepository;
 	private final SocialConnectionRepository socialConnectionRepository;
 	private final TeamMemberRepository teamMemberRepository;
@@ -292,15 +287,11 @@ public class MemberService {
 			.filter(transaction -> transaction.getTeamId() == null)
 			.toList();
 
-		// 참여 중인 그룹 처리 (삭제된 팀 ID 반환)
-		Set<Long> deletedTeamIds = processTeamWithdrawal(memberId, withdrawalInfo);
+		// 참여 중인 그룹 처리
+		processTeamWithdrawal(memberId, withdrawalInfo);
 
-		// 그룹 거래 내역 익명화 (삭제되지 않은 팀의 거래만)
-		List<Transaction> remainingTeamTransactions = teamTransactions.stream()
-			.filter(transaction -> !deletedTeamIds.contains(transaction.getTeamId()))
-			.toList();
-
-		anonymizeTeamTransactions(remainingTeamTransactions);
+		// 그룹 거래 내역 익명화
+		anonymizeTeamTransactions(teamTransactions);
 
 		// 탈퇴 방식에 따른 개인 데이터 처리
 		if (withdrawalInfo.softDelete()) {
@@ -348,35 +339,25 @@ public class MemberService {
 		return false;
 	}
 
-	private Set<Long> processTeamWithdrawal(Long memberId, WithdrawalInfo withdrawalInfo) {
+	private void processTeamWithdrawal(Long memberId, WithdrawalInfo withdrawalInfo) {
 		List<TeamMember> teamMembers = teamMemberRepository.find(null, memberId);
-		Set<Long> deletedTeamIds = new HashSet<>();
-
-		log.info("=== processTeamWithdrawal START ===");
-		log.info("Team members count: {}", teamMembers.size());
 
 		for (TeamMember teamMember : teamMembers) {
 			Team team = teamMember.getTeam();
 			Long teamId = team.getId();
 
-			log.info("Processing team ID: {}, Leader ID: {}", teamId, team.getLeader().getId());
-
 			if (!team.getLeader().getId().equals(memberId)) {
-				log.info("Member is not leader, returning early");
-				return deletedTeamIds;
+				return;
 			}
 
 			String nextLeaderNickname = withdrawalInfo.teamToNextLeaderMap().get(team.getId());
 
 			if (nextLeaderNickname != null) {
-				log.info("Updating leader to: {}", nextLeaderNickname);
 				Member nextLeader = memberRepository.findByNickname(nextLeaderNickname);
 
 				team.updateLeader(nextLeader);
 
-				log.info("Calling teamRepository.save... Team ID: {}", team.getId());
 				teamRepository.save(team);
-				log.info("Team saved successfully");
 			}
 
 			teamMemberRepository.deleteByTeamIdAndMemberId(teamId, memberId);
@@ -384,29 +365,16 @@ public class MemberService {
 			if (teamMemberRepository.countByTeamId(teamId) == 0) {
 				teamRepository.deleteById(teamId);
 				transactionRepository.deleteByTeamId(teamId);
-				deletedTeamIds.add(teamId);
 			}
 		}
-
-		log.info("=== processTeamWithdrawal END ===");
-		return deletedTeamIds;
 	}
 
 	private void anonymizeTeamTransactions(List<Transaction> teamTransactions) {
-		log.info("=== anonymizeTeamTransactions START ===");
-		log.info("Team transactions count: {}", teamTransactions.size());
-
 		for (Transaction transaction : teamTransactions) {
-			log.info("Before anonymize - Transaction ID: {}, Creator: {}", transaction.getId(),
-				transaction.getCreator() != null ? transaction.getCreator().getId() : "null");
 			transaction.anonymize();
-			log.info("After anonymize - Creator: {}",
-				transaction.getCreator() != null ? transaction.getCreator().getId() : "null");
 		}
 
-		log.info("Calling transactionRepository.saveAll...");
 		transactionRepository.saveAll(teamTransactions);
-		log.info("=== anonymizeTeamTransactions END ===");
 	}
 
 	private void processSoftWithdrawal(Member member, List<Transaction> personalTransactions,

@@ -90,10 +90,8 @@ public class MemberRepositoryImpl implements MemberRepository {
 
 	@Override
 	public void deleteAll(List<Member> members) {
-		List<Long> ids = members.stream()
-			.map(Member::getId)
-			.toList();
+		List<MemberJpaEntity> entities = members.stream().map(MemberJpaEntity::from).toList();
 
-		memberJpaRepository.deleteAllById(ids);
+		memberJpaRepository.deleteAll(entities);
 	}
 }

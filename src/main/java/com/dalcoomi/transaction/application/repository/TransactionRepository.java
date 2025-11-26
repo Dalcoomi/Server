@@ -27,5 +27,5 @@ public interface TransactionRepository {
 
 	void deleteByTeamId(Long groupId);
 
-	void deleteAll(List<Transaction> personalTransactions);
+	void deleteAll(List<Transaction> transactions);
 }

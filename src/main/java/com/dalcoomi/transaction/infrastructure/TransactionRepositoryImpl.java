@@ -11,87 +11,37 @@ import static java.util.Objects.requireNonNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import com.dalcoomi.category.infrastructure.CategoryJpaEntity;
 import com.dalcoomi.common.error.exception.NotFoundException;
-import com.dalcoomi.member.infrastructure.MemberJpaEntity;
 import com.dalcoomi.transaction.application.repository.TransactionRepository;
 import com.dalcoomi.transaction.domain.Transaction;
 import com.dalcoomi.transaction.dto.TransactionSearchCriteria;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
 public class TransactionRepositoryImpl implements TransactionRepository {
 
-	private static final Logger log = LoggerFactory.getLogger(TransactionRepositoryImpl.class);
-
 	private final TransactionJpaRepository transactionJpaRepository;
 	private final JPAQueryFactory jpaQueryFactory;
-	private final EntityManager entityManager;
 
 	@Override
 	public Transaction save(Transaction transaction) {
-		TransactionJpaEntity transactionJpaEntity = convertToJpaEntity(transaction);
-
-		return transactionJpaRepository.save(transactionJpaEntity).toModel();
+		return transactionJpaRepository.save(TransactionJpaEntity.from(transaction)).toModel();
 	}
 
 	@Override
 	public List<Transaction> saveAll(List<Transaction> transactions) {
-		List<TransactionJpaEntity> transactionJpaEntities = transactions.stream()
-			.map(this::convertToJpaEntity)
-			.toList();
+		List<TransactionJpaEntity> transactionJpaEntities = transactionJpaRepository.saveAll(
+			transactions.stream().map(TransactionJpaEntity::from).toList());
 
-		List<TransactionJpaEntity> savedEntities = transactionJpaRepository.saveAll(transactionJpaEntities);
-
-		return savedEntities.stream().map(TransactionJpaEntity::toModel).toList();
-	}
-
-	private TransactionJpaEntity convertToJpaEntity(Transaction transaction) {
-		log.info("=== convertToJpaEntity START ===");
-		log.info("Transaction ID: {}", transaction.getId());
-		log.info("Creator: {}", transaction.getCreator() != null ? transaction.getCreator().getId() : "null");
-		log.info("Category ID: {}", transaction.getCategory().getId());
-
-		if (transaction.getId() != null) {
-			log.info("Existing entity - using getReference()");
-			// 기존 엔티티 업데이트: 연관 엔티티를 getReference()로 설정
-			MemberJpaEntity creatorReference = transaction.getCreator() != null
-				? entityManager.getReference(MemberJpaEntity.class, transaction.getCreator().getId())
-				: null;
-
-			CategoryJpaEntity categoryReference = entityManager.getReference(CategoryJpaEntity.class,
-				transaction.getCategory().getId());
-
-			log.info("Created references - Creator: {}, Category: {}", creatorReference, categoryReference);
-
-			return TransactionJpaEntity.builder()
-				.id(transaction.getId())
-				.creator(creatorReference)
-				.category(categoryReference)
-				.teamId(transaction.getTeamId())
-				.transactionDate(transaction.getTransactionDate())
-				.content(transaction.getContent())
-				.amount(transaction.getAmount() != null ? transaction.getAmount().toString() : null)
-				.transactionType(transaction.getTransactionType())
-				.deletedAt(transaction.getDeletedAt())
-				.dataRetentionConsent(transaction.getDataRetentionConsent())
-				.build();
-		} else {
-			log.info("New entity - using from()");
-			// 새로운 엔티티 생성
-			return TransactionJpaEntity.from(transaction);
-		}
+		return transactionJpaEntities.stream().map(TransactionJpaEntity::toModel).toList();
 	}
 
 	@Override
@@ -125,8 +75,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 	public List<Transaction> findTransactions(TransactionSearchCriteria criteria) {
 		return jpaQueryFactory
 			.selectFrom(transactionJpaEntity)
-			.join(transactionJpaEntity.creator, memberJpaEntity).fetchJoin()
-			.join(transactionJpaEntity.category, categoryJpaEntity).fetchJoin()
+			.join(transactionJpaEntity.creator, memberJpaEntity)
+			.join(transactionJpaEntity.category, categoryJpaEntity)
 			.where(
 				generateEqOrIsNull(criteria.teamId(), transactionJpaEntity.teamId::eq,
 					transactionJpaEntity.teamId.isNull()),
@@ -183,8 +133,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
 	@Override
 	public void deleteAll(List<Transaction> transactions) {
-		List<Long> ids = transactions.stream().map(Transaction::getId).toList();
+		List<TransactionJpaEntity> entities = transactions.stream().map(TransactionJpaEntity::from).toList();
 
-		transactionJpaRepository.deleteAllById(ids);
+		transactionJpaRepository.deleteAll(entities);
 	}
 }
