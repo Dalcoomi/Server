@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dalcoomi.auth.annotation.AuthMember;
 import com.dalcoomi.auth.application.AuthService;
 import com.dalcoomi.auth.application.JwtService;
+import com.dalcoomi.auth.domain.DeviceType;
 import com.dalcoomi.auth.dto.LoginInfo;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.auth.dto.request.LoginRequest;
@@ -58,9 +59,8 @@ public class AuthController {
 
 	@PostMapping("/reissue")
 	@ResponseStatus(OK)
-	public ReissueTokenResponse reissueToken(
-		@RequestHeader("Refresh-Token") String refreshToken,
-		@RequestHeader("Device-Type") com.dalcoomi.auth.domain.DeviceType deviceType) {
+	public ReissueTokenResponse reissueToken(@RequestHeader("Refresh-Token") String refreshToken,
+		@RequestHeader("Device-Type") DeviceType deviceType) {
 		Long memberId = jwtService.validateRefreshToken(refreshToken);
 		TokenInfo tokenInfo = authService.reissueToken(memberId, refreshToken, deviceType);
 

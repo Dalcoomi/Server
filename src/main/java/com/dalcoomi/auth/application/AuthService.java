@@ -11,6 +11,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.dalcoomi.auth.domain.DeviceType;
 import com.dalcoomi.auth.dto.LoginInfo;
 import com.dalcoomi.auth.dto.TokenInfo;
 import com.dalcoomi.common.error.exception.LockedException;
@@ -100,8 +101,7 @@ public class AuthService {
 		jwtService.deleteRefreshToken(memberId, refreshToken);
 	}
 
-	public TokenInfo reissueToken(Long memberId, String oldRefreshToken,
-		com.dalcoomi.auth.domain.DeviceType deviceType) {
+	public TokenInfo reissueToken(Long memberId, String oldRefreshToken, DeviceType deviceType) {
 		jwtService.deleteRefreshToken(memberId, oldRefreshToken);
 
 		return jwtService.createAndSaveToken(memberId, MEMBER_ROLE, deviceType);
