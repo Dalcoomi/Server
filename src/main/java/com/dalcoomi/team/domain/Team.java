@@ -1,5 +1,6 @@
 package com.dalcoomi.team.domain;
 
+import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_LABEL;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_MEMBER_LIMIT;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_PURPOSE;
 import static com.dalcoomi.common.error.model.ErrorMessage.TEAM_INVALID_TITLE;
@@ -26,15 +27,18 @@ public class Team {
 	private String title;
 	private String invitationCode;
 	private Integer memberLimit;
+	private String label;
 	private String purpose;
 
 	@Builder
-	public Team(Long id, Member leader, String title, String invitationCode, Integer memberLimit, String purpose) {
+	public Team(Long id, Member leader, String title, String invitationCode, Integer memberLimit, String label,
+		String purpose) {
 		this.id = id;
 		this.leader = leader;
 		this.title = validateTitle(title);
 		this.invitationCode = invitationCode;
 		this.memberLimit = validateMemberLimit(memberLimit);
+		this.label = validateLabel(label);
 		this.purpose = validatePurpose(purpose);
 	}
 
@@ -43,6 +47,7 @@ public class Team {
 			.id(request.teamId())
 			.title(request.title())
 			.memberLimit(request.memberLimit())
+			.label(request.label())
 			.purpose(request.purpose())
 			.build();
 	}
@@ -57,26 +62,6 @@ public class Team {
 		}
 
 		return sb.toString();
-	}
-
-	public void updateLeader(Member member) {
-		this.leader = member;
-	}
-
-	public void updateInvitationCode(String invitationCode) {
-		this.invitationCode = invitationCode;
-	}
-
-	public void updateTitle(String title) {
-		this.title = validateTitle(title);
-	}
-
-	public void updateMemberLimit(Integer memberLimit) {
-		this.memberLimit = validateMemberLimit(memberLimit);
-	}
-
-	public void updatePurpose(String purpose) {
-		this.purpose = validatePurpose(purpose);
 	}
 
 	private String validateTitle(String title) {
@@ -95,11 +80,43 @@ public class Team {
 		return memberLimit;
 	}
 
+	private String validateLabel(String label) {
+		if (!isBlank(label)) {
+			throw new IllegalArgumentException(TEAM_INVALID_LABEL.getMessage());
+		}
+
+		return label;
+	}
+
 	private String validatePurpose(String purpose) {
 		if (!isBlank(purpose) && purpose.length() > PURPOSE_LENGTH) {
 			throw new IllegalArgumentException(TEAM_INVALID_PURPOSE.getMessage());
 		}
 
 		return purpose;
+	}
+
+	public void updateLeader(Member member) {
+		this.leader = member;
+	}
+
+	public void updateInvitationCode(String invitationCode) {
+		this.invitationCode = invitationCode;
+	}
+
+	public void updateTitle(String title) {
+		this.title = validateTitle(title);
+	}
+
+	public void updateMemberLimit(Integer memberLimit) {
+		this.memberLimit = validateMemberLimit(memberLimit);
+	}
+
+	public void updateLabel(String label) {
+		this.label = validateLabel(label);
+	}
+
+	public void updatePurpose(String purpose) {
+		this.purpose = validatePurpose(purpose);
 	}
 }

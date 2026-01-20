@@ -15,6 +15,9 @@ public record TeamRequest(
 	@Max(value = 10, message = "인원 수는 최대 10명입니다.")
 	Integer memberLimit,
 
+	@NotNull(message = "라벨 컬러는 필수입니다.")
+	String label,
+
 	@Size(max = 30, message = "그룹 목표는 최대 30자입니다.")
 	String purpose
 ) {

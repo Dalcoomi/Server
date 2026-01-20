@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout with Submodule
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           submodules: true
           token: ${{ secrets.SUBMODULE_PAT }}
@@ -22,10 +22,10 @@ jobs:
 
       - name: Public IP
         id: ip
-        uses: haythem/public-ip@v1.3
+        uses: haythem/public-ip@bdddd92c198b0955f0b494a8ebeac529754262ff # v1.3
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_PROD_SECRET_KEY }}
@@ -36,7 +36,7 @@ jobs:
           aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: AWS EC2 Create Directory
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@23bd972bfcf52bf00cbb7f7f62b2bb06c2efa5b4 # master
         with:
           host: ${{ secrets.EC2_PROD_HOST }}
           username: ${{ secrets.EC2_PROD_USERNAME }}
@@ -52,7 +52,7 @@ jobs:
           cp src/main/resources/config/prod.env ./infra/.env
 
       - name: AWS EC2 Copy Files
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@7179e72a3fa4d4c33870a471708fda724fae7596 # master
         with:
           host: ${{ secrets.EC2_PROD_HOST }}
           username: ${{ secrets.EC2_PROD_USERNAME }}
@@ -73,20 +73,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout with Submodule
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           submodules: true
           token: ${{ secrets.SUBMODULE_PAT }}
           fetch-depth: 0
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
         with:
           java-version: 21
           distribution: 'corretto'
 
       - name: Gradle cache
-        uses: actions/cache@v4
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: |
             ~/.gradle/caches
@@ -102,16 +102,16 @@ jobs:
         run: ./gradlew build -x test
 
       - name: Docker Buildx setting
-        uses: docker/setup-buildx-action@v3.8.0
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5 # v3.8.0
 
       - name: Dockerhub Login
-        uses: docker/login-action@v3.3.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ secrets.DOCKER_HUB_PROD_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PROD_TOKEN }}
 
       - name: Dockerhub build and push
-        uses: docker/build-push-action@v6.10.0
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         with:
           context: .
           file: ./infra/Dockerfile-prod
@@ -127,10 +127,10 @@ jobs:
 
       - name: Public IP
         id: ip
-        uses: haythem/public-ip@v1.3
+        uses: haythem/public-ip@bdddd92c198b0955f0b494a8ebeac529754262ff # v1.3
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_PROD_SECRET_KEY }}
@@ -141,7 +141,7 @@ jobs:
           aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_PROD_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: AWS EC2 Server Deploy
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@23bd972bfcf52bf00cbb7f7f62b2bb06c2efa5b4 # master
         env:
           COMPOSE: "dalcoomi/infra/docker-compose-prod.yml"
         with:

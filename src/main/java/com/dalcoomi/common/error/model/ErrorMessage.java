@@ -80,6 +80,7 @@ public enum ErrorMessage {
 	TEAM_INVALID_INVITATION_CODE("유효하지 않는 초대 코드입니다."),
 	TEAM_INVALID_TITLE("유효하지 않는 그룹명입니다."),
 	TEAM_INVALID_MEMBER_LIMIT("그룹 인원 수는 1명 이상 %d명 이하여야 합니다."),
+	TEAM_INVALID_LABEL("유효하지 않는 그룹명입니다."),
 	TEAM_INVALID_PURPOSE("유효하지 않는 그룹 목표입니다."),
 	TEAM_COUNT_EXCEEDED("최대 3개 그룹까지만 참가할 수 있습니다."),
 	TEAM_DISPLAY_ORDER_DUPLICATED("그룹 순서 값이 중복되었습니다."),

@@ -67,7 +67,7 @@ public class TeamService {
 	}
 
 	@Transactional
-	public void join(Long memberId, String invitationCode) {
+	public Team join(Long memberId, String invitationCode) {
 		Member member = memberRepository.findById(memberId);
 		Team team = teamRepository.findByInvitationCode(invitationCode);
 
@@ -86,6 +86,8 @@ public class TeamService {
 		TeamMember teamMember = TeamMember.of(team, member);
 
 		teamMemberRepository.save(teamMember);
+
+		return team;
 	}
 
 	@Transactional(readOnly = true)
@@ -149,6 +151,7 @@ public class TeamService {
 
 		currentTeam.updateTitle(team.getTitle());
 		currentTeam.updateMemberLimit(team.getMemberLimit());
+		currentTeam.updateLabel(team.getLabel());
 		currentTeam.updatePurpose(team.getPurpose());
 
 		teamRepository.save(currentTeam);
