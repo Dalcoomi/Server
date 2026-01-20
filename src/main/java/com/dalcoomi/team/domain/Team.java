@@ -81,7 +81,7 @@ public class Team {
 	}
 
 	private String validateLabel(String label) {
-		if (!isBlank(label)) {
+		if (isBlank(label)) {
 			throw new IllegalArgumentException(TEAM_INVALID_LABEL.getMessage());
 		}
 
