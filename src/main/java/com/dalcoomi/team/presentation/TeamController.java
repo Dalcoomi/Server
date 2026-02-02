@@ -29,6 +29,7 @@ import com.dalcoomi.team.dto.request.TeamRequest;
 import com.dalcoomi.team.dto.request.UpdateTeamOrderRequest;
 import com.dalcoomi.team.dto.response.GetMyTeamsResponse;
 import com.dalcoomi.team.dto.response.GetTeamResponse;
+import com.dalcoomi.team.dto.response.JoinResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +53,10 @@ public class TeamController {
 
 	@PostMapping("/join/{invitationCode}")
 	@ResponseStatus(OK)
-	public void join(@AuthMember Long memberId, @PathVariable("invitationCode") String invitationCode) {
-		teamService.join(memberId, invitationCode);
+	public JoinResponse join(@AuthMember Long memberId, @PathVariable("invitationCode") String invitationCode) {
+		Team team = teamService.join(memberId, invitationCode);
+
+		return new JoinResponse(team.getId(), team.getTitle());
 	}
 
 	@GetMapping

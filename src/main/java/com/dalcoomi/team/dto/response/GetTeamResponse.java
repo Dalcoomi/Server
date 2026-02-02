@@ -13,6 +13,7 @@ public record GetTeamResponse(
 	String title,
 	String invitationCode,
 	Integer memberLimit,
+	String label,
 	String purpose,
 	String leaderNickname,
 	List<MemberInfo> members
@@ -26,6 +27,7 @@ public record GetTeamResponse(
 			.title(teamInfo.team().getTitle())
 			.invitationCode(teamInfo.team().getInvitationCode())
 			.memberLimit(teamInfo.team().getMemberLimit())
+			.label(teamInfo.team().getLabel())
 			.purpose(teamInfo.team().getPurpose())
 			.leaderNickname(teamInfo.team().getLeader().getNickname())
 			.members(membersInfo)

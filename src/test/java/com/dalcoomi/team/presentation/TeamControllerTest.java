@@ -99,9 +99,10 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 
 		String title = "엥엥";
 		Integer memberLimit = 2;
+		String label = "green";
 		String purpose = "에엥";
 
-		TeamRequest request = new TeamRequest(null, title, memberLimit, purpose);
+		TeamRequest request = new TeamRequest(null, title, memberLimit, label, purpose);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -120,6 +121,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		assertThat(team.getLeader().getId()).isEqualTo(member.getId());
 		assertThat(team.getTitle()).isEqualTo(title);
 		assertThat(team.getMemberLimit()).isEqualTo(memberLimit);
+		assertThat(team.getLabel()).isEqualTo(label);
 		assertThat(team.getPurpose()).isEqualTo(purpose);
 	}
 
@@ -135,9 +137,10 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 
 		String title = "엥엥";
 		Integer memberLimit = 12;
+		String label = "green";
 		String purpose = "에엥";
 
-		TeamRequest request = new TeamRequest(null, title, memberLimit, purpose);
+		TeamRequest request = new TeamRequest(null, title, memberLimit, label, purpose);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -184,7 +187,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(member.getId());
 
-		TeamRequest request = new TeamRequest(null, "새 팀", 3, "새 목표");
+		TeamRequest request = new TeamRequest(null, "새 팀", 3, "green", "새 목표");
 		String json = objectMapper.writeValueAsString(request);
 
 		// when & then
@@ -216,6 +219,8 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		mockMvc.perform(post("/api/teams/join/{invitationCode}", team.getInvitationCode())
 				.contentType(APPLICATION_JSON))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.teamId").value(team.getId()))
+			.andExpect(jsonPath("$.title").value(team.getTitle()))
 			.andDo(print());
 
 		boolean joined = teamMemberRepository.existsByTeamIdAndMemberId(team.getId(), newMember.getId());
@@ -335,6 +340,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.groups").value(hasSize(2)))
 			.andExpect(jsonPath("$.groups[0].teamId").value(team2.getId()))
 			.andExpect(jsonPath("$.groups[0].title").value(team2.getTitle()))
+			.andExpect(jsonPath("$.groups[0].label").value(team2.getLabel()))
 			.andExpect(jsonPath("$.groups[0].memberCount").value(1))
 			.andExpect(jsonPath("$.groups[0].memberLimit").value(team2.getMemberLimit()))
 			.andExpect(jsonPath("$.groups[1].teamId").value(team1.getId()))
@@ -398,6 +404,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.teamId").value(team.getId()))
 			.andExpect(jsonPath("$.title").value(team.getTitle()))
 			.andExpect(jsonPath("$.memberLimit").value(team.getMemberLimit()))
+			.andExpect(jsonPath("$.label").value(team.getLabel()))
 			.andExpect(jsonPath("$.purpose").value(team.getPurpose()))
 			.andExpect(jsonPath("$.leaderNickname").value(team.getLeader().getNickname()))
 			.andExpect(jsonPath("$.members").isArray())
@@ -593,9 +600,10 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 
 		String updatedTitle = "수정된 그룹명";
 		Integer updatedMemberLimit = 5;
+		String label = "green";
 		String updatedPurpose = "수정된 목표";
 
-		TeamRequest request = new TeamRequest(team.getId(), updatedTitle, updatedMemberLimit, updatedPurpose);
+		TeamRequest request = new TeamRequest(team.getId(), updatedTitle, updatedMemberLimit, label, updatedPurpose);
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -634,7 +642,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정 (일반 멤버로)
 		setAuthentication(normalMember.getId());
 
-		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 5, "수정된 목표");
+		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 5, "green", "수정된 목표");
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -658,7 +666,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(member.getId());
 
 		Long nonExistentTeamId = 999L;
-		TeamRequest request = new TeamRequest(nonExistentTeamId, "수정된 그룹명", 5, "수정된 목표");
+		TeamRequest request = new TeamRequest(nonExistentTeamId, "수정된 그룹명", 5, "green", "수정된 목표");
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -687,7 +695,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(leader.getId());
 
-		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 12, "수정된 목표");
+		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 12, "green", "수정된 목표");
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -715,7 +723,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		// 인증 설정
 		setAuthentication(leader.getId());
 
-		TeamRequest request = new TeamRequest(team.getId(), null, 5, "수정된 목표");
+		TeamRequest request = new TeamRequest(team.getId(), null, 5, "green", "수정된 목표");
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -744,7 +752,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(leader.getId());
 
 		String tooLongTitle = "a".repeat(21);
-		TeamRequest request = new TeamRequest(team.getId(), tooLongTitle, 5, "수정된 목표");
+		TeamRequest request = new TeamRequest(team.getId(), tooLongTitle, 5, "green", "수정된 목표");
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);
@@ -785,7 +793,7 @@ class TeamControllerTest extends AbstractContainerBaseTest {
 		setAuthentication(leader.getId());
 
 		// 현재 3명이 있는데 최대 인원을 2명으로 수정 시도
-		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 2, "수정된 목표");
+		TeamRequest request = new TeamRequest(team.getId(), "수정된 그룹명", 2, "green", "수정된 목표");
 
 		// when & then
 		String json = objectMapper.writeValueAsString(request);

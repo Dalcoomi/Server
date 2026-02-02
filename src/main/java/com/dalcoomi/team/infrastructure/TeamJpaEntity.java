@@ -45,16 +45,20 @@ public class TeamJpaEntity extends BaseTimeEntity {
 	@Column(name = "member_limit", nullable = false)
 	private Integer memberLimit;
 
+	@Column(name = "label", nullable = false)
+	private String label;
+
 	@Column(name = "purpose", nullable = true)
 	private String purpose;
 
 	@Builder
 	public TeamJpaEntity(Long id, MemberJpaEntity leader, String title, String invitationCode, Integer memberLimit,
-		String purpose) {
+		String label, String purpose) {
 		this.id = id;
 		this.leader = leader;
 		this.title = title;
 		this.invitationCode = invitationCode;
+		this.label = label;
 		this.memberLimit = memberLimit;
 		this.purpose = purpose;
 	}
@@ -66,6 +70,7 @@ public class TeamJpaEntity extends BaseTimeEntity {
 			.title(team.getTitle())
 			.invitationCode(team.getInvitationCode())
 			.memberLimit(team.getMemberLimit())
+			.label(team.getLabel())
 			.purpose(team.getPurpose())
 			.build();
 	}
@@ -77,6 +82,7 @@ public class TeamJpaEntity extends BaseTimeEntity {
 			.title(this.title)
 			.invitationCode(this.invitationCode)
 			.memberLimit(this.memberLimit)
+			.label(this.label)
 			.purpose(this.purpose)
 			.build();
 	}

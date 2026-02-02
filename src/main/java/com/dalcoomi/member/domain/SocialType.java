@@ -8,7 +8,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public enum SocialType {
 
 	NAVER,
-	KAKAO;
+	KAKAO,
+	APPLE;
 
 	@JsonCreator
 	public static SocialType from(String value) {

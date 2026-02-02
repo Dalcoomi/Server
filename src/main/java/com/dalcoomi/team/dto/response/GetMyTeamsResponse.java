@@ -29,6 +29,7 @@ public record GetMyTeamsResponse(
 	public record GetMyTeamsResponseItem(
 		Long teamId,
 		String title,
+		String label,
 		Integer memberCount,
 		Integer memberLimit,
 		Integer displayOrder
@@ -38,6 +39,7 @@ public record GetMyTeamsResponse(
 			return GetMyTeamsResponseItem.builder()
 				.teamId(team.getId())
 				.title(team.getTitle())
+				.label(team.getLabel())
 				.memberCount(memberCount)
 				.memberLimit(team.getMemberLimit())
 				.displayOrder(displayOrder)
