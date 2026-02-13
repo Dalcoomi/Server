@@ -28,11 +28,6 @@ public enum ErrorMessage {
 	IMAGE_NOT_SUPPORT("지원하지 않는 이미지 형식입니다. jpg, jpeg, png, svg만 가능합니다."),
 	MAX_UPLOAD_SIZE_EXCEEDED("파일 업로드 크기 10MB 제한을 초과했습니다."),
 
-	ENCRYPTION_FAILED("데이터 암호화에 실패했습니다."),
-	DECRYPTION_FAILED("데이터 복호화에 실패했습니다."),
-	ENCRYPTION_KEY_INVALID("암호화 키가 유효하지 않습니다. 32자여야 합니다."),
-	ENCRYPTION_KEY_GENERATION_FAILED("암호화 키 생성에 실패했습니다."),
-
 	LOCK_EXIST_ERROR("동일한 요청이 처리 중입니다."),
 
 	MEMBER_NOT_FOUND("존재하지 않는 회원입니다."),

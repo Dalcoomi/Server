@@ -13,7 +13,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import com.dalcoomi.common.encryption.HashService;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.SocialConnectionRepository;
 import com.dalcoomi.member.domain.SocialConnection;
@@ -28,23 +27,10 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 
 	private final SocialConnectionJpaRepository socialConnectionJpaRepository;
 	private final JPAQueryFactory jpaQueryFactory;
-	private final HashService hashService;
 
 	@Override
 	public SocialConnection save(SocialConnection socialConnection) {
 		SocialConnectionJpaEntity entity = SocialConnectionJpaEntity.from(socialConnection);
-
-		entity = SocialConnectionJpaEntity.builder()
-			.id(entity.getId())
-			.member(entity.getMember())
-			.socialEmail(entity.getSocialEmail())
-			.socialEmailHash(hashService.hash(socialConnection.getSocialEmail()))
-			.socialId(entity.getSocialId())
-			.socialIdHash(hashService.hash(socialConnection.getSocialId()))
-			.socialRefreshToken(entity.getSocialRefreshToken())
-			.socialType(entity.getSocialType())
-			.deletedAt(entity.getDeletedAt())
-			.build();
 
 		return socialConnectionJpaRepository.save(entity).toModel();
 	}
@@ -52,21 +38,7 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 	@Override
 	public void saveAll(List<SocialConnection> socialConnections) {
 		List<SocialConnectionJpaEntity> entities = socialConnections.stream()
-			.map(socialConnection -> {
-				SocialConnectionJpaEntity entity = SocialConnectionJpaEntity.from(socialConnection);
-
-				return SocialConnectionJpaEntity.builder()
-					.id(entity.getId())
-					.member(entity.getMember())
-					.socialEmail(entity.getSocialEmail())
-					.socialEmailHash(hashService.hash(socialConnection.getSocialEmail()))
-					.socialId(entity.getSocialId())
-					.socialIdHash(hashService.hash(socialConnection.getSocialId()))
-					.socialRefreshToken(entity.getSocialRefreshToken())
-					.socialType(entity.getSocialType())
-					.deletedAt(entity.getDeletedAt())
-					.build();
-			})
+			.map(SocialConnectionJpaEntity::from)
 			.toList();
 
 		socialConnectionJpaRepository.saveAll(entities);
@@ -74,9 +46,7 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 
 	@Override
 	public Boolean existsMemberBySocialIdAndSocialType(String socialId, SocialType socialType) {
-		String socialIdHash = hashService.hash(socialId);
-
-		return socialConnectionJpaRepository.existsBySocialIdHashAndSocialType(socialIdHash, socialType);
+		return socialConnectionJpaRepository.existsBySocialIdAndSocialType(socialId, socialType);
 	}
 
 	@Override
@@ -88,16 +58,13 @@ public class SocialConnectionRepositoryImpl implements SocialConnectionRepositor
 
 	@Override
 	public List<SocialConnection> findBySocialEmailOrSocialId(String socialEmail, String socialId) {
-		String socialEmailHash = hashService.hash(socialEmail);
-		String socialIdHash = hashService.hash(socialId);
-
 		return jpaQueryFactory
 			.selectDistinct(socialConnectionJpaEntity)
 			.from(socialConnectionJpaEntity)
 			.join(socialConnectionJpaEntity.member, memberJpaEntity)
 			.where(
-				socialConnectionJpaEntity.socialEmailHash.eq(socialEmailHash)
-					.or(socialConnectionJpaEntity.socialIdHash.eq(socialIdHash))
+				socialConnectionJpaEntity.socialEmail.eq(socialEmail)
+					.or(socialConnectionJpaEntity.socialId.eq(socialId))
 			)
 			.fetch()
 			.stream()

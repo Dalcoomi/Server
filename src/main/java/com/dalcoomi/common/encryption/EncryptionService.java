@@ -1,13 +1,8 @@
 package com.dalcoomi.common.encryption;
 
-import static com.dalcoomi.common.error.model.ErrorMessage.DECRYPTION_FAILED;
-import static com.dalcoomi.common.error.model.ErrorMessage.ENCRYPTION_FAILED;
-import static com.dalcoomi.common.error.model.ErrorMessage.ENCRYPTION_KEY_GENERATION_FAILED;
-import static com.dalcoomi.common.error.model.ErrorMessage.ENCRYPTION_KEY_INVALID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -19,10 +14,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import com.dalcoomi.common.error.exception.DalcoomiException;
-
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 복호화 마이그레이션 완료 후 삭제 예정
+ */
 @Slf4j
 @Service
 public class EncryptionService {
@@ -36,35 +32,6 @@ public class EncryptionService {
 
 	public EncryptionService(@Value("${app.encryption.key:}") String encryptionKey) {
 		this.secretKey = generateOrLoadKey(encryptionKey);
-	}
-
-	public String encrypt(String plainText) {
-		if (!StringUtils.hasText(plainText)) {
-			return plainText;
-		}
-
-		try {
-			Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-			byte[] iv = new byte[GCM_IV_LENGTH];
-
-			new SecureRandom().nextBytes(iv);
-
-			GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
-
-			cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmParameterSpec);
-
-			byte[] encryptedText = cipher.doFinal(plainText.getBytes(UTF_8));
-			byte[] encryptedWithIv = new byte[GCM_IV_LENGTH + encryptedText.length];
-
-			System.arraycopy(iv, 0, encryptedWithIv, 0, GCM_IV_LENGTH);
-			System.arraycopy(encryptedText, 0, encryptedWithIv, GCM_IV_LENGTH, encryptedText.length);
-
-			return Base64.getEncoder().encodeToString(encryptedWithIv);
-		} catch (Exception e) {
-			log.error(ENCRYPTION_FAILED.getMessage(), e);
-
-			throw new DalcoomiException(ENCRYPTION_FAILED, e);
-		}
 	}
 
 	public String decrypt(String cipherText) {
@@ -91,16 +58,16 @@ public class EncryptionService {
 
 			return new String(decryptedText, UTF_8);
 		} catch (Exception e) {
-			log.error("{} 복호화 대상: {}", DECRYPTION_FAILED.getMessage(), cipherText);
+			log.error("데이터 복호화 실패. 복호화 대상: {}", cipherText);
 
-			throw new DalcoomiException(DECRYPTION_FAILED);
+			throw new RuntimeException("데이터 복호화에 실패했습니다.", e);
 		}
 	}
 
 	private SecretKey generateOrLoadKey(String encryptionKey) {
 		if (StringUtils.hasText(encryptionKey)) {
 			if (encryptionKey.length() != 32) {
-				throw new DalcoomiException(ENCRYPTION_KEY_INVALID);
+				throw new IllegalArgumentException("암호화 키가 유효하지 않습니다. 32자여야 합니다.");
 			}
 
 			try {
@@ -109,10 +76,10 @@ public class EncryptionService {
 
 				return new SecretKeySpec(keyBytes, ALGORITHM);
 			} catch (Exception e) {
-				throw new DalcoomiException(ENCRYPTION_KEY_GENERATION_FAILED, e);
+				throw new RuntimeException("암호화 키 생성에 실패했습니다.", e);
 			}
 		}
 
-		throw new DalcoomiException(ENCRYPTION_KEY_INVALID);
+		throw new IllegalArgumentException("암호화 키가 유효하지 않습니다. 32자여야 합니다.");
 	}
 }

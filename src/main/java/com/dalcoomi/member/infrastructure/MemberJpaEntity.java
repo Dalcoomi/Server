@@ -3,13 +3,11 @@ package com.dalcoomi.member.infrastructure;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.dalcoomi.common.encryption.EncryptedStringConverter;
 import com.dalcoomi.common.jpa.BaseTimeEntity;
 import com.dalcoomi.member.domain.Member;
 
 import io.hypersistence.utils.hibernate.id.Tsid;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -29,36 +27,20 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	@Column(name = "id", nullable = false, unique = true)
 	private Long id;
 
-	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "email", nullable = false)
 	private String email;
 
-	@Column(name = "email_hash", nullable = false)
-	private String emailHash;
-
-	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "name", nullable = false)
 	private String name;
-
-	@Column(name = "name_hash", nullable = false)
-	private String nameHash;
 
 	@Column(name = "nickname", nullable = false)
 	private String nickname;
 
-	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "birthday", nullable = true)
 	private String birthday;
 
-	@Column(name = "birthday_hash", nullable = true)
-	private String birthdayHash;
-
-	@Convert(converter = EncryptedStringConverter.class)
 	@Column(name = "gender", nullable = true)
 	private String gender;
-
-	@Column(name = "gender_hash", nullable = true)
-	private String genderHash;
 
 	@Column(name = "profile_image_url", nullable = false)
 	private String profileImageUrl;
@@ -79,20 +61,16 @@ public class MemberJpaEntity extends BaseTimeEntity {
 	private LocalDateTime deletedAt;
 
 	@Builder
-	public MemberJpaEntity(Long id, String email, String emailHash, String name, String nameHash, String nickname,
-		String birthday, String birthdayHash, String gender, String genderHash, String profileImageUrl,
+	public MemberJpaEntity(Long id, String email, String name, String nickname,
+		String birthday, String gender, String profileImageUrl,
 		Boolean serviceAgreement, Boolean collectionAgreement, Boolean aiLearningAgreement, LocalDateTime lastLoginAt,
 		LocalDateTime deletedAt) {
 		this.id = id;
 		this.email = email;
-		this.emailHash = emailHash;
 		this.name = name;
-		this.nameHash = nameHash;
 		this.nickname = nickname;
 		this.birthday = birthday;
-		this.birthdayHash = birthdayHash;
 		this.gender = gender;
-		this.genderHash = genderHash;
 		this.profileImageUrl = profileImageUrl;
 		this.serviceAgreement = serviceAgreement;
 		this.collectionAgreement = collectionAgreement;
@@ -105,14 +83,10 @@ public class MemberJpaEntity extends BaseTimeEntity {
 		return MemberJpaEntity.builder()
 			.id(member.getId())
 			.email(member.getEmail())
-			.emailHash(member.getEmailHash())
 			.name(member.getName())
-			.nameHash(member.getNameHash())
 			.nickname(member.getNickname())
 			.birthday(member.getBirthday() != null ? member.getBirthday().toString() : null)
-			.birthdayHash(member.getBirthdayHash())
 			.gender(member.getGender())
-			.genderHash(member.getGenderHash())
 			.profileImageUrl(member.getProfileImageUrl())
 			.serviceAgreement(member.getServiceAgreement())
 			.collectionAgreement(member.getCollectionAgreement())
@@ -126,14 +100,10 @@ public class MemberJpaEntity extends BaseTimeEntity {
 		Member member = Member.builder()
 			.id(this.id)
 			.email(this.email)
-			.emailHash(this.emailHash)
 			.name(this.name)
-			.nameHash(this.nameHash)
 			.nickname("dummy")
 			.birthday(this.birthday != null ? LocalDate.parse(this.birthday) : null)
-			.birthdayHash(this.birthdayHash)
 			.gender(this.gender)
-			.genderHash(this.genderHash)
 			.profileImageUrl(this.profileImageUrl)
 			.serviceAgreement(this.serviceAgreement)
 			.collectionAgreement(this.collectionAgreement)
