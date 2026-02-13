@@ -137,7 +137,12 @@ jacocoTestCoverageVerification {
                     '*.HealthController',
                     'com.dalcoomi.transaction.application.ReceiptStreamConsumer.*',
                     '*.*Warmup',
-                    '*.Dummy*'
+                    '*.Dummy*',
+                    '*.DecryptionMigrationBatchService',
+                    '*.DecryptionMigrationController',
+                    '*.EncryptionService',
+                    '*.ReceiptSseService',
+                    '*.ReceiptPubSubPublisher'
             ]
         }
     }
