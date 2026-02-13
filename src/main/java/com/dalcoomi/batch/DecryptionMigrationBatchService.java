@@ -49,7 +49,7 @@ public class DecryptionMigrationBatchService {
 
 				jdbcTemplate.update(
 					"UPDATE member SET email = ?, name = ?, birthday = ?, gender = ?, "
-						+ "email_hash = NULL, name_hash = NULL, birthday_hash = NULL, gender_hash = NULL "
+						+ "email_hash = '', name_hash = '', birthday_hash = '', gender_hash = '' "
 						+ "WHERE id = ?",
 					email, name, birthday, gender, id
 				);
@@ -67,7 +67,7 @@ public class DecryptionMigrationBatchService {
 
 	private int decryptSocialConnectionData() {
 		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-			"SELECT id, social_email, social_id, social_refresh_token FROM social_connection"
+			"SELECT id, social_email, social_id FROM social_connection"
 		);
 
 		int count = 0;
@@ -77,13 +77,12 @@ public class DecryptionMigrationBatchService {
 				Long id = ((Number)row.get("id")).longValue();
 				String socialEmail = decryptSafe((String)row.get("social_email"));
 				String socialId = decryptSafe((String)row.get("social_id"));
-				String socialRefreshToken = decryptSafe((String)row.get("social_refresh_token"));
 
 				jdbcTemplate.update(
-					"UPDATE social_connection SET social_email = ?, social_id = ?, social_refresh_token = ?, "
-						+ "social_email_hash = NULL, social_id_hash = NULL "
+					"UPDATE social_connection SET social_email = ?, social_id = ?, social_refresh_token = '', "
+						+ "social_email_hash = '', social_id_hash = '' "
 						+ "WHERE id = ?",
-					socialEmail, socialId, socialRefreshToken, id
+					socialEmail, socialId, id
 				);
 
 				count++;
@@ -108,7 +107,10 @@ public class DecryptionMigrationBatchService {
 			try {
 				Long id = ((Number)row.get("id")).longValue();
 				String content = decryptSafe((String)row.get("content"));
-				String amount = decryptSafe((String)row.get("amount"));
+				Object amountRaw = row.get("amount");
+				String amount = amountRaw instanceof Number
+					? amountRaw.toString()
+					: decryptSafe((String)amountRaw);
 
 				jdbcTemplate.update(
 					"UPDATE transaction SET content = ?, amount = ? WHERE id = ?",
