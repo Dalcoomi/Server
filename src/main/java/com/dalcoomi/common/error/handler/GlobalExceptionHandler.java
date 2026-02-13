@@ -105,9 +105,9 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(BAD_REQUEST)
 	@ExceptionHandler(DateTimeException.class)
 	protected ErrorResponse handleDateTimeParseException(DateTimeException exception) {
-		log.error(exception.getMessage(), exception);
+		log.error("날짜/시간 파싱 실패: {}", exception.getMessage(), exception);
 
-		return new ErrorResponse(exception.getMessage());
+		return new ErrorResponse("날짜/시간 형식이 올바르지 않습니다.");
 	}
 
 	@ResponseStatus(BAD_REQUEST)
