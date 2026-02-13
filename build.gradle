@@ -138,9 +138,6 @@ jacocoTestCoverageVerification {
                     'com.dalcoomi.transaction.application.ReceiptStreamConsumer.*',
                     '*.*Warmup',
                     '*.Dummy*',
-                    '*.DecryptionMigrationBatchService',
-                    '*.DecryptionMigrationController',
-                    '*.EncryptionService',
                     '*.ReceiptSseService',
                     '*.ReceiptPubSubPublisher'
             ]
