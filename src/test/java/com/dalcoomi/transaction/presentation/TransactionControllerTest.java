@@ -361,6 +361,7 @@ class TransactionControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
 			.andExpect(jsonPath("$.transactions[0].categoryName").value(category.getName()))
 			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member.getNickname()))
+			.andExpect(jsonPath("$.transactions[0].creatorProfileImageUrl").value(member.getProfileImageUrl()))
 			.andDo(print());
 	}
 
@@ -414,6 +415,7 @@ class TransactionControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
 			.andExpect(jsonPath("$.transactions[0].categoryName").value(category2.getName()))
 			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member.getNickname()))
+			.andExpect(jsonPath("$.transactions[0].creatorProfileImageUrl").value(member.getProfileImageUrl()))
 			.andDo(print());
 	}
 
@@ -471,6 +473,7 @@ class TransactionControllerTest extends AbstractContainerBaseTest {
 			.andExpect(jsonPath("$.transactions[0].transactionType").value(transaction3.getTransactionType().name()))
 			.andExpect(jsonPath("$.transactions[0].categoryName").value(category.getName()))
 			.andExpect(jsonPath("$.transactions[0].creatorNickname").value(member2.getNickname()))
+			.andExpect(jsonPath("$.transactions[0].creatorProfileImageUrl").value(member2.getProfileImageUrl()))
 			.andDo(print());
 	}
 

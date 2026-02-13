@@ -34,6 +34,7 @@ public record GetTransactionsResponse(
 	public record GetMyTransactionResponseItem(
 		Long transactionId,
 		String creatorNickname,
+		String creatorProfileImageUrl,
 		String categoryName,
 		LocalDateTime transactionDate,
 		String content,
@@ -45,6 +46,7 @@ public record GetTransactionsResponse(
 			return GetMyTransactionResponseItem.builder()
 				.transactionId(transaction.getId())
 				.creatorNickname(transaction.getCreator().getNickname())
+				.creatorProfileImageUrl(transaction.getCreator().getProfileImageUrl())
 				.categoryName(transaction.getCategory().getName())
 				.transactionDate(transaction.getTransactionDate())
 				.content(transaction.getContent())

@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.dalcoomi.common.encryption.HashService;
 import com.dalcoomi.common.error.exception.NotFoundException;
 import com.dalcoomi.member.application.repository.MemberRepository;
 import com.dalcoomi.member.domain.Member;
@@ -18,39 +17,17 @@ import lombok.RequiredArgsConstructor;
 public class MemberRepositoryImpl implements MemberRepository {
 
 	private final MemberJpaRepository memberJpaRepository;
-	private final HashService hashService;
 
 	@Override
 	public Member save(Member member) {
 		MemberJpaEntity entity = MemberJpaEntity.from(member);
-
-		entity = MemberJpaEntity.builder()
-			.id(entity.getId())
-			.email(entity.getEmail())
-			.emailHash(hashService.hash(member.getEmail()))
-			.name(entity.getName())
-			.nameHash(hashService.hash(member.getName()))
-			.nickname(entity.getNickname())
-			.birthday(entity.getBirthday())
-			.birthdayHash(member.getBirthday() != null ? hashService.hash(member.getBirthday().toString()) : null)
-			.gender(entity.getGender())
-			.genderHash(hashService.hash(member.getGender()))
-			.profileImageUrl(entity.getProfileImageUrl())
-			.serviceAgreement(entity.getServiceAgreement())
-			.collectionAgreement(entity.getCollectionAgreement())
-			.aiLearningAgreement(entity.getAiLearningAgreement())
-			.lastLoginAt(entity.getLastLoginAt())
-			.deletedAt(entity.getDeletedAt())
-			.build();
 
 		return memberJpaRepository.save(entity).toModel();
 	}
 
 	@Override
 	public boolean existsByEmail(String email) {
-		String emailHash = hashService.hash(email);
-
-		return memberJpaRepository.existsByEmailHash(emailHash);
+		return memberJpaRepository.existsByEmail(email);
 	}
 
 	@Override
@@ -72,9 +49,7 @@ public class MemberRepositoryImpl implements MemberRepository {
 
 	@Override
 	public Member findByEmail(String email) {
-		String emailHash = hashService.hash(email);
-
-		return memberJpaRepository.findByEmailHashAndDeletedAtIsNull(emailHash)
+		return memberJpaRepository.findByEmailAndDeletedAtIsNull(email)
 			.orElseThrow(() -> new NotFoundException(MEMBER_NOT_FOUND)).toModel();
 	}
 

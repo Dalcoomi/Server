@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, Long> {
 
-	boolean existsByEmailHash(String emailHash);
+	boolean existsByEmail(String email);
 
 	boolean existsByNickname(String nickname);
 
@@ -14,5 +14,5 @@ public interface MemberJpaRepository extends JpaRepository<MemberJpaEntity, Long
 
 	Optional<MemberJpaEntity> findByNicknameAndDeletedAtIsNull(String nextLeaderNickname);
 
-	Optional<MemberJpaEntity> findByEmailHashAndDeletedAtIsNull(String emailHash);
+	Optional<MemberJpaEntity> findByEmailAndDeletedAtIsNull(String email);
 }
